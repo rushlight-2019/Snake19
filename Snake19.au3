@@ -1,11 +1,11 @@
 AutoItSetOption("MustDeclareVars", 1)
 
 ;If not define then only in script
-Global Static $MESSAGE = True ;Define then DataOut will show in script or compiled
+;Global Static $MESSAGE = True ;Define then DataOut will show in script or compiled
 ;Global Static $MESSAGE =  False   ;Pause will still work in script  No Dataout
 
 ; Must be Declared before _Prf_startup
-Global $ver = "0.07 31 May 2019 New Layout Snake/Food"
+Global $ver = "0.08 31 May 2019 Eat wall & Status"
 
 Global Static $useLog = True ; False
 
@@ -13,7 +13,7 @@ Global Static $useLog = True ; False
 #include "R:\!Autoit\Blank\_prf_startup.au3"
 
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
-#AutoIt3Wrapper_Res_Fileversion=0.0.0.7
+#AutoIt3Wrapper_Res_Fileversion=0.0.0.8
 #AutoIt3Wrapper_Icon=R:\!Autoit\Ico\prf.ico
 #AutoIt3Wrapper_Res_Description=Another snake game
 #AutoIt3Wrapper_Res_LegalCopyright=© Phillip Forrestal 2019
@@ -42,6 +42,7 @@ Global Static $useLog = True ; False
 
 	poop
 
+	0.08 31 May 2019 Eat wall & Status
 	0.07 31 May 2019 New Layout Snake/Food
 	0.06 30 May 2019  Redo Layout like The Game
 	Too much flicker
@@ -76,7 +77,7 @@ Global $g_sx = 50
 Global $g_sy = 40
 Global $g_bx = $g_sx + 2
 Global $g_by = $g_sy + 2
-Global $g_ctrboard
+Global $g_ctrlBoard
 
 Global $g_food[2] ; x, y , Ctrl
 Global $g_snake[($g_sx) * ($g_sy)][2] ; x, y
@@ -92,23 +93,30 @@ Global $g_hTick
 Global $g_aMap[$g_bx][$g_by]
 
 Global $g_aDisplayMap[$g_bx][$g_by]
-Global $g_Size = 10
+Global $g_Size = 15 ;10
+Global $g_Font = 24
+Global $g_Status
+Global $g_StatusText
+Global $g_StatusOff = 2
 
 Global Static $s_pic = @ScriptDir & "\Pic\"
 
 ; Main is call at end
 Func Main()
 	If Not $TESTING Then
-		If StartForm() Then
-			Return
-		EndIf
-	EndIf
-
-	Game()
-
+		;If True Then
+		Do
+			If StartForm() Then
+				Return
+			EndIf
+			Game()
+		Until False
+	Else
+		Game()
+		endif
 EndFunc   ;==>Main
 #CS INFO
-	7222 V6 5/31/2019 9:17:59 AM V5 5/30/2019 10:14:46 AM V4 5/30/2019 1:07:20 AM V3 5/29/2019 6:31:27 PM
+	10236 V7 5/31/2019 6:26:23 PM V6 5/31/2019 9:17:59 AM V5 5/30/2019 10:14:46 AM V4 5/30/2019 1:07:20 AM
 #CE
 
 Func Game()
@@ -123,15 +131,19 @@ Func Game()
 	Local $L_dirx
 	Local $L_diry
 	Local $L_change
-	Local $Color
+	Local $var
 
-	$g_ctrboard = GUICreate("Snake19 - " & $ver, $g_bx * 10, $g_by * 10)
-	;	GUISetBkColor($COLOR_BLACK)
+	$g_ctrlBoard = GUICreate("Snake19 - " & $ver, $g_bx * $g_Size, $g_by * $g_Size + $g_Font + 2)
+
 	$L_idDown = GUICtrlCreateDummy()
 	$L_idRight = GUICtrlCreateDummy()
 	$L_idLeft = GUICtrlCreateDummy()
 	$L_idUp = GUICtrlCreateDummy()
 	$L_idEsc = GUICtrlCreateDummy()
+
+	$g_Status = GUICtrlCreateLabel("", 0, 0, $g_bx * $g_Size, $g_Font + $g_StatusOff)
+	$g_StatusText = GUICtrlCreateLabel("Status", $g_Size / 2, $g_StatusOff, $g_bx * $g_Size - $g_Size, $g_Font)
+	GUICtrlSetFont(-1, 10, 700, 0, "Arial")
 	GUISetState()
 
 	For $y = 0 To $g_by - 1
@@ -139,12 +151,12 @@ Func Game()
 			Select
 				Case $x = 0 Or $x = $g_bx - 1 Or $y = 0 Or $y = $g_by - 1
 					$g_aMap[$x][$y] = -1 ;outside edge
-					$Color = "Edge.jpg"
+					$var = "Edge.jpg"
 				Case Else
 					$g_aMap[$x][$y] = 0 ; empty
-					$Color = "Blue.jpg" ;"Black.jpg"
+					$var = "Blue.jpg" ;"Black.jpg"
 			EndSelect
-			$g_aDisplayMap[$x][$y] = GUICtrlCreatePic($s_pic & $Color, $x * $g_Size, $y * $g_Size, $g_Size, $g_Size)
+			$g_aDisplayMap[$x][$y] = GUICtrlCreatePic($s_pic & $var, $x * $g_Size, $y * $g_Size + $g_Font + $g_StatusOff, $g_Size, $g_Size)
 		Next
 	Next
 
@@ -159,7 +171,7 @@ Func Game()
 
 	Local $aAccelKey2[][] = [["{RIGHT}", $L_idRight], ["{LEFT}", $L_idLeft], ["{DOWN}", $L_idDown], ["{UP}", $L_idUp], ["{ESC}", $L_idEsc]]
 
-	GUISetAccelerators($aAccelKey2, $g_ctrboard)
+	GUISetAccelerators($aAccelKey2, $g_ctrlBoard)
 
 	$g_hTick = TimerInit()
 	While 1 ; Game Loop
@@ -184,6 +196,7 @@ Func Game()
 					$L_diry = 0
 
 				Case $L_idUp
+
 					Do
 					Until GUIGetMsg() <> $L_idUp
 					$L_dirx = 0
@@ -203,11 +216,12 @@ Func Game()
 
 		Switch $g_aMap[$g_x + $L_dirx][$g_y + $L_diry]
 			Case -1
-				Pause("Ate walll")
-				Exit
+				Status("Ate wall", 1)
+
+				ExitLoop
 			Case 1
-				Pause("Ate self")
-				Exit
+				Status("Ate self", 1)
+				ExitLoop
 			Case 10
 				$g_x += $L_dirx
 				$g_y += $L_diry
@@ -239,13 +253,13 @@ Func Game()
 
 	WEnd
 
-	GUISetAccelerators(1, $g_ctrboard) ; Turn off Accelerator
+	GUISetAccelerators(1, $g_ctrlBoard) ; Turn off Accelerator
 
-	GUIDelete($g_ctrboard)
+	GUIDelete($g_ctrlBoard)
 
 EndFunc   ;==>Game
 #CS INFO
-	182778 V3 5/31/2019 9:17:59 AM V2 5/30/2019 10:14:46 AM V1 5/30/2019 1:07:20 AM
+	202076 V4 5/31/2019 6:26:23 PM V3 5/31/2019 9:17:59 AM V2 5/30/2019 10:14:46 AM V1 5/30/2019 1:07:20 AM
 #CE
 
 Func Tick() ;
@@ -261,6 +275,24 @@ Func Tick() ;
 EndFunc   ;==>Tick
 #CS INFO
 	11277 V2 5/30/2019 10:14:46 AM V1 5/30/2019 1:07:20 AM
+#CE
+
+Func Status($string, $color, $delay = 4)
+	Local $c
+
+	GUICtrlSetData($g_StatusText, $string)
+	Switch $color
+		Case 1
+			$c = 0xff69b4
+	EndSwitch
+	GUICtrlSetBkColor($g_Status, $c)
+	GUICtrlSetBkColor($g_StatusText, $c)
+	If $delay > 0 Then
+		Sleep($delay * 1000)
+	EndIf
+EndFunc   ;==>Status
+#CS INFO
+	21172 V1 5/31/2019 6:26:23 PM
 #CE
 
 Func RemoveSnake() ; at end
@@ -354,19 +386,19 @@ EndFunc   ;==>AddFood
 #CE
 
 Func ClearBoard()
-	Local $Color
+	Local $var
 
 	For $x = 0 To $g_bx - 1
 		For $y = 0 To $g_by - 1
 			Select
 				Case $x = 0 Or $x = $g_bx - 1 Or $y = 0 Or $y = $g_by - 1
 					$g_aMap[$x][$y] = -1 ;outside edge
-					$Color = "Edge.jpg"
+					$var = "Edge.jpg"
 				Case Else
 					$g_aMap[$x][$y] = 0 ; empty
-					$Color = "Black.jpg"
+					$var = "Black.jpg"
 			EndSelect
-			GUICtrlSetImage($g_aDisplayMap[$x][$y], $s_pic & $Color)
+			GUICtrlSetImage($g_aDisplayMap[$x][$y], $s_pic & $var)
 		Next
 	Next
 
@@ -374,7 +406,7 @@ Func ClearBoard()
 	AddFood()
 EndFunc   ;==>ClearBoard
 #CS INFO
-	27302 V3 5/31/2019 9:17:59 AM V2 5/30/2019 10:14:46 AM V1 5/29/2019 6:31:27 PM
+	26574 V4 5/31/2019 6:26:23 PM V3 5/31/2019 9:17:59 AM V2 5/30/2019 10:14:46 AM V1 5/29/2019 6:31:27 PM
 #CE
 
 Func StartForm()
@@ -408,11 +440,10 @@ Func StartForm()
 
 	Local $Edit1 = GUICtrlCreateEdit("", 20, $b + 150, 550, 250)
 	GUICtrlSetData($Edit1, "Press ESC to quit." & @CRLF, 1)
-	GUICtrlSetData($Edit1, "Normal:  One snake, one food" & @CRLF, 1)
+	;GUICtrlSetData($Edit1, "Normal:  One snake, one food" & @CRLF, 1)
+	GUICtrlSetData($Edit1, "Beta:  Normal: One snake, one food,  each food increase snake by 10" & @CRLF, 1)
+
 	GUICtrlSetData($Edit1, @CRLF, 1)
-	GUICtrlSetData($Edit1, "Problems:" & @CRLF, 1)
-	GUICtrlSetData($Edit1, "Map not in the right place" & @CRLF, 1)
-	GUICtrlSetData($Edit1, "Eat self Eat wall" & @CRLF, 1)
 
 	GUISetState(@SW_SHOW)
 
@@ -432,11 +463,11 @@ Func StartForm()
 
 EndFunc   ;==>StartForm
 #CS INFO
-	106808 V4 5/31/2019 9:17:59 AM V3 5/30/2019 10:14:46 AM V2 5/29/2019 1:14:38 PM V1 5/29/2019 3:12:10 AM
+	102673 V5 5/31/2019 6:26:23 PM V4 5/31/2019 9:17:59 AM V3 5/30/2019 10:14:46 AM V2 5/29/2019 1:14:38 PM
 #CE
 
 ;Main
 Main()
-MsgBox(0, "Done", $ver)
+
 Exit
-;~T ScriptFunc.exe V0.54a 15 May 2019 - 5/31/2019 9:17:59 AM
+;~T ScriptFunc.exe V0.54a 15 May 2019 - 5/31/2019 6:26:23 PM
