@@ -5,7 +5,7 @@ AutoItSetOption("MustDeclareVars", 1)
 ;Global Static $MESSAGE =  False   ;Pause will still work in script  No Dataout
 
 ; Must be Declared before _Prf_startup
-Global $ver = "0.09 1 Jun 2019 Minor fixes."
+Global $ver = "0.12 3 Jun 2019 Move snake"
 
 If @Compiled = 0 Then
 	Global Static $useLog = True
@@ -17,7 +17,7 @@ EndIf
 #include "R:\!Autoit\Blank\_prf_startup.au3"
 
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
-#AutoIt3Wrapper_Res_Fileversion=0.0.0.9
+#AutoIt3Wrapper_Res_Fileversion=0.0.1.2
 #AutoIt3Wrapper_Icon=R:\!Autoit\Ico\prf.ico
 #AutoIt3Wrapper_Res_Description=Another snake game
 #AutoIt3Wrapper_Res_LegalCopyright=© Phillip Forrestal 2019
@@ -53,8 +53,10 @@ EndIf
 	3 = previous Y
 	4 = next X
 	5 = next Y
-	6 = snake cell number
+	6 = snake cell number (to computer size)
 
+	0.12 3 Jun 2019 Move snake
+	0.11 2 Jun 2019 Add Snake - add previous and next. Snake cell number
 	0.10 2 Jun 2019 Major change to map array
 	0.09 1 Jun 2019 Minor fixes.
 	0.08 31 May 2019 Eat wall & Status
@@ -76,16 +78,6 @@ EndIf
 #include <Constants.au3>
 #include <ButtonConstants.au3>
 
-;Static $UserLoction = EnvGet("USERPROFILE");
-;Static $Temp = EnvGet("TEMP")
-
-;AutoItSetOption("SendKeyDelay", 15)
-;AutoItSetOption("SendKeyDownDelay", 15)
-
-;$CmdLine[0] ; Contains the total number of items in the array.
-;$CmdLine[1] ; The first parameter.
-;$CmdLine[2] ; The second parameter.
-
 ;Static
 Static $s_pic = @ScriptDir & "\Pic\"
 
@@ -105,24 +97,34 @@ Global $g_sx = 50
 Global $g_sy = 40
 Global $g_bx = $g_sx + 2
 Global $g_by = $g_sy + 2
-Global $g_ctrlBoard
+Global $g_ctrlBoard = -1
 
-Global $g_food[2] ; x, y , Ctrl
-Global $g_snake[($g_sx) * ($g_sy)][2] ; x, y
-Global $g_start = 0
-Global $g_end = 0
-Global $g_cnt = 1
-Global $g_unbound = UBound($g_snake)
+;Map
+;Column 1
+Static $ctrl = 0 ;	0 = Ctrl
+Static $what = 1 ;		1 = What at cell  $SNAKE, $FOOD, $EMPTY
+Static $prX = 2 ;	2 = previous X
+Static $prY = 3 ;	3 = previous Y
+Static $nxX = 4 ;	4 = next X
+Static $nxY = 5 ;	5 = next Y
+Static $num = 6 ;	6 = snake cell number
+Global $Map[7][$g_bx][$g_by]
+;$Map[$what][x][y]
 
-;Game
-Global $g_x
-Global $g_y
+Global $count
+Global $x_new
+Global $y_new
+Global $x_end
+Global $y_end
+
+Global $g_foodX
+Global $g_foodY
+
 Global $g_hTick
-Global $g_aMap[$g_bx][$g_by]
 
-Global $g_aDisplayMap[$g_bx][$g_by]
 Global $g_Size = 15 ;10
 Global $g_Font = 24
+
 Global $g_Status
 Global $g_StatusText
 Global $g_StatusOff = 2
@@ -148,53 +150,60 @@ EndFunc   ;==>Main
 Func Game()
 	Local $nMsg, $x, $y
 	;Keys acc
-	Local $L_idDown
-	Local $L_idRight
-	Local $L_idLeft
-	Local $L_idUp
-	Local $L_idEsc
+	Local Static $L_idDown
+	Local Static $L_idRight
+	Local Static $L_idLeft
+	Local Static $L_idUp
+	Local Static $L_idEsc
 
 	Local $L_dirx
 	Local $L_diry
 	Local $L_change, $L_changeHalf
 	Local $var
 
-	$g_ctrlBoard = GUICreate("Snake19 - " & $ver, $g_bx * $g_Size, $g_by * $g_Size + $g_Font + 2)
+	If $g_ctrlBoard = -1 Then
 
-	$L_idDown = GUICtrlCreateDummy()
-	$L_idRight = GUICtrlCreateDummy()
-	$L_idLeft = GUICtrlCreateDummy()
-	$L_idUp = GUICtrlCreateDummy()
-	$L_idEsc = GUICtrlCreateDummy()
+		$g_ctrlBoard = GUICreate("Snake19 - " & $ver, $g_bx * $g_Size, $g_by * $g_Size + $g_Font + 2)
 
-	$g_Status = GUICtrlCreateLabel("", 0, 0, $g_bx * $g_Size, $g_Font + $g_StatusOff)
-	$g_StatusText = GUICtrlCreateLabel("Status", $g_Size / 2, $g_StatusOff, $g_bx * $g_Size - $g_Size, $g_Font)
-	GUICtrlSetFont(-1, 10, 700, 0, "Arial")
-	GUISetState()
+		$L_idDown = GUICtrlCreateDummy()
+		$L_idRight = GUICtrlCreateDummy()
+		$L_idLeft = GUICtrlCreateDummy()
+		$L_idUp = GUICtrlCreateDummy()
+		$L_idEsc = GUICtrlCreateDummy()
 
-	For $y = 0 To $g_by - 1
-		For $x = 0 To $g_bx - 1
-			Select
-				Case $x = 0 Or $x = $g_bx - 1 Or $y = 0 Or $y = $g_by - 1
-					$g_aMap[$x][$y] = -1 ;outside edge
-					$var = $cEDGE
-				Case Else
-					$g_aMap[$x][$y] = $EMPTY ; empty
-					$var = $cEMPTY1 ;$cEMPTY
-			EndSelect
-			$g_aDisplayMap[$x][$y] = GUICtrlCreatePic($var, $x * $g_Size, $y * $g_Size + $g_Font + $g_StatusOff, $g_Size, $g_Size)
+		$g_Status = GUICtrlCreateLabel("", 0, 0, $g_bx * $g_Size, $g_Font + $g_StatusOff)
+		$g_StatusText = GUICtrlCreateLabel("Status", $g_Size / 2, $g_StatusOff, $g_bx * $g_Size - $g_Size, $g_Font)
+		GUICtrlSetFont(-1, 10, 700, 0, "Arial")
+
+		For $y = 0 To $g_by - 1
+			For $x = 0 To $g_bx - 1
+				;Select
+				;	Case $x = 0 Or $x = $g_bx - 1 Or $y = 0 Or $y = $g_by - 1
+				;			$Map[$what][$x][$y] = -1 ;outside edge
+				;			$var = $cEDGE
+				;		Case Else
+				;			$Map[$what][$x][$y] = $EMPTY ; empty
+				$var = $cRED ;$cEDGE
+				;	EndSelect
+				$Map[$ctrl][$x][$y] = GUICtrlCreatePic($var, $x * $g_Size, $y * $g_Size + $g_Font + $g_StatusOff, $g_Size, $g_Size)
+			Next
 		Next
-	Next
+
+	EndIf
+	GUISetState(@SW_SHOW, $g_ctrlBoard)
 
 	$L_dirx = 0
 	$L_diry = 0
 	$L_change = 0 ; change $g_cnt  snake lenght
 	$L_changeHalf = False
 
+	ClearBoard()
 	StartSnake()
-	;Pause("Start working~~~")
 	AddFood()
+
+	;Pause("Start working~~~")
 	;Pause("Temp End~~~")
+	;exit
 
 	Local $aAccelKey2[][] = [["{RIGHT}", $L_idRight], ["{LEFT}", $L_idLeft], ["{DOWN}", $L_idDown], ["{UP}", $L_idUp], ["{ESC}", $L_idEsc]]
 
@@ -244,7 +253,7 @@ Func Game()
 			ContinueLoop
 		EndIf
 
-		Switch $g_aMap[$g_x + $L_dirx][$g_y + $L_diry]
+		Switch $Map[$what][$x_new + $L_dirx][$y_new + $L_diry]
 			Case -1
 				Status("Ate wall", 1)
 
@@ -253,36 +262,34 @@ Func Game()
 				Status("Ate self", 1)
 				ExitLoop
 			Case $FOOD
-				$g_x += $L_dirx
-				$g_y += $L_diry
+				$L_change += 1 ; doing this way because furture versions might not be one
 
-				$L_change += 0 ; doing this way because furture versions might not be one
+				$L_change += 8 ; doing this way because furture versions might not be one ***************************
 
-				$L_change += 10 ; doing this way because furture versions might not be one ***************************
-				RemoveFood()
-				AddSnake()
-
+				;RemoveFood()  NOT needed because  snake will over write with out looking
+				AddFood()
+				PrevNext($x_new + $L_dirx, $y_new + $L_diry) ;New value
+				;MsgBox(0, "Add snake", $x_new & "," & $y_new & "Num: " & $Map[$num][$x_new][$y_new], 10)
 			Case $EMPTY
-				$g_x += $L_dirx
-				$g_y += $L_diry
 
-				AddSnake()
+				PrevNext($x_new + $L_dirx, $y_new + $L_diry) ;New value
+
 				;Check to see if snake grow longer or shorter
+				;Dataout("Change", $L_change)
+
 				If $L_change = 0 Then
 					RemoveSnake()
-
 				ElseIf $L_change > 0 Then ; snake get longer don't remove end
-					$g_cnt += 1
-					$L_change -= 1
+
 					If $L_changeHalf = True Then
 						$L_changeHalf = False
 						RemoveSnake()
 					Else
+						$L_change -= 1
 						$L_changeHalf = True
 					EndIf
 
 				ElseIf $L_change < 0 Then ; snake get shorter remove end twice
-					$g_cnt -= 1
 					$L_change += 1
 					RemoveSnake()
 					RemoveSnake()
@@ -293,11 +300,13 @@ Func Game()
 
 	GUISetAccelerators(1, $g_ctrlBoard) ; Turn off Accelerator
 
-	GUIDelete($g_ctrlBoard)
+	MsgBox(0, "Snake", $Map[$num][$x_new][$y_new] - $Map[$num][$x_end][$y_end] + 1 & " Count " & $count, 5)
+
+	GUISetState(@SW_HIDE, $g_ctrlBoard)
 
 EndFunc   ;==>Game
 #CS INFO
-	201824 V5 6/2/2019 1:14:05 AM V4 5/31/2019 6:26:23 PM V3 5/31/2019 9:17:59 AM V2 5/30/2019 10:14:46 AM
+	248750 V8 6/3/2019 10:34:22 AM V7 6/3/2019 1:09:45 AM V6 6/2/2019 7:12:26 PM V5 6/2/2019 1:14:05 AM
 #CE
 
 Func Tick() ;
@@ -305,6 +314,7 @@ Func Tick() ;
 
 	While 1
 		$fdiff = TimerDiff($g_hTick)
+		;If $fdiff > 1000 then ;150 Then ;150
 		If $fdiff > 150 Then ;150
 			ExitLoop
 		EndIf
@@ -312,7 +322,7 @@ Func Tick() ;
 	$g_hTick = TimerInit()
 EndFunc   ;==>Tick
 #CS INFO
-	11277 V2 5/30/2019 10:14:46 AM V1 5/30/2019 1:07:20 AM
+	13561 V3 6/3/2019 10:34:22 AM V2 5/30/2019 10:14:46 AM V1 5/30/2019 1:07:20 AM
 #CE
 
 Func Status($string, $color, $delay = 4)
@@ -333,118 +343,120 @@ EndFunc   ;==>Status
 	21172 V1 5/31/2019 6:26:23 PM
 #CE
 
-Func RemoveSnake() ; at end
-	$g_aMap[$g_snake[$g_end][0]][$g_snake[$g_end][1]] = $EMPTY
-	GUICtrlSetImage($g_aDisplayMap[$g_snake[$g_end][0]][$g_snake[$g_end][1]], $cEMPTY)
-
-	$g_end += 1
-	If $g_end = $g_unbound Then
-		$g_end = 0
-	EndIf
-
-EndFunc   ;==>RemoveSnake
-#CS INFO
-	20371 V3 6/2/2019 1:14:05 AM V2 5/31/2019 9:17:59 AM V1 5/30/2019 10:14:46 AM
-#CE
-
 Func StartSnake()
 	Local $x, $y
 
-	$g_x = Int(Random(5, $g_sx - 5))
-	$g_y = Int(Random(5, $g_sy - 5))
+	$x = Int(Random(5, $g_sx - 5))
+	$y = Int(Random(5, $g_sy - 5))
 
-	$g_start = 0
-	$g_end = 0
-	$g_cnt = 1
-	DataOut($g_x, $g_y)
-	AddSnake(False)
+	$x_new = $x
+	$y_new = $y
+	$Map[$prX][$x_new][$y_new] = 0
+	$Map[$prY][$x_new][$y_new] = 0
+
+	$Map[$nxX][$x_new][$y_new] = 0
+	$Map[$nxY][$x_new][$y_new] = 0
+
+	$count = 1
+	$Map[$num][$x_new][$y_new] = $count
+
+	$Map[$what][$x_new][$y_new] = $SNAKE
+	GUICtrlSetImage($Map[$ctrl][$x_new][$y_new], $cSNAKE)
+
+	$x_end = $x_new
+	$y_end = $y_new
 
 EndFunc   ;==>StartSnake
 #CS INFO
-	13674 V4 5/31/2019 9:17:59 AM V3 5/30/2019 10:14:46 AM V2 5/30/2019 1:07:20 AM V1 5/29/2019 6:31:27 PM
+	34897 V2 6/3/2019 10:34:22 AM V1 6/3/2019 1:09:45 AM
 #CE
 
-Func AddSnake($flag = True) ;at start
-	If $flag Then
-		$g_start += 1
-		If $g_start = $g_unbound Then
-			$g_start = 0
-		EndIf
-	EndIf
+Func PrevNext($x, $y) ;New value
+	Local $x_prv, $y_prv
 
-	$g_aMap[$g_x][$g_y] = $SNAKE
-	$g_snake[$g_start][0] = $g_x ; x, y, ctrl
-	$g_snake[$g_start][1] = $g_y
-	GUICtrlSetImage($g_aDisplayMap[$g_x][$g_y], $cSNAKE)
+	$x_prv = $x_new
+	$y_prv = $y_new
+	$x_new = $x
+	$y_new = $y
+	$Map[$prX][$x_new][$y_new] = $x_prv
+	$Map[$prY][$x_new][$y_new] = $y_prv
 
-EndFunc   ;==>AddSnake
+	$Map[$nxX][$x_prv][$y_prv] = $x_new
+	$Map[$nxY][$x_prv][$y_prv] = $y_new
+
+	$count += 1
+	$Map[$num][$x_new][$y_new] = $count
+
+	$Map[$what][$x_new][$y_new] = $SNAKE
+	GUICtrlSetImage($Map[$ctrl][$x_new][$y_new], $cSNAKE)
+EndFunc   ;==>PrevNext
 #CS INFO
-	23101 V3 6/2/2019 1:14:05 AM V2 5/31/2019 9:17:59 AM V1 5/30/2019 10:14:46 AM
+	49175 V2 6/3/2019 10:34:22 AM V1 6/3/2019 1:09:45 AM
 #CE
 
-Func RemoveFood()
-	;Local $x, $y  Not needed Snake will rewright location without looking
+Func RemoveSnake() ; at end
+	Local $x, $y
 
-	;$x=$g_food[0]  ; keep food on board so food won't  be added here.
-	;$y=$g_food[0]
+	$x = $x_end
+	$y = $y_end
 
-	GUICtrlSetImage($g_aDisplayMap[$g_food[0]][$g_food[1]], $cEMPTY)
-	AddFood()
+	;MsgBox(0, "Remove snake", "x " & $x & " y " & $y & " Num: " & $Map[$num][$x][$y], 10)
 
-	;$g_aMap[$x][$y] = 0 ;empty
+	$Map[$what][$x][$y] = $EMPTY
+	GUICtrlSetImage($Map[$ctrl][$x][$y], $cEMPTY)
+	$Map[$num][$x][$y] = 0 ; don't really need to zero out
 
-EndFunc   ;==>RemoveFood
+	$x_end = $Map[$nxX][$x][$y]
+	$y_end = $Map[$nxY][$x][$y]
+
+	;$Map[$prX][$x_end][$y_end] = 0
+	;$Map[$prY][$x_end][$y_end] = 0
+
+	;$Map[$nxX][$x_end][$y_end] = 0
+	;$Map[$nxY][$x_end][$y_end] = 0
+
+EndFunc   ;==>RemoveSnake
 #CS INFO
-	24138 V3 6/2/2019 1:14:05 AM V2 5/31/2019 9:17:59 AM V1 5/30/2019 10:14:46 AM
+	36306 V6 6/3/2019 10:34:22 AM V5 6/3/2019 1:09:45 AM V4 6/2/2019 7:12:26 PM V3 6/2/2019 1:14:05 AM
 #CE
 
 Func AddFood()
-	;$g_CtrlBG[$Y][$X] = GUICtrlCreateGraphic($X * 64, (7 - $Y) * 64, 64, 64) ;Clickable
 	Local $x, $y
 
 	Do
 		$x = Int(Random(1, $g_sx))
 		$y = Int(Random(1, $g_sy))
-		;dataout($x,$y)
-		dataout($g_aMap[$x][$y])
-	Until $g_aMap[$x][$y] = $EMPTY
+	Until $Map[$what][$x][$y] = $EMPTY
 
-	dataout($x, $y)
-
-	$g_aMap[$x][$y] = 10 ; Food
-	$g_food[0] = $x ; x, y, ctrl
-	$g_food[1] = $y
-	GUICtrlSetImage($g_aDisplayMap[$x][$y], $cFOOD)
-
-	dataout($x, $y)
-
+	$g_foodX = $x ; x, y, ctrl
+	$g_foodY = $y
+	$Map[$what][$x][$y] = $FOOD
+	GUICtrlSetImage($Map[$ctrl][$x][$y], $cFOOD)
 EndFunc   ;==>AddFood
 #CS INFO
-	30012 V5 6/2/2019 1:14:05 AM V4 5/31/2019 9:17:59 AM V3 5/30/2019 10:14:46 AM V2 5/30/2019 1:07:20 AM
+	18553 V7 6/3/2019 1:09:45 AM V6 6/2/2019 7:12:26 PM V5 6/2/2019 1:14:05 AM V4 5/31/2019 9:17:59 AM
 #CE
 
 Func ClearBoard()
 	Local $var
 
-	For $x = 0 To $g_bx - 1
-		For $y = 0 To $g_by - 1
+	For $y = 0 To $g_by - 1
+		For $x = 0 To $g_bx - 1
 			Select
 				Case $x = 0 Or $x = $g_bx - 1 Or $y = 0 Or $y = $g_by - 1
-					$g_aMap[$x][$y] = -1 ;outside edge
+					$Map[$what][$x][$y] = -1 ;outside edge
 					$var = $cEDGE
 				Case Else
-					$g_aMap[$x][$y] = 0 ; empty
+					$Map[$what][$x][$y] = $EMPTY ; empty
 					$var = $cEMPTY1
 			EndSelect
-			GUICtrlSetImage($g_aDisplayMap[$x][$y], $var)
+			GUICtrlSetImage($Map[$ctrl][$x][$y], $var)
 		Next
 	Next
 
-	StartSnake()
-	AddFood()
 EndFunc   ;==>ClearBoard
 #CS INFO
-	25249 V5 6/2/2019 1:14:05 AM V4 5/31/2019 6:26:23 PM V3 5/31/2019 9:17:59 AM V2 5/30/2019 10:14:46 AM
+	24151 V7 6/3/2019 1:09:45 AM V6 6/2/2019 7:12:26 PM V5 6/2/2019 1:14:05 AM V4 5/31/2019 6:26:23 PM
 #CE
 
 Func StartForm()
@@ -508,4 +520,4 @@ EndFunc   ;==>StartForm
 Main()
 
 Exit
-;~T ScriptFunc.exe V0.54a 15 May 2019 - 6/2/2019 1:14:05 AM
+;~T ScriptFunc.exe V0.54a 15 May 2019 - 6/3/2019 10:34:22 AM
