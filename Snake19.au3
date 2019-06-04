@@ -5,7 +5,7 @@ AutoItSetOption("MustDeclareVars", 1)
 ;Global Static $MESSAGE =  False   ;Pause will still work in script  No Dataout
 
 ; Must be Declared before _Prf_startup
-Global $ver = "0.12 3 Jun 2019 Move snake"
+Global $ver = "0.14 3 Jun 2019 Status, length score"
 
 If @Compiled = 0 Then
 	Global Static $useLog = True
@@ -17,7 +17,7 @@ EndIf
 #include "R:\!Autoit\Blank\_prf_startup.au3"
 
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
-#AutoIt3Wrapper_Res_Fileversion=0.0.1.2
+#AutoIt3Wrapper_Res_Fileversion=0.0.1.4
 #AutoIt3Wrapper_Icon=R:\!Autoit\Ico\prf.ico
 #AutoIt3Wrapper_Res_Description=Another snake game
 #AutoIt3Wrapper_Res_LegalCopyright=© Phillip Forrestal 2019
@@ -54,7 +54,7 @@ EndIf
 	4 = next X
 	5 = next Y
 	6 = snake cell number (to computer size)
-
+	0.14 3 Jun 2019 Status, length score
 	0.12 3 Jun 2019 Move snake
 	0.11 2 Jun 2019 Add Snake - add previous and next. Snake cell number
 	0.10 2 Jun 2019 Major change to map array
@@ -125,14 +125,14 @@ Global $g_hTick
 Global $g_Size = 15 ;10
 Global $g_Font = 24
 
-Global $g_Status
-Global $g_StatusText
+Global $g_Status[2]
+Global $g_StatusText[2]
 Global $g_StatusOff = 2
 
 ; Main is call at end
 Func Main()
-	If Not $TESTING Then
-		;If True Then
+	;	If Not $TESTING Then
+	If True Then
 		Do
 			If StartForm() Then
 				Return
@@ -159,7 +159,7 @@ Func Game()
 	Local $L_dirx
 	Local $L_diry
 	Local $L_change, $L_changeHalf
-	Local $var
+	Local $a, $b
 
 	If $g_ctrlBoard = -1 Then
 
@@ -170,10 +170,7 @@ Func Game()
 		$L_idLeft = GUICtrlCreateDummy()
 		$L_idUp = GUICtrlCreateDummy()
 		$L_idEsc = GUICtrlCreateDummy()
-
-		$g_Status = GUICtrlCreateLabel("", 0, 0, $g_bx * $g_Size, $g_Font + $g_StatusOff)
-		$g_StatusText = GUICtrlCreateLabel("Status", $g_Size / 2, $g_StatusOff, $g_bx * $g_Size - $g_Size, $g_Font)
-		GUICtrlSetFont(-1, 10, 700, 0, "Arial")
+		GUISetState(@SW_SHOW, $g_ctrlBoard)
 
 		For $y = 0 To $g_by - 1
 			For $x = 0 To $g_bx - 1
@@ -183,14 +180,28 @@ Func Game()
 				;			$var = $cEDGE
 				;		Case Else
 				;			$Map[$what][$x][$y] = $EMPTY ; empty
-				$var = $cRED ;$cEDGE
+				$a = $cRED ;$cEDGE
 				;	EndSelect
-				$Map[$ctrl][$x][$y] = GUICtrlCreatePic($var, $x * $g_Size, $y * $g_Size + $g_Font + $g_StatusOff, $g_Size, $g_Size)
+				$Map[$ctrl][$x][$y] = GUICtrlCreatePic($a, $x * $g_Size, $y * $g_Size + $g_Font + $g_StatusOff, $g_Size, $g_Size)
 			Next
 		Next
 
+		$a = ($g_bx * $g_Size) / 2 ;Half way
+		$b = $a - $g_Size ; len  = half - $g_size (half of it at both ends)
+		; Start both 1) ($g_size/2)  2) half +($g_size/2)
+
+		$g_Status[0] = GUICtrlCreateLabel("", 0, 0, $a, $g_Font + $g_StatusOff)
+		$g_Status[1] = GUICtrlCreateLabel("", $a, 0, $a, $g_Font + $g_StatusOff)
+
+		$g_StatusText[0] = GUICtrlCreateLabel("Status1", $g_Size / 2, $g_StatusOff, $a - $g_Size, $g_Font)
+		GUICtrlSetFont(-1, 10, 700, 0, "Arial")
+
+		$g_StatusText[1] = GUICtrlCreateLabel("Status2", $a + ($g_Size / 2), $g_StatusOff, $a - $g_Size, $g_Font)
+		GUICtrlSetFont(-1, 10, 700, 0, "Arial")
+
 	EndIf
 	GUISetState(@SW_SHOW, $g_ctrlBoard)
+	Status(0, "", 0, 0)
 
 	$L_dirx = 0
 	$L_diry = 0
@@ -255,11 +266,11 @@ Func Game()
 
 		Switch $Map[$what][$x_new + $L_dirx][$y_new + $L_diry]
 			Case -1
-				Status("Ate wall", 1)
+				Status(0, "Ate wall", 1)
 
 				ExitLoop
 			Case $SNAKE
-				Status("Ate self", 1)
+				Status(0, "Ate self", 1)
 				ExitLoop
 			Case $FOOD
 				$L_change += 1 ; doing this way because furture versions might not be one
@@ -269,7 +280,7 @@ Func Game()
 				;RemoveFood()  NOT needed because  snake will over write with out looking
 				AddFood()
 				PrevNext($x_new + $L_dirx, $y_new + $L_diry) ;New value
-				;MsgBox(0, "Add snake", $x_new & "," & $y_new & "Num: " & $Map[$num][$x_new][$y_new], 10)
+
 			Case $EMPTY
 
 				PrevNext($x_new + $L_dirx, $y_new + $L_diry) ;New value
@@ -296,17 +307,20 @@ Func Game()
 				EndIf
 		EndSwitch
 
+		$a = $Map[$num][$x_new][$y_new] - $Map[$num][$x_end][$y_end] + 1
+		Status(1, "Snake length: " & $a & " Score: " & $count + $a, 2, 0)
+
 	WEnd
 
 	GUISetAccelerators(1, $g_ctrlBoard) ; Turn off Accelerator
 
-	MsgBox(0, "Snake", $Map[$num][$x_new][$y_new] - $Map[$num][$x_end][$y_end] + 1 & " Count " & $count, 5)
+	;MsgBox(0, "Snake", $Map[$num][$x_new][$y_new] - $Map[$num][$x_end][$y_end] + 1 & " score:  " & $count, 5)
 
 	GUISetState(@SW_HIDE, $g_ctrlBoard)
 
 EndFunc   ;==>Game
 #CS INFO
-	248750 V8 6/3/2019 10:34:22 AM V7 6/3/2019 1:09:45 AM V6 6/2/2019 7:12:26 PM V5 6/2/2019 1:14:05 AM
+	280170 V9 6/3/2019 8:05:25 PM V8 6/3/2019 10:34:22 AM V7 6/3/2019 1:09:45 AM V6 6/2/2019 7:12:26 PM
 #CE
 
 Func Tick() ;
@@ -325,22 +339,26 @@ EndFunc   ;==>Tick
 	13561 V3 6/3/2019 10:34:22 AM V2 5/30/2019 10:14:46 AM V1 5/30/2019 1:07:20 AM
 #CE
 
-Func Status($string, $color, $delay = 4)
+Func Status($status, $string, $color, $delay = 4)
 	Local $c
 
-	GUICtrlSetData($g_StatusText, $string)
+	GUICtrlSetData($g_StatusText[$status], $string)
 	Switch $color
-		Case 1
+		Case 0 ;Black
+			$c = 0x000000
+		Case 1 ;Pink
 			$c = 0xff69b4
+		Case 2 ;White
+			$c = 0xffffff
 	EndSwitch
-	GUICtrlSetBkColor($g_Status, $c)
-	GUICtrlSetBkColor($g_StatusText, $c)
+	GUICtrlSetBkColor($g_Status[$status], $c)
+	GUICtrlSetBkColor($g_StatusText[$status], $c)
 	If $delay > 0 Then
 		Sleep($delay * 1000)
 	EndIf
 EndFunc   ;==>Status
 #CS INFO
-	21172 V1 5/31/2019 6:26:23 PM
+	28671 V2 6/3/2019 8:05:25 PM V1 5/31/2019 6:26:23 PM
 #CE
 
 Func StartSnake()
@@ -368,7 +386,7 @@ Func StartSnake()
 
 EndFunc   ;==>StartSnake
 #CS INFO
-	34897 V2 6/3/2019 10:34:22 AM V1 6/3/2019 1:09:45 AM
+	33488 V3 6/3/2019 8:05:25 PM V2 6/3/2019 10:34:22 AM V1 6/3/2019 1:09:45 AM
 #CE
 
 Func PrevNext($x, $y) ;New value
@@ -391,7 +409,7 @@ Func PrevNext($x, $y) ;New value
 	GUICtrlSetImage($Map[$ctrl][$x_new][$y_new], $cSNAKE)
 EndFunc   ;==>PrevNext
 #CS INFO
-	49175 V2 6/3/2019 10:34:22 AM V1 6/3/2019 1:09:45 AM
+	33652 V3 6/3/2019 8:05:25 PM V2 6/3/2019 10:34:22 AM V1 6/3/2019 1:09:45 AM
 #CE
 
 Func RemoveSnake() ; at end
@@ -476,22 +494,23 @@ Func StartForm()
 	$Group1 = GUICtrlCreateGroup("", 200, 40, 200, 150)
 	$Radio1 = GUICtrlCreateRadio("Normal", $a, $b, 120, 20)
 	GUICtrlSetFont(-1, 10, 400, 0, "Arial")
-	GUICtrlSetState($Radio1, $GUI_CHECKED)
-	$Radio2 = GUICtrlCreateRadio("Radio2", $a, $b + 30, 120, 20)
+	$Radio2 = GUICtrlCreateRadio("Beta", $a, $b + 30, 120, 20)
 	GUICtrlSetFont(-1, 10, 400, 0, "Arial")
+	GUICtrlSetState($Radio2, $GUI_CHECKED)
 
-	$Radio3 = GUICtrlCreateRadio("Radio3", $a, $b + 60, 120, 20)
-	GUICtrlSetFont(-1, 10, 400, 0, "Arial")
-	$Checkbox1 = GUICtrlCreateCheckbox("Checkbox1", $a, $b + 90, 120, 20)
-	GUICtrlSetFont(-1, 10, 400, 0, "Arial")
+	;$Radio3 = GUICtrlCreateRadio("Radio3", $a, $b + 60, 120, 20)
+	;	GUICtrlSetFont(-1, 10, 400, 0, "Arial")
+	;	$Checkbox1 = GUICtrlCreateCheckbox("Checkbox1", $a, $b + 90, 120, 20)
+	;	GUICtrlSetFont(-1, 10, 400, 0, "Arial")
 	GUICtrlCreateGroup("", -99, -99, 1, 1)
 
 	$b_start = GUICtrlCreateButton("GO", 270, 550, 100, 35)
 
 	Local $Edit1 = GUICtrlCreateEdit("", 20, $b + 150, 550, 250)
 	GUICtrlSetData($Edit1, "Press ESC to quit." & @CRLF, 1)
-	;GUICtrlSetData($Edit1, "Normal:  One snake, one food" & @CRLF, 1)
-	GUICtrlSetData($Edit1, "Beta:  Normal: One snake, one food,  each food increase snake by 10" & @CRLF, 1)
+
+	GUICtrlSetData($Edit1, "Normal:  Food increase by 1.  Score 1pt per food pickup -- Not functional." & @CRLF, 1)
+	GUICtrlSetData($Edit1, "Beta:  Food increase snake by 10 with FAKE score" & @CRLF, 1)
 
 	GUICtrlSetData($Edit1, @CRLF, 1)
 
@@ -513,11 +532,11 @@ Func StartForm()
 
 EndFunc   ;==>StartForm
 #CS INFO
-	102673 V5 5/31/2019 6:26:23 PM V4 5/31/2019 9:17:59 AM V3 5/30/2019 10:14:46 AM V2 5/29/2019 1:14:38 PM
+	104829 V6 6/3/2019 8:05:25 PM V5 5/31/2019 6:26:23 PM V4 5/31/2019 9:17:59 AM V3 5/30/2019 10:14:46 AM
 #CE
 
 ;Main
 Main()
 
 Exit
-;~T ScriptFunc.exe V0.54a 15 May 2019 - 6/3/2019 10:34:22 AM
+;~T ScriptFunc.exe V0.54a 15 May 2019 - 6/3/2019 8:05:25 PM
