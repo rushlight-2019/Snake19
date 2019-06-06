@@ -5,7 +5,7 @@ Global Static $MESSAGE = True ;Define then DataOut will show in script or compil
 ;Global Static $MESSAGE =  False   ;Pause will still work in script  No Dataout
 
 ; Must be Declared before _Prf_startup
-Global $ver = "0.16 5 Jun 2019 High Score for Mine"
+Global $ver = "0.17 5 Jun 2019 Make Normal functional"
 
 If @Compiled = 0 Then
 	Global Static $useLog = True
@@ -17,7 +17,7 @@ EndIf
 #include "R:\!Autoit\Blank\_prf_startup.au3"
 
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
-#AutoIt3Wrapper_Res_Fileversion=0.0.1.6
+#AutoIt3Wrapper_Res_Fileversion=0.0.1.7
 #AutoIt3Wrapper_Icon=R:\!Autoit\Ico\prf.ico
 #AutoIt3Wrapper_Res_Description=Another snake game
 #AutoIt3Wrapper_Res_LegalCopyright=© Phillip Forrestal 2019
@@ -42,7 +42,7 @@ EndIf
 	5 = next Y
 	6 = snake cell number (to computer size)
 
-    0.17 5  Jun 2019 Make Normal functional
+	0.17 5 Jun 2019 Make Normal functional
 	0.16 5 Jun 2019 High Score for Mine
 	0.15 3 Jun 2019 High Score on main screen
 	0.14 3 Jun 2019 Status, length score
@@ -125,15 +125,18 @@ Global $g_StatusOff = 2
 Global $g_aHiScore[10][5] ; data load by INI.  10 =  score,  date, len.food, turns
 Global $g_iScore
 Global $g_cSetting ;ini
-Local Const $c_iSSwidth = 50
-Local Const $c_iSSheight = 50
-Local Const $c_iSSleft = 10
+
+Global $g_GameWhich = 1 ; 0 Norma, 1 Mine
+Global $g_HiScoreWho ;ctrl
+Global $g_HiScore[8]
+
+Global $Radio1, $Radio2
+Global $g_ScoreLen ; Normal Traveled, Extra Length of snake
+Global $g_ScoreTurn
+Global $g_ScoreFood
 
 ; Main is call at end
 Func Main()
-
-	ReadHiScore()
-
 	;	If Not $TESTING Then
 
 	If True Then
@@ -148,71 +151,7 @@ Func Main()
 	EndIf
 EndFunc   ;==>Main
 #CS INFO
-	11463 V9 6/5/2019 2:01:25 AM V8 6/2/2019 1:14:05 AM V7 5/31/2019 6:26:23 PM V6 5/31/2019 9:17:59 AM
-#CE
-
-Func UpDateHiScore()
-	If $g_aHiScore[8][0] < $g_iScore Then
-		MsgBox($MB_TOPMOST, "High Score", "New High Score: " & $g_iScore, 5)
-
-		$g_aHiScore[9][0] = $g_iScore
-		$g_aHiScore[9][1] = _Now()
-		$g_aHiScore[9][2] = 100 ;len
-		$g_aHiScore[9][3] = 1 ;food cnt
-		$g_aHiScore[9][4] = 2 ;turn cnt
-
-		_ArraySort($g_aHiScore, 1, 1, 9)
-		SaveHiScore()
-	EndIf
-EndFunc   ;==>UpDateHiScore
-#CS INFO
-	27146 V2 6/5/2019 2:01:25 AM V1 6/4/2019 8:01:23 PM
-#CE
-
-Func SaveHiScore()
-	Local $x, $a[9][2]
-
-	For $x = 1 To 8
-		$a[$x][0] = String($x)
-		$a[$x][1] = $g_aHiScore[$x][0] & "|" & $g_aHiScore[$x][1] & "|" & $g_aHiScore[$x][2] & "|" & $g_aHiScore[$x][3] & "|" & $g_aHiScore[$x][4]
-	Next
-	$a[0][0] = 8
-	DataOut("ini", $s_ini)
-	$x = IniWriteSection($s_ini, "HighScore", $a)
-	Dataout($x, @error)
-
-EndFunc   ;==>SaveHiScore
-#CS INFO
-	25197 V2 6/5/2019 2:01:25 AM V1 6/4/2019 8:01:23 PM
-#CE
-
-Func ReadHiScore()
-	Local $a, $c
-
-	$a = IniReadSection($s_ini, "HighScore")
-	If @error = 0 Then
-		For $i = 1 To 8
-			$c = StringSplit($a[$i][1], "|")
-			$g_aHiScore[$i][0] = Int($c[1])
-			$g_aHiScore[$i][1] = $c[2]
-			$g_aHiScore[$i][2] = $c[3]
-			$g_aHiScore[$i][3] = $c[4]
-			$g_aHiScore[$i][3] = $c[5]
-
-		Next
-	Else
-		For $i = 1 To 8 ; not found load
-			$g_aHiScore[$i][0] = 0 ;
-			$g_aHiScore[$i][1] = "" ;date
-			$g_aHiScore[$i][2] = "" ;len
-			$g_aHiScore[$i][3] = "" ;food
-			$g_aHiScore[$i][4] = "" ;turns
-		Next
-		SaveHiScore()
-	EndIf
-EndFunc   ;==>ReadHiScore
-#CS INFO
-	37947 V2 6/5/2019 2:01:25 AM V1 6/4/2019 8:01:23 PM
+	10317 V10 6/5/2019 11:59:45 PM V9 6/5/2019 2:01:25 AM V8 6/2/2019 1:14:05 AM V7 5/31/2019 6:26:23 PM
 #CE
 
 Func Game()
@@ -228,6 +167,10 @@ Func Game()
 	Local $L_diry
 	Local $L_change, $L_changeHalf
 	Local $a, $b
+	Local $L_turnNo, $L_turnLast
+	$L_turnLast = 0
+	$g_ScoreTurn = 0
+	$g_ScoreFood = 0
 
 	If $g_ctrlBoard = -1 Then
 
@@ -287,6 +230,7 @@ Func Game()
 
 		$nMsg = GUIGetMsg()
 		If $nMsg > 0 Then
+
 			Switch $nMsg
 				Case $L_idEsc
 					ExitLoop
@@ -294,12 +238,14 @@ Func Game()
 				Case $L_idLeft
 					Do
 					Until GUIGetMsg() <> $L_idLeft
+					$L_turnNo = 1
 					$L_dirx = -1
 					$L_diry = 0
 
 				Case $L_idRight
 					Do
 					Until GUIGetMsg() <> $L_idRight
+					$L_turnNo = 2
 					$L_dirx = 1
 					$L_diry = 0
 
@@ -307,16 +253,23 @@ Func Game()
 
 					Do
 					Until GUIGetMsg() <> $L_idUp
+					$L_turnNo = 3
 					$L_dirx = 0
 					$L_diry = -1
 
 				Case $L_idDown
 					Do
 					Until GUIGetMsg() <> $L_idDown
+					$L_turnNo = 4
 					$L_dirx = 0
 					$L_diry = 1
 
 			EndSwitch
+			If $L_turnNo <> $L_turnLast Then
+				$L_turnLast = $L_turnNo
+				$g_ScoreTurn += 1
+			EndIf
+
 		Else
 			Do
 			Until GUIGetMsg() = 0
@@ -334,9 +287,12 @@ Func Game()
 				Status(0, "Ate self", 1)
 				ExitLoop
 			Case $FOOD
-				$L_change += 1 ; doing this way because furture versions might not be one
-
-				$L_change += 8 ; doing this way because furture versions might not be one ***************************
+				$g_ScoreFood += 1
+				If $g_GameWhich = 0 Then ; 0 Normal, 1 Mine
+					;$L_change += 1
+				Else
+					$L_change += 9 ; doing this way because furture versions might not be one ***************************
+				EndIf
 
 				;RemoveFood()  NOT needed because  snake will over write with out looking
 				AddFood()
@@ -369,9 +325,13 @@ Func Game()
 		EndSwitch
 
 		$a = $Map[$num][$x_new][$y_new] - $Map[$num][$x_end][$y_end] + 1
-		Status(1, "Snake length: " & $a & " Score: " & $count + $a, 2, 0)
-		$g_iScore = $count + $a
-
+		If $g_GameWhich = 0 Then ; 0 Normal, 1 Mine
+			Status(1, "Normal: Snake length: " & $a, 2, 0)
+			$g_iScore = $a
+		Else
+			Status(1, "Snake length: " & $a & " Score: " & $count + $a, 2, 0)
+			$g_iScore = $count + $a
+		EndIf
 	WEnd
 
 	GUISetAccelerators(1, $g_ctrlBoard) ; Turn off Accelerator
@@ -382,7 +342,7 @@ Func Game()
 
 EndFunc   ;==>Game
 #CS INFO
-	270422 V11 6/5/2019 2:01:25 AM V10 6/4/2019 8:01:23 PM V9 6/3/2019 8:05:25 PM V8 6/3/2019 10:34:22 AM
+	294853 V12 6/5/2019 11:59:45 PM V11 6/5/2019 2:01:25 AM V10 6/4/2019 8:01:23 PM V9 6/3/2019 8:05:25 PM
 #CE
 
 Func Tick() ;
@@ -541,9 +501,8 @@ EndFunc   ;==>ClearBoard
 
 Func StartForm()
 	Local $Form1, $Group1
-	Local $Radio1, $Radio2, $Radio3, $Checkbox1, $b_start
+	Local $Radio3, $Checkbox1, $b_start
 	Local $nMsg
-	Local $l_HiScore[8]
 
 	$Form1 = GUICreate("Snake 19 - " & $ver, 600, 600, -1, -1)
 	GUICtrlCreateLabel("Snake 19", 0, 0, 600, 24, $SS_CENTER)
@@ -558,9 +517,8 @@ Func StartForm()
 	$Group1 = GUICtrlCreateGroup("", $a - 10, $b - 10, $c + 30, 40)
 	$Radio1 = GUICtrlCreateRadio("Normal", $a, $b, $c, 20)
 	GUICtrlSetFont(-1, 10, 400, 0, "Arial")
-	$Radio2 = GUICtrlCreateRadio("Beta", $a, $b + 20, $c, 20)
+	$Radio2 = GUICtrlCreateRadio("Extra", $a, $b + 20, $c, 20)
 	GUICtrlSetFont(-1, 10, 400, 0, "Arial")
-	GUICtrlSetState($Radio2, $GUI_CHECKED)
 
 	;$Radio3 = GUICtrlCreateRadio("Radio3", $a, $b + 60, 120, 20)
 	;	GUICtrlSetFont(-1, 10, 400, 0, "Arial")
@@ -569,14 +527,13 @@ Func StartForm()
 	;	GUICtrlCreateGroup("", -99, -99, 1, 1)
 	$b += 40
 
-	GUICtrlCreateLabel("High Score Beta", $a, $b, $c + 30, 24) ; Height is twice font size
+	$g_HiScoreWho = GUICtrlCreateLabel("High Score - Extra", $a, $b, $c + 30, 24) ; Height is twice font size
 	GUICtrlSetFont(-1, 10, 400, 0, "Arial")
-	$a = 200
+	$a = 100
 	$b += 40
 	For $x = 0 To 7
-		dataout($x, $b)
-		$l_HiScore[$x] = GUICtrlCreateLabel(String($x + 1), $a, $b, 300, 24) ; Height is twice font size
-		GUICtrlSetFont($l_HiScore[$x], 10, 400, 0, "Arial")
+		$g_HiScore[$x] = GUICtrlCreateLabel(String($x + 1), $a, $b, 400, 24) ; Height is twice font size
+		GUICtrlSetFont($g_HiScore[$x], 10, 400, 0, "Arial")
 		$b += 20
 	Next
 
@@ -585,9 +542,10 @@ Func StartForm()
 	Local $Edit1 = GUICtrlCreateEdit("", 20, $b, 550, 250)
 	GUICtrlSetData($Edit1, "Press ESC to quit." & @CRLF, 1)
 
-	GUICtrlSetData($Edit1, "Normal:  Food increase Snake by 1.  Score 1pt per food pickup -- NOT WORKING" & @CRLF, 1)
+	GUICtrlSetData($Edit1, "Normal:  Food increase Snake by 1.  Score +1 per food pickup " & @CRLF, 1)
+	;	GUICtrlSetData($Edit1, "NOT WORKING  Maybe optional Jump snake. Snake slower and shorted" & @CRLF, 1)
 	GUICtrlSetData($Edit1, @CRLF, 1)
-	GUICtrlSetData($Edit1, "Mine Beta:  Food increase snake by 2 with FAKE score" & @CRLF, 1)
+	GUICtrlSetData($Edit1, "Mine Beta:  Food increase snake by X with FAKE score" & @CRLF, 1)
 	GUICtrlSetData($Edit1, @CRLF, 1)
 	GUICtrlSetData($Edit1, "NOT WORKING: Snake does not like to turn so, so few turns (2) and Food increase snake & score" & @CRLF, 1)
 	GUICtrlSetData($Edit1, "NOT WORKING: Snake does not like to travel far for next meal. So get there quick. So Food increase snake & score" & @CRLF, 1)
@@ -596,9 +554,7 @@ Func StartForm()
 	GUICtrlSetData($Edit1, "NOT WORKING: When Snake is bloody, Not sure what happen with the food." & @CRLF, 1)
 	GUISetState(@SW_SHOW)
 
-	For $i = 0 To 7
-		GUICtrlSetData($l_HiScore[$i], $i + 1 & " - " & $g_aHiScore[$i + 1][0] & " - " & $g_aHiScore[$i + 1][1] & " length: " & $g_aHiScore[$i + 1][2] & " F: " & $g_aHiScore[$i + 1][3] & " T: " & $g_aHiScore[$i + 1][4])
-	Next
+	NormalExtra()
 
 	While 1
 		$nMsg = GUIGetMsg()
@@ -611,16 +567,130 @@ Func StartForm()
 				GUIDelete($Form1)
 				Return False
 
+			Case $Radio1 ;Normal
+				$g_GameWhich = 0
+				NormalExtra()
+
+			Case $Radio2 ; Extra
+				$g_GameWhich = 1
+				NormalExtra()
+
 		EndSwitch
 	WEnd
 
 EndFunc   ;==>StartForm
 #CS INFO
-	198957 V8 6/5/2019 2:01:25 AM V7 6/4/2019 8:01:23 PM V6 6/3/2019 8:05:25 PM V5 5/31/2019 6:26:23 PM
+	195362 V9 6/5/2019 11:59:45 PM V8 6/5/2019 2:01:25 AM V7 6/4/2019 8:01:23 PM V6 6/3/2019 8:05:25 PM
+#CE
+
+Func NormalExtra()
+	If $g_GameWhich = 0 Then ; 0 Normal, 1 Mine
+		GUICtrlSetState($Radio1, $GUI_CHECKED)
+	Else
+		GUICtrlSetState($Radio2, $GUI_CHECKED)
+	EndIf
+	ReadHiScore()
+	DisplayHiScore()
+EndFunc   ;==>NormalExtra
+#CS INFO
+	16149 V1 6/5/2019 11:59:45 PM
+#CE
+
+Func DisplayHiScore()
+	If $g_GameWhich = 0 Then ; 0 Normal, 1 Mine
+		GUICtrlSetData($g_HiScoreWho, "High Score - Normal")
+		For $i = 0 To 7
+			GUICtrlSetData($g_HiScore[$i], $i + 1 & " - " & $g_aHiScore[$i + 1][0] & " - " & $g_aHiScore[$i + 1][1] & " Travel: " & $g_aHiScore[$i + 1][2] & " Turn: " & $g_aHiScore[$i + 1][4])
+		Next
+	Else
+		GUICtrlSetData($g_HiScoreWho, "High Score - Extra")
+		For $i = 0 To 7
+			GUICtrlSetData($g_HiScore[$i], $i + 1 & " - " & $g_aHiScore[$i + 1][0] & " - " & $g_aHiScore[$i + 1][1] & " Length: " & $g_aHiScore[$i + 1][2] & " Food: " & $g_aHiScore[$i + 1][3] & " Turn: " & $g_aHiScore[$i + 1][4])
+		Next
+	EndIf
+
+EndFunc   ;==>DisplayHiScore
+#CS INFO
+	44017 V1 6/5/2019 11:59:45 PM
+#CE
+
+Func UpDateHiScore()
+	If $g_aHiScore[8][0] < $g_iScore Then
+		MsgBox($MB_TOPMOST, "High Score", "New High Score: " & $g_iScore, 5)
+
+		$g_aHiScore[9][0] = $g_iScore
+		$g_aHiScore[9][1] = _Now()
+		If $g_GameWhich = 0 Then ; 0 Normal, 1 Mine
+			$g_aHiScore[9][2] = $count
+		Else
+			$g_aHiScore[9][2] = $Map[$num][$x_new][$y_new] - $Map[$num][$x_end][$y_end] + 1
+		EndIf
+		$g_aHiScore[9][3] = $g_ScoreFood
+		$g_aHiScore[9][4] = $g_ScoreTurn
+
+		_ArraySort($g_aHiScore, 1, 1, 9)
+		SaveHiScore()
+	EndIf
+EndFunc   ;==>UpDateHiScore
+#CS INFO
+	38085 V3 6/5/2019 11:59:45 PM V2 6/5/2019 2:01:25 AM V1 6/4/2019 8:01:23 PM
+#CE
+
+Func SaveHiScore()
+	Local $x, $a[9][2]
+
+	For $x = 1 To 8
+		$a[$x][0] = String($x)
+		$a[$x][1] = $g_aHiScore[$x][0] & "|" & $g_aHiScore[$x][1] & "|" & $g_aHiScore[$x][2] & "|" & $g_aHiScore[$x][3] & "|" & $g_aHiScore[$x][4]
+	Next
+	$a[0][0] = 8
+
+	If $g_GameWhich = 0 Then ; 0 Normal, 1 Mine
+		$x = IniWriteSection($s_ini, "HighScoreNormal", $a)
+	Else
+		$x = IniWriteSection($s_ini, "HighScoreExtra", $a)
+	EndIf
+
+EndFunc   ;==>SaveHiScore
+#CS INFO
+	30372 V3 6/5/2019 11:59:45 PM V2 6/5/2019 2:01:25 AM V1 6/4/2019 8:01:23 PM
+#CE
+
+Func ReadHiScore()
+	Local $a, $c
+	If $g_GameWhich = 0 Then ; 0 Normal, 1 Mine
+		$a = IniReadSection($s_ini, "HighScoreNormal")
+	Else
+		$a = IniReadSection($s_ini, "HighScoreExtra")
+	EndIf
+	If @error = 0 Then
+		For $i = 1 To 8
+			$c = StringSplit($a[$i][1], "|")
+			$g_aHiScore[$i][0] = Int($c[1])
+			$g_aHiScore[$i][1] = $c[2]
+			$g_aHiScore[$i][2] = $c[3]
+			$g_aHiScore[$i][3] = $c[4]
+			$g_aHiScore[$i][4] = $c[5]
+
+		Next
+	Else
+		For $i = 1 To 8 ; not found load
+			$g_aHiScore[$i][0] = 0 ;
+			$g_aHiScore[$i][1] = "" ;date
+			$g_aHiScore[$i][2] = "" ;len
+			$g_aHiScore[$i][3] = "" ;food
+			$g_aHiScore[$i][4] = "" ;turns
+		Next
+		SaveHiScore()
+	EndIf
+EndFunc   ;==>ReadHiScore
+#CS INFO
+	46170 V3 6/5/2019 11:59:45 PM V2 6/5/2019 2:01:25 AM V1 6/4/2019 8:01:23 PM
 #CE
 
 ;Main
 Main()
 
 Exit
-;~T ScriptFunc.exe V0.54a 15 May 2019 - 6/5/2019 2:01:25 AM
+
+;~T ScriptFunc.exe V0.54a 15 May 2019 - 6/5/2019 11:59:45 PM
