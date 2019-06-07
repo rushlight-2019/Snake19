@@ -5,7 +5,7 @@ Global Static $MESSAGE = True ;Define then DataOut will show in script or compil
 ;Global Static $MESSAGE =  False   ;Pause will still work in script  No Dataout
 
 ; Must be Declared before _Prf_startup
-Global $ver = "0.17 5 Jun 2019 Make Normal functional"
+Global $ver = "0.19 6 Jun 2019  Hungery"
 
 If @Compiled = 0 Then
 	Global Static $useLog = True
@@ -17,7 +17,7 @@ EndIf
 #include "R:\!Autoit\Blank\_prf_startup.au3"
 
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
-#AutoIt3Wrapper_Res_Fileversion=0.0.1.7
+#AutoIt3Wrapper_Res_Fileversion=0.0.1.9
 #AutoIt3Wrapper_Icon=R:\!Autoit\Ico\prf.ico
 #AutoIt3Wrapper_Res_Description=Another snake game
 #AutoIt3Wrapper_Res_LegalCopyright=© Phillip Forrestal 2019
@@ -42,6 +42,8 @@ EndIf
 	5 = next Y
 	6 = snake cell number (to computer size)
 
+	0.19 6 Jun 2019  Hungery
+	0.18 6 Jun 2019 Turns
 	0.17 5 Jun 2019 Make Normal functional
 	0.16 5 Jun 2019 High Score for Mine
 	0.15 3 Jun 2019 High Score on main screen
@@ -73,7 +75,6 @@ EndIf
 ;Static
 Static $s_pic = @ScriptDir & "\Pic\"
 Static $s_ini = @WorkingDir & "\snake.ini"
-
 Static $cEDGE = $s_pic & "Edge.jpg"
 Static $EMPTY = 0
 Static $cEMPTY1 = $s_pic & "blue.jpg"
@@ -135,6 +136,10 @@ Global $g_ScoreLen ; Normal Traveled, Extra Length of snake
 Global $g_ScoreTurn
 Global $g_ScoreFood
 
+Global $g_Status0Off = 1000
+; Size can be zero at the begin so once size is > 0 then hunger is active.
+Global $RemoveBegining = False
+
 ; Main is call at end
 Func Main()
 	;	If Not $TESTING Then
@@ -167,10 +172,14 @@ Func Game()
 	Local $L_diry
 	Local $L_change, $L_changeHalf
 	Local $a, $b
+
 	Local $L_turnNo, $L_turnLast
-	$L_turnLast = 0
-	$g_ScoreTurn = 0
-	$g_ScoreFood = 0
+	Local $L_turnBonus
+	Static $L_turnBonusStr = 6
+
+	Local $L_Hunger
+	Local $L_HungerCnt
+	Static $L_HungerStr = 50
 
 	If $g_ctrlBoard = -1 Then
 
@@ -205,20 +214,33 @@ Func Game()
 
 	EndIf
 	GUISetState(@SW_SHOW, $g_ctrlBoard)
-	Status(0, "", 0, 0)
+	Status(0, "", 0)
 
 	$L_dirx = 0
 	$L_diry = 0
 	$L_change = 0 ; change $g_cnt  snake lenght
 	$L_changeHalf = False
 
+	Status(1, "", 0)
+	Status(0, "", 0)
 	ClearBoard()
 	StartSnake()
 	AddFood()
 
-	;Pause("Start working~~~")
-	;Pause("Temp End~~~")
-	;exit
+	;Default before start
+	DataOut("New Game ~~")
+	$L_turnLast = 0
+	$g_ScoreTurn = 0
+	$g_ScoreFood = 0
+	$count = 1
+	$g_iScore = 0
+	$L_turnBonus = $L_turnBonusStr + 1 ; The way it start with 1 turn on start. To fix start with +1
+
+	$L_HungerCnt = 0
+	$L_Hunger = 1000
+
+	; Size can be zero at the begin so once size is > 0 then hunger is active.
+	$RemoveBegining = False
 
 	Local $aAccelKey2[][] = [["{RIGHT}", $L_idRight], ["{LEFT}", $L_idLeft], ["{DOWN}", $L_idDown], ["{UP}", $L_idUp], ["{ESC}", $L_idEsc]]
 
@@ -268,6 +290,7 @@ Func Game()
 			If $L_turnNo <> $L_turnLast Then
 				$L_turnLast = $L_turnNo
 				$g_ScoreTurn += 1
+				$L_turnBonus -= 1
 			EndIf
 
 		Else
@@ -281,17 +304,52 @@ Func Game()
 		Switch $Map[$what][$x_new + $L_dirx][$y_new + $L_diry]
 			Case -1
 				Status(0, "Ate wall", 1)
-
 				ExitLoop
+
 			Case $SNAKE
 				Status(0, "Ate self", 1)
 				ExitLoop
+
 			Case $FOOD
 				$g_ScoreFood += 1
-				If $g_GameWhich = 0 Then ; 0 Normal, 1 Mine
-					;$L_change += 1
-				Else
-					$L_change += 9 ; doing this way because furture versions might not be one ***************************
+
+				If $g_GameWhich = 1 Then ; 0 Normal, 1 Mine
+					$L_Hunger = ($L_HungerStr * 2) - $g_ScoreFood
+					If $L_Hunger < 30 Then
+						$L_Hunger = 30
+					EndIf
+					$L_HungerCnt = 0
+dataout("$L_Hunger at food",$L_Hunger)
+
+					Switch $L_turnBonus
+						Case 6, 5, 4
+							$L_change += 3
+							$g_iScore += 100
+							Status(0, "Turn bonus 100 Snake 3", 4)
+						Case 3
+							$L_change += 2
+							$g_iScore += 80
+							Status(0, "Turn bonus 80 Snake 2", 4)
+						Case 2
+							$L_change += 2
+							$g_iScore += 60
+							Status(0, "Turn bonus 60 Snake 2", 4)
+						Case 1
+							$L_change += 1
+							$g_iScore += 30
+							Status(0, "Turn bonus 30 Snake 1", 4)
+						Case 0
+							$g_iScore += 10
+							Status(0, "Turn bonus 10", 4)
+						Case Else
+							Status(0, "", 0)
+					EndSwitch
+
+					$L_turnBonus = $L_turnBonusStr
+				EndIf
+
+				If $g_GameWhich = 1 Then ; 0 Normal, 1 Mine
+					$L_change += 1 ; doing this way because furture versions might not be one ***************************
 				EndIf
 
 				;RemoveFood()  NOT needed because  snake will over write with out looking
@@ -299,6 +357,33 @@ Func Game()
 				PrevNext($x_new + $L_dirx, $y_new + $L_diry) ;New value
 
 			Case $EMPTY
+
+				If $g_Status0Off = 0 Then
+					Status(0, "", 0)
+				Else
+					$g_Status0Off -= 1
+				EndIf
+
+				If $g_GameWhich = 1 Then ; 0 Normal, 1 Mine
+					If $L_Hunger = 0 Then
+						$L_HungerCnt += 1
+						Status(0, "Hungery - " & $L_HungerCnt & " Snake shorter", 3)
+						$g_Status0Off = 50
+
+						$L_Hunger = $L_HungerStr - $L_HungerCnt
+						If $L_Hunger < 30 Then
+							$L_Hunger = 30
+						EndIf
+						Dataout($L_Hunger, "$L_Hunger")
+
+						$g_iScore -= $L_HungerCnt
+						$L_change -= $L_HungerCnt
+						dataout($L_HungerCnt, "$L_HungerCnt")
+						dataout("~~")
+					Else
+						$L_Hunger -= 1
+					EndIf
+				EndIf
 
 				PrevNext($x_new + $L_dirx, $y_new + $L_diry) ;New value
 
@@ -319,30 +404,37 @@ Func Game()
 
 				ElseIf $L_change < 0 Then ; snake get shorter remove end twice
 					$L_change += 1
-					RemoveSnake()
-					RemoveSnake()
+
+					If RemoveSnake() Then
+						ExitLoop
+					EndIf
+					If RemoveSnake() Then
+						ExitLoop
+					EndIf
+
 				EndIf
 		EndSwitch
 
 		$a = $Map[$num][$x_new][$y_new] - $Map[$num][$x_end][$y_end] + 1
 		If $g_GameWhich = 0 Then ; 0 Normal, 1 Mine
-			Status(1, "Normal: Snake length: " & $a, 2, 0)
-			$g_iScore = $a
+			Status(1, "Normal: Snake length: " & $a, 2)
 		Else
-			Status(1, "Snake length: " & $a & " Score: " & $count + $a, 2, 0)
-			$g_iScore = $count + $a
+			Status(1, "Snake length: " & $a & " Score: " & $a + $g_iScore, 2)
 		EndIf
 	WEnd
-
 	GUISetAccelerators(1, $g_ctrlBoard) ; Turn off Accelerator
+	If $g_GameWhich = 0 Then ; 0 Normal, 1 Mine
+		$g_iScore = $a
+	Else
+		$g_iScore += $Map[$num][$x_new][$y_new] - $Map[$num][$x_end][$y_end] + 1
+	EndIf
 
-	;MsgBox(0, "Snake", $Map[$num][$x_new][$y_new] - $Map[$num][$x_end][$y_end] + 1 & " score:  " & $count, 5)
 	UpDateHiScore()
 	GUISetState(@SW_HIDE, $g_ctrlBoard)
 
 EndFunc   ;==>Game
 #CS INFO
-	294853 V12 6/5/2019 11:59:45 PM V11 6/5/2019 2:01:25 AM V10 6/4/2019 8:01:23 PM V9 6/3/2019 8:05:25 PM
+	409542 V13 6/6/2019 11:09:42 PM V12 6/5/2019 11:59:45 PM V11 6/5/2019 2:01:25 AM V10 6/4/2019 8:01:23 PM
 #CE
 
 Func Tick() ;
@@ -361,8 +453,12 @@ EndFunc   ;==>Tick
 	13561 V3 6/3/2019 10:34:22 AM V2 5/30/2019 10:14:46 AM V1 5/30/2019 1:07:20 AM
 #CE
 
-Func Status($status, $string, $color, $delay = 4)
+Func Status($status, $string, $color)
 	Local $c
+
+	If $status = 0 Then
+		$g_Status0Off = 25
+	EndIf
 
 	GUICtrlSetData($g_StatusText[$status], $string)
 	Switch $color
@@ -372,15 +468,17 @@ Func Status($status, $string, $color, $delay = 4)
 			$c = 0xff69b4
 		Case 2 ;White
 			$c = 0xffffff
+		Case 4 ;pale green
+			$c = 0x90EE90
+		Case 3
+			$c = 0xffff00
+
 	EndSwitch
 	GUICtrlSetBkColor($g_Status[$status], $c)
 	GUICtrlSetBkColor($g_StatusText[$status], $c)
-	If $delay > 0 Then
-		Sleep($delay * 1000)
-	EndIf
 EndFunc   ;==>Status
 #CS INFO
-	28671 V2 6/3/2019 8:05:25 PM V1 5/31/2019 6:26:23 PM
+	31537 V3 6/6/2019 11:09:42 PM V2 6/3/2019 8:05:25 PM V1 5/31/2019 6:26:23 PM
 #CE
 
 Func StartSnake()
@@ -397,7 +495,6 @@ Func StartSnake()
 	$Map[$nxX][$x_new][$y_new] = 0
 	$Map[$nxY][$x_new][$y_new] = 0
 
-	$count = 1
 	$Map[$num][$x_new][$y_new] = $count
 
 	$Map[$what][$x_new][$y_new] = $SNAKE
@@ -408,7 +505,7 @@ Func StartSnake()
 
 EndFunc   ;==>StartSnake
 #CS INFO
-	33488 V3 6/3/2019 8:05:25 PM V2 6/3/2019 10:34:22 AM V1 6/3/2019 1:09:45 AM
+	32789 V4 6/6/2019 11:09:42 PM V3 6/3/2019 8:05:25 PM V2 6/3/2019 10:34:22 AM V1 6/3/2019 1:09:45 AM
 #CE
 
 Func PrevNext($x, $y) ;New value
@@ -436,6 +533,8 @@ EndFunc   ;==>PrevNext
 
 Func RemoveSnake() ; at end
 	Local $x, $y
+	; Size can be zero at the begin so once size is > 0 then hunger is active.
+	;Global $RemoveBegining = False
 
 	$x = $x_end
 	$y = $y_end
@@ -444,7 +543,7 @@ Func RemoveSnake() ; at end
 
 	$Map[$what][$x][$y] = $EMPTY
 	GUICtrlSetImage($Map[$ctrl][$x][$y], $cEMPTY)
-	$Map[$num][$x][$y] = 0 ; don't really need to zero out
+	;$Map[$num][$x][$y] = 0 ; don't really need to zero out
 
 	$x_end = $Map[$nxX][$x][$y]
 	$y_end = $Map[$nxY][$x][$y]
@@ -455,9 +554,24 @@ Func RemoveSnake() ; at end
 	;$Map[$nxX][$x_end][$y_end] = 0
 	;$Map[$nxY][$x_end][$y_end] = 0
 
+	;dataout("remove", $Map[$num][$x_new][$y_new] - $Map[$num][$x_end][$y_end])
+	;dataout($RemoveBegining)
+	; Size can be zero at the begin so once size is > 0 then hunger is active.
+	;Global $RemoveBegining = False
+
+	If $Map[$num][$x_new][$y_new] - $Map[$num][$x_end][$y_end] = 0 Then
+		If $RemoveBegining Then
+			Status(0, "Died of hunger:", 1)
+			Return True
+		EndIf
+		Return False
+	EndIf
+	$RemoveBegining = True
+	Return False
+
 EndFunc   ;==>RemoveSnake
 #CS INFO
-	36306 V6 6/3/2019 10:34:22 AM V5 6/3/2019 1:09:45 AM V4 6/2/2019 7:12:26 PM V3 6/2/2019 1:14:05 AM
+	78266 V7 6/6/2019 11:09:42 PM V6 6/3/2019 10:34:22 AM V5 6/3/2019 1:09:45 AM V4 6/2/2019 7:12:26 PM
 #CE
 
 Func AddFood()
@@ -541,17 +655,22 @@ Func StartForm()
 
 	Local $Edit1 = GUICtrlCreateEdit("", 20, $b, 550, 250)
 	GUICtrlSetData($Edit1, "Press ESC to quit." & @CRLF, 1)
+	GUICtrlSetData($Edit1, @CRLF, 1)
 
-	GUICtrlSetData($Edit1, "Normal:  Food increase Snake by 1.  Score +1 per food pickup " & @CRLF, 1)
+	GUICtrlSetData($Edit1, "Normal" & @CRLF, 1)
+	GUICtrlSetData($Edit1, "  Food increase Snake by 1.  Score +1 per food pickup " & @CRLF, 1)
+	GUICtrlSetData($Edit1, @CRLF, 1)
+
 	;	GUICtrlSetData($Edit1, "NOT WORKING  Maybe optional Jump snake. Snake slower and shorted" & @CRLF, 1)
+	GUICtrlSetData($Edit1, "Extra:" & @CRLF, 1)
+	GUICtrlSetData($Edit1, "  Food increase snake by 2" & @CRLF, 1)
 	GUICtrlSetData($Edit1, @CRLF, 1)
-	GUICtrlSetData($Edit1, "Mine Beta:  Food increase snake by X with FAKE score" & @CRLF, 1)
-	GUICtrlSetData($Edit1, @CRLF, 1)
-	GUICtrlSetData($Edit1, "NOT WORKING: Snake does not like to turn so, so few turns (2) and Food increase snake & score" & @CRLF, 1)
-	GUICtrlSetData($Edit1, "NOT WORKING: Snake does not like to travel far for next meal. So get there quick. So Food increase snake & score" & @CRLF, 1)
-	GUICtrlSetData($Edit1, "NOT WORKING: Snake does not like to travel far for next meal. Snake does get shorter & score get smaller" & @CRLF, 1)
-	GUICtrlSetData($Edit1, "NOT WORKING: Snake can eat itself - hurts. bloody. It it does snake get shorter & score get smaller" & @CRLF, 1)
-	GUICtrlSetData($Edit1, "NOT WORKING: When Snake is bloody, Not sure what happen with the food." & @CRLF, 1)
+	GUICtrlSetData($Edit1, "Bonus:" & @CRLF, 1)
+	GUICtrlSetData($Edit1, " Snake does not like to turn so, so few turns and Food increase snake & score" & @CRLF, 1)
+	;	GUICtrlSetData($Edit1, "NOT WORKING: Snake does not like to travel far for next meal. So get there quick. So Food increase snake & score" & @CRLF, 1)
+	GUICtrlSetData($Edit1, " Snake does not like to travel far for next meal. Snake does get shorter & score get smaller" & @CRLF, 1)
+	;	GUICtrlSetData($Edit1, "NOT WORKING: Snake can eat itself - hurts. bloody. It it does snake get shorter & score get smaller" & @CRLF, 1)
+	;	GUICtrlSetData($Edit1, "NOT WORKING: When Snake is bloody, Not sure what happen with the food." & @CRLF, 1)
 	GUISetState(@SW_SHOW)
 
 	NormalExtra()
@@ -580,7 +699,7 @@ Func StartForm()
 
 EndFunc   ;==>StartForm
 #CS INFO
-	195362 V9 6/5/2019 11:59:45 PM V8 6/5/2019 2:01:25 AM V7 6/4/2019 8:01:23 PM V6 6/3/2019 8:05:25 PM
+	202455 V10 6/6/2019 11:09:42 PM V9 6/5/2019 11:59:45 PM V8 6/5/2019 2:01:25 AM V7 6/4/2019 8:01:23 PM
 #CE
 
 Func NormalExtra()
@@ -630,10 +749,12 @@ Func UpDateHiScore()
 
 		_ArraySort($g_aHiScore, 1, 1, 9)
 		SaveHiScore()
+	Else
+		Sleep(5000)
 	EndIf
 EndFunc   ;==>UpDateHiScore
 #CS INFO
-	38085 V3 6/5/2019 11:59:45 PM V2 6/5/2019 2:01:25 AM V1 6/4/2019 8:01:23 PM
+	39261 V4 6/6/2019 11:09:42 PM V3 6/5/2019 11:59:45 PM V2 6/5/2019 2:01:25 AM V1 6/4/2019 8:01:23 PM
 #CE
 
 Func SaveHiScore()
@@ -690,7 +811,7 @@ EndFunc   ;==>ReadHiScore
 
 ;Main
 Main()
-
+FileDelete($s_ini)
 Exit
 
-;~T ScriptFunc.exe V0.54a 15 May 2019 - 6/5/2019 11:59:45 PM
+;~T ScriptFunc.exe V0.54a 15 May 2019 - 6/6/2019 11:09:42 PM
