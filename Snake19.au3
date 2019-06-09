@@ -5,7 +5,8 @@ Global Static $MESSAGE = True ;Define then DataOut will show in script or compil
 ;Global Static $MESSAGE =  False   ;Pause will still work in script  No Dataout
 
 ; Must be Declared before _Prf_startup
-Global $ver = "0.19 6 Jun 2019  Hungery"
+Global $ver = "0.20 9 Jun 2019 Eat me Double back on self"
+
 
 If @Compiled = 0 Then
 	Global Static $useLog = True
@@ -17,7 +18,7 @@ EndIf
 #include "R:\!Autoit\Blank\_prf_startup.au3"
 
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
-#AutoIt3Wrapper_Res_Fileversion=0.0.1.9
+#AutoIt3Wrapper_Res_Fileversion=0.0.2.0
 #AutoIt3Wrapper_Icon=R:\!Autoit\Ico\prf.ico
 #AutoIt3Wrapper_Res_Description=Another snake game
 #AutoIt3Wrapper_Res_LegalCopyright=© Phillip Forrestal 2019
@@ -29,6 +30,30 @@ EndIf
 #EndRegion ;**** Directives created by AutoIt3Wrapper_GUI ****
 
 ;-----------------START OF PROGRAM-------------
+
+#cs
+	MIT License
+
+	Copyright (c) 2019 Phillip Forrestal
+
+	Permission is hereby granted, free of charge, to any person obtaining a copy
+	of this software and associated documentation files (the "Software"), to deal
+	in the Software without restriction, including without limitation the rights
+	to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+	copies of the Software, and to permit persons to whom the Software is
+	furnished to do so, subject to the following conditions:
+
+	The above copyright notice and this permission notice shall be included in all
+	copies or substantial portions of the Software.
+
+	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+	IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+	FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+	AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+	LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+	SOFTWARE.
+#ce
 
 #cs ----------------------------------------------------------------------------
 	Another snake game - My first.
@@ -42,6 +67,12 @@ EndIf
 	5 = next Y
 	6 = snake cell number (to computer size)
 
+	to do
+	Eat Me in half
+	Status score only when change.  Score is flicking on each cycle.
+
+	0.21 x Jun 2019 Status score only when change
+	0.20 7 Jun 2019 Eat me Double back on self
 	0.19 6 Jun 2019  Hungery
 	0.18 6 Jun 2019 Turns
 	0.17 5 Jun 2019 Make Normal functional
@@ -160,7 +191,7 @@ EndFunc   ;==>Main
 #CE
 
 Func Game()
-	Local $nMsg, $x, $y
+	Local $nMsg, $x, $y, $flag
 	;Keys acc
 	Local Static $L_idDown
 	Local Static $L_idRight
@@ -171,6 +202,7 @@ Func Game()
 	Local $L_dirx
 	Local $L_diry
 	Local $L_change, $L_changeHalf
+	Static $L_ChangeStr = 3
 	Local $a, $b
 
 	Local $L_turnNo, $L_turnLast
@@ -214,12 +246,12 @@ Func Game()
 
 	EndIf
 	GUISetState(@SW_SHOW, $g_ctrlBoard)
-	Status(0, "", 0)
 
 	$L_dirx = 0
 	$L_diry = 0
 	$L_change = 0 ; change $g_cnt  snake lenght
-	$L_changeHalf = False
+
+	$L_changeHalf = $L_ChangeStr
 
 	Status(1, "", 0)
 	Status(0, "", 0)
@@ -300,6 +332,7 @@ Func Game()
 		If $L_dirx = 0 And $L_diry = 0 Then
 			ContinueLoop
 		EndIf
+		;DataOut($x_new, $y_new)
 
 		Switch $Map[$what][$x_new + $L_dirx][$y_new + $L_diry]
 			Case -1
@@ -307,8 +340,23 @@ Func Game()
 				ExitLoop
 
 			Case $SNAKE
-				Status(0, "Ate self", 1)
-				ExitLoop
+
+				; Check  prev to be the same  last location
+				If $Map[$prX][$x_new][$y_new] = $x_new + $L_dirx And $Map[$prY][$x_new][$y_new] = $y_new + $L_diry Then ; Double back
+					DataOut("Eat me Double back on self")
+					$flag = DoubleBack($L_dirx, $L_diry)
+					If $flag Then
+						Status(0, "Double back", 3)
+						$L_change -= 2
+						$g_iScore -= 100
+					Else
+						Status(0, "Ate self", 1)
+						ExitLoop
+					EndIf
+				Else
+					Status(0, "Ate self", 1)
+					ExitLoop
+				EndIf
 
 			Case $FOOD
 				$g_ScoreFood += 1
@@ -319,7 +367,7 @@ Func Game()
 						$L_Hunger = 30
 					EndIf
 					$L_HungerCnt = 0
-dataout("$L_Hunger at food",$L_Hunger)
+					dataout("$L_Hunger at food", $L_Hunger)
 
 					Switch $L_turnBonus
 						Case 6, 5, 4
@@ -342,7 +390,7 @@ dataout("$L_Hunger at food",$L_Hunger)
 							$g_iScore += 10
 							Status(0, "Turn bonus 10", 4)
 						Case Else
-							Status(0, "", 0)
+							;Status(0, "", 0)
 					EndSwitch
 
 					$L_turnBonus = $L_turnBonusStr
@@ -360,9 +408,8 @@ dataout("$L_Hunger at food",$L_Hunger)
 
 				If $g_Status0Off = 0 Then
 					Status(0, "", 0)
-				Else
-					$g_Status0Off -= 1
 				EndIf
+				$g_Status0Off -= 1
 
 				If $g_GameWhich = 1 Then ; 0 Normal, 1 Mine
 					If $L_Hunger = 0 Then
@@ -393,24 +440,30 @@ dataout("$L_Hunger at food",$L_Hunger)
 				If $L_change = 0 Then
 					RemoveSnake()
 				ElseIf $L_change > 0 Then ; snake get longer don't remove end
-
-					If $L_changeHalf = True Then
-						$L_changeHalf = False
-						RemoveSnake()
-					Else
-						$L_change -= 1
-						$L_changeHalf = True
-					EndIf
+					Switch $L_changeHalf
+						Case 0
+							$L_change -= 1
+							$L_changeHalf = $L_ChangeStr
+						Case Else
+							RemoveSnake()
+							$L_changeHalf -= 1
+					EndSwitch
 
 				ElseIf $L_change < 0 Then ; snake get shorter remove end twice
-					$L_change += 1
-
-					If RemoveSnake() Then
-						ExitLoop
-					EndIf
-					If RemoveSnake() Then
-						ExitLoop
-					EndIf
+					Switch $L_changeHalf
+						Case 0
+							$L_change += 1
+							$L_changeHalf = $L_ChangeStr
+							If RemoveSnake() Then
+								ExitLoop ;no snake
+							EndIf
+							If RemoveSnake() Then
+								ExitLoop ;no snake
+							EndIf
+						Case Else
+							$L_changeHalf -= 1
+							RemoveSnake()
+					EndSwitch
 
 				EndIf
 		EndSwitch
@@ -434,7 +487,7 @@ dataout("$L_Hunger at food",$L_Hunger)
 
 EndFunc   ;==>Game
 #CS INFO
-	409542 V13 6/6/2019 11:09:42 PM V12 6/5/2019 11:59:45 PM V11 6/5/2019 2:01:25 AM V10 6/4/2019 8:01:23 PM
+	452810 V14 6/9/2019 1:07:49 PM V13 6/6/2019 11:09:42 PM V12 6/5/2019 11:59:45 PM V11 6/5/2019 2:01:25 AM
 #CE
 
 Func Tick() ;
@@ -455,6 +508,7 @@ EndFunc   ;==>Tick
 
 Func Status($status, $string, $color)
 	Local $c
+	dataout($status, $string)
 
 	If $status = 0 Then
 		$g_Status0Off = 25
@@ -478,7 +532,7 @@ Func Status($status, $string, $color)
 	GUICtrlSetBkColor($g_StatusText[$status], $c)
 EndFunc   ;==>Status
 #CS INFO
-	31537 V3 6/6/2019 11:09:42 PM V2 6/3/2019 8:05:25 PM V1 5/31/2019 6:26:23 PM
+	33827 V4 6/9/2019 1:07:49 PM V3 6/6/2019 11:09:42 PM V2 6/3/2019 8:05:25 PM V1 5/31/2019 6:26:23 PM
 #CE
 
 Func StartSnake()
@@ -506,6 +560,54 @@ Func StartSnake()
 EndFunc   ;==>StartSnake
 #CS INFO
 	32789 V4 6/6/2019 11:09:42 PM V3 6/3/2019 8:05:25 PM V2 6/3/2019 10:34:22 AM V1 6/3/2019 1:09:45 AM
+#CE
+
+Func DoubleBack($dirx, $diry)
+	Local $a, $flag
+	;new+dir  is one back.
+	; Find which X or Y which is the same, then random _+ one on there
+	DataOut($dirx, $diry)
+	If $dirx = 0 Then
+		$a = Random(0, 1, 1)
+		If $a = 0 Then
+			$a = -1
+		EndIf
+		$flag = False
+		If $Map[$what][$x_new + $a][$y_new] = 0 Then
+			$flag = True
+		Else
+			$a *= -1
+			If $Map[$what][$x_new + $a][$y_new] = 0 Then
+				$flag = True
+			EndIf
+		EndIf
+		If $flag Then
+			PrevNext($x_new + $a, $y_new + $diry)
+		EndIf
+	Else ;$diry =0
+		$a = Random(0, 1, 1)
+		If $a = 0 Then
+			$a = -1
+		EndIf
+		$flag = False
+		If $Map[$what][$x_new][$y_new + $a] = 0 Then
+			$flag = True
+		Else
+			$a *= -1
+			If $Map[$what][$x_new][$y_new + $a] = 0 Then
+				$flag = True
+			EndIf
+		EndIf
+		If $flag Then
+			PrevNext($x_new + $dirx, $y_new + $a)
+		EndIf
+
+	EndIf
+	Return $flag
+
+EndFunc   ;==>DoubleBack
+#CS INFO
+	54236 V1 6/9/2019 1:07:49 PM
 #CE
 
 Func PrevNext($x, $y) ;New value
@@ -814,4 +916,4 @@ Main()
 FileDelete($s_ini)
 Exit
 
-;~T ScriptFunc.exe V0.54a 15 May 2019 - 6/6/2019 11:09:42 PM
+;~T ScriptFunc.exe V0.54a 15 May 2019 - 6/9/2019 1:07:49 PM
