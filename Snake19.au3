@@ -5,8 +5,7 @@ Global Static $MESSAGE = True ;Define then DataOut will show in script or compil
 ;Global Static $MESSAGE =  False   ;Pause will still work in script  No Dataout
 
 ; Must be Declared before _Prf_startup
-Global $ver = "0.20 9 Jun 2019 Eat me Double back on self"
-
+Global $ver = "0.21 9 Jun 2019 Mouse cursor"
 
 If @Compiled = 0 Then
 	Global Static $useLog = True
@@ -18,7 +17,7 @@ EndIf
 #include "R:\!Autoit\Blank\_prf_startup.au3"
 
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
-#AutoIt3Wrapper_Res_Fileversion=0.0.2.0
+#AutoIt3Wrapper_Res_Fileversion=0.0.2.1
 #AutoIt3Wrapper_Icon=R:\!Autoit\Ico\prf.ico
 #AutoIt3Wrapper_Res_Description=Another snake game
 #AutoIt3Wrapper_Res_LegalCopyright=© Phillip Forrestal 2019
@@ -68,15 +67,20 @@ EndIf
 	6 = snake cell number (to computer size)
 
 	to do
+	Setting:  background, snake pic, food, speed, size cell,  number of cells (high score will clear) default 40x50 2000 cells
+	Better clear (if solid background)
+	Move cursor off page
 	Eat Me in half
-	Status score only when change.  Score is flicking on each cycle.
+	Make 2 games loops Normal / Extra
+	Status score only when change.  Score is flicking
 
-	0.21 x Jun 2019 Status score only when change
+	0.xx x Jun 2019 Status score only when change
+	0.21 9 Jun 2019 Mouse cursor
 	0.20 7 Jun 2019 Eat me Double back on self
 	0.19 6 Jun 2019  Hungery
 	0.18 6 Jun 2019 Turns
 	0.17 5 Jun 2019 Make Normal functional
-	0.16 5 Jun 2019 High Score for Mine
+	0.16 5 Jun 2019 High Score for Extra
 	0.15 3 Jun 2019 High Score on main screen
 	0.14 3 Jun 2019 Status, length score
 	0.12 3 Jun 2019 Move snake
@@ -170,6 +174,7 @@ Global $g_ScoreFood
 Global $g_Status0Off = 1000
 ; Size can be zero at the begin so once size is > 0 then hunger is active.
 Global $RemoveBegining = False
+Global $Mouse = 0
 
 ; Main is call at end
 Func Main()
@@ -216,6 +221,7 @@ Func Game()
 	If $g_ctrlBoard = -1 Then
 
 		$g_ctrlBoard = GUICreate("Snake19 - " & $ver, $g_bx * $g_Size, $g_by * $g_Size + $g_Font + 2)
+		MouseMove(0, 0, 0)
 
 		$L_idDown = GUICtrlCreateDummy()
 		$L_idRight = GUICtrlCreateDummy()
@@ -277,6 +283,7 @@ Func Game()
 	Local $aAccelKey2[][] = [["{RIGHT}", $L_idRight], ["{LEFT}", $L_idLeft], ["{DOWN}", $L_idDown], ["{UP}", $L_idUp], ["{ESC}", $L_idEsc]]
 
 	GUISetAccelerators($aAccelKey2, $g_ctrlBoard)
+MouseMove(0, 0, 0)
 
 	$g_hTick = TimerInit()
 	While 1 ; Game Loop
@@ -487,7 +494,7 @@ Func Game()
 
 EndFunc   ;==>Game
 #CS INFO
-	452810 V14 6/9/2019 1:07:49 PM V13 6/6/2019 11:09:42 PM V12 6/5/2019 11:59:45 PM V11 6/5/2019 2:01:25 AM
+	455228 V15 6/9/2019 5:40:22 PM V14 6/9/2019 1:07:49 PM V13 6/6/2019 11:09:42 PM V12 6/5/2019 11:59:45 PM
 #CE
 
 Func Tick() ;
@@ -508,7 +515,7 @@ EndFunc   ;==>Tick
 
 Func Status($status, $string, $color)
 	Local $c
-	dataout($status, $string)
+	;dataout($status, $string)
 
 	If $status = 0 Then
 		$g_Status0Off = 25
@@ -532,7 +539,7 @@ Func Status($status, $string, $color)
 	GUICtrlSetBkColor($g_StatusText[$status], $c)
 EndFunc   ;==>Status
 #CS INFO
-	33827 V4 6/9/2019 1:07:49 PM V3 6/6/2019 11:09:42 PM V2 6/3/2019 8:05:25 PM V1 5/31/2019 6:26:23 PM
+	33886 V5 6/9/2019 5:40:22 PM V4 6/9/2019 1:07:49 PM V3 6/6/2019 11:09:42 PM V2 6/3/2019 8:05:25 PM
 #CE
 
 Func StartSnake()
@@ -721,6 +728,10 @@ Func StartForm()
 	Local $nMsg
 
 	$Form1 = GUICreate("Snake 19 - " & $ver, 600, 600, -1, -1)
+	If IsArray($Mouse) Then
+		MouseMove($Mouse[0], $Mouse[1], 0)
+	EndIf
+
 	GUICtrlCreateLabel("Snake 19", 0, 0, 600, 24, $SS_CENTER)
 	GUICtrlSetFont(-1, 12, 800, 0, "Arial")
 
@@ -785,6 +796,7 @@ Func StartForm()
 				Return True
 
 			Case $b_start
+				$Mouse = MouseGetPos()
 				GUIDelete($Form1)
 				Return False
 
@@ -801,7 +813,7 @@ Func StartForm()
 
 EndFunc   ;==>StartForm
 #CS INFO
-	202455 V10 6/6/2019 11:09:42 PM V9 6/5/2019 11:59:45 PM V8 6/5/2019 2:01:25 AM V7 6/4/2019 8:01:23 PM
+	209358 V11 6/9/2019 5:40:22 PM V10 6/6/2019 11:09:42 PM V9 6/5/2019 11:59:45 PM V8 6/5/2019 2:01:25 AM
 #CE
 
 Func NormalExtra()
@@ -916,4 +928,4 @@ Main()
 FileDelete($s_ini)
 Exit
 
-;~T ScriptFunc.exe V0.54a 15 May 2019 - 6/9/2019 1:07:49 PM
+;~T ScriptFunc.exe V0.54a 15 May 2019 - 6/9/2019 5:40:22 PM
