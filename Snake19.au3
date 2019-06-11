@@ -5,7 +5,7 @@ Global Static $MESSAGE = True ;Define then DataOut will show in script or compil
 ;Global Static $MESSAGE =  False   ;Pause will still work in script  No Dataout
 
 ; Must be Declared before _Prf_startup
-Global $ver = "0.21 9 Jun 2019 Mouse cursor"
+Global $ver = "0.24 10 Jun 2019 High Box without OK"
 
 If @Compiled = 0 Then
 	Global Static $useLog = True
@@ -17,7 +17,7 @@ EndIf
 #include "R:\!Autoit\Blank\_prf_startup.au3"
 
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
-#AutoIt3Wrapper_Res_Fileversion=0.0.2.1
+#AutoIt3Wrapper_Res_Fileversion=0.0.2.4
 #AutoIt3Wrapper_Icon=R:\!Autoit\Ico\prf.ico
 #AutoIt3Wrapper_Res_Description=Another snake game
 #AutoIt3Wrapper_Res_LegalCopyright=© Phillip Forrestal 2019
@@ -67,14 +67,18 @@ EndIf
 	6 = snake cell number (to computer size)
 
 	to do
+	near end
+	Status score  change just
+	One color background
 	Setting:  background, snake pic, food, speed, size cell,  number of cells (high score will clear) default 40x50 2000 cells
-	Better clear (if solid background)
-	Move cursor off page
+
+	current
 	Eat Me in half
 	Make 2 games loops Normal / Extra
-	Status score only when change.  Score is flicking
 
-	0.xx x Jun 2019 Status score only when change
+	0.24 10 Jun 2019 High Box withou OK
+	0.23 10 Jun 2019 Make 2 games loops Normal / Extra
+	0.22 10 Jun 2019 Status score only when change flicker 99% gone
 	0.21 9 Jun 2019 Mouse cursor
 	0.20 7 Jun 2019 Eat me Double back on self
 	0.19 6 Jun 2019  Hungery
@@ -209,6 +213,7 @@ Func Game()
 	Local $L_change, $L_changeHalf
 	Static $L_ChangeStr = 3
 	Local $a, $b
+	Local $L_ScoreLast = 0
 
 	Local $L_turnNo, $L_turnLast
 	Local $L_turnBonus
@@ -276,23 +281,29 @@ Func Game()
 
 	$L_HungerCnt = 0
 	$L_Hunger = 1000
+	$L_ScoreLast = 0
 
 	; Size can be zero at the begin so once size is > 0 then hunger is active.
 	$RemoveBegining = False
 
 	Local $aAccelKey2[][] = [["{RIGHT}", $L_idRight], ["{LEFT}", $L_idLeft], ["{DOWN}", $L_idDown], ["{UP}", $L_idUp], ["{ESC}", $L_idEsc]]
-
 	GUISetAccelerators($aAccelKey2, $g_ctrlBoard)
-MouseMove(0, 0, 0)
+	MouseMove(0, 0, 0)
 
 	$g_hTick = TimerInit()
+
 	While 1 ; Game Loop
 		Tick()
 
 		$nMsg = GUIGetMsg()
+		If $nMsg = $GUI_EVENT_MINIMIZE Or $nMsg = $GUI_EVENT_CLOSE Then
+			DataOut("EVENT", $nMsg)
+			$nMsg = 0
+		EndIf
 		If $nMsg > 0 Then
 
 			Switch $nMsg
+
 				Case $L_idEsc
 					ExitLoop
 
@@ -341,34 +352,37 @@ MouseMove(0, 0, 0)
 		EndIf
 		;DataOut($x_new, $y_new)
 
-		Switch $Map[$what][$x_new + $L_dirx][$y_new + $L_diry]
-			Case -1
-				Status(0, "Ate wall", 1)
-				ExitLoop
+		If $g_GameWhich = 1 Then ; 0 Normal, 1 Mine
 
-			Case $SNAKE
+			;EXTRA
 
-				; Check  prev to be the same  last location
-				If $Map[$prX][$x_new][$y_new] = $x_new + $L_dirx And $Map[$prY][$x_new][$y_new] = $y_new + $L_diry Then ; Double back
-					DataOut("Eat me Double back on self")
-					$flag = DoubleBack($L_dirx, $L_diry)
-					If $flag Then
-						Status(0, "Double back", 3)
-						$L_change -= 2
-						$g_iScore -= 100
+			Switch $Map[$what][$x_new + $L_dirx][$y_new + $L_diry]
+				Case -1
+					Status(0, "Ate wall", 1)
+					ExitLoop
+
+				Case $SNAKE
+
+					; Check  prev to be the same  last location
+					If $Map[$prX][$x_new][$y_new] = $x_new + $L_dirx And $Map[$prY][$x_new][$y_new] = $y_new + $L_diry Then ; Double back
+						DataOut("Eat me Double back on self")
+						$flag = DoubleBack($L_dirx, $L_diry)
+						If $flag Then
+							Status(0, "Double back", 3)
+							$L_change -= 2
+							$g_iScore -= 100
+						Else
+							Status(0, "Ate self", 1)
+							ExitLoop
+						EndIf
 					Else
 						Status(0, "Ate self", 1)
 						ExitLoop
 					EndIf
-				Else
-					Status(0, "Ate self", 1)
-					ExitLoop
-				EndIf
 
-			Case $FOOD
-				$g_ScoreFood += 1
+				Case $FOOD
+					$g_ScoreFood += 1
 
-				If $g_GameWhich = 1 Then ; 0 Normal, 1 Mine
 					$L_Hunger = ($L_HungerStr * 2) - $g_ScoreFood
 					If $L_Hunger < 30 Then
 						$L_Hunger = 30
@@ -397,28 +411,23 @@ MouseMove(0, 0, 0)
 							$g_iScore += 10
 							Status(0, "Turn bonus 10", 4)
 						Case Else
-							;Status(0, "", 0)
+							Status(0, "", 0)
 					EndSwitch
 
 					$L_turnBonus = $L_turnBonusStr
-				EndIf
-
-				If $g_GameWhich = 1 Then ; 0 Normal, 1 Mine
 					$L_change += 1 ; doing this way because furture versions might not be one ***************************
-				EndIf
 
-				;RemoveFood()  NOT needed because  snake will over write with out looking
-				AddFood()
-				PrevNext($x_new + $L_dirx, $y_new + $L_diry) ;New value
+					;RemoveFood()  NOT needed because  snake will over write with out looking
+					AddFood()
+					PrevNext($x_new + $L_dirx, $y_new + $L_diry) ;New value
 
-			Case $EMPTY
+				Case $EMPTY
 
-				If $g_Status0Off = 0 Then
-					Status(0, "", 0)
-				EndIf
-				$g_Status0Off -= 1
+					If $g_Status0Off = 0 Then
+						Status(0, "", 0)
+					EndIf
+					$g_Status0Off -= 1
 
-				If $g_GameWhich = 1 Then ; 0 Normal, 1 Mine
 					If $L_Hunger = 0 Then
 						$L_HungerCnt += 1
 						Status(0, "Hungery - " & $L_HungerCnt & " Snake shorter", 3)
@@ -437,51 +446,93 @@ MouseMove(0, 0, 0)
 					Else
 						$L_Hunger -= 1
 					EndIf
-				EndIf
 
-				PrevNext($x_new + $L_dirx, $y_new + $L_diry) ;New value
+					PrevNext($x_new + $L_dirx, $y_new + $L_diry) ;New value
 
-				;Check to see if snake grow longer or shorter
-				;Dataout("Change", $L_change)
+					;Check to see if snake grow longer or shorter
+					;Dataout("Change", $L_change)
 
-				If $L_change = 0 Then
+					If $L_change = 0 Then
+						RemoveSnake()
+					ElseIf $L_change > 0 Then ; snake get longer don't remove end
+						Switch $L_changeHalf
+							Case 0
+								$L_change -= 1
+								$L_changeHalf = $L_ChangeStr
+							Case Else
+								RemoveSnake()
+								$L_changeHalf -= 1
+						EndSwitch
+
+					ElseIf $L_change < 0 Then ; snake get shorter remove end twice
+						Switch $L_changeHalf
+							Case 0
+								$L_change += 1
+								$L_changeHalf = $L_ChangeStr
+								If RemoveSnake() Then
+									ExitLoop ;no snake
+								EndIf
+								If RemoveSnake() Then
+									ExitLoop ;no snake
+								EndIf
+							Case Else
+								$L_changeHalf -= 1
+								RemoveSnake()
+						EndSwitch
+					EndIf
+
+			EndSwitch
+
+			;Score
+			$a = $Map[$num][$x_new][$y_new] - $Map[$num][$x_end][$y_end] + 1
+			If $L_ScoreLast <> $a Then
+				$L_ScoreLast = $a
+				Status(1, "Snake length: " & $a & " Score: " & $a + $g_iScore, 2)
+			EndIf
+
+		Else ;Normal
+
+			Switch $Map[$what][$x_new + $L_dirx][$y_new + $L_diry]
+				Case -1 ;Normal Wall
+					Status(0, "Ate wall", 1)
+					ExitLoop
+
+				Case $SNAKE ;Normal
+					Status(0, "Ate self", 1)
+					ExitLoop
+
+				Case $FOOD ;Normal
+					$g_ScoreFood += 1
+
+					; Normal is 1 which adds below						$L_change += 1 ; doing this way because furture versions might not be one ***************************
+
+					;RemoveFood()  NOT needed because  snake will over write with out looking
+					AddFood()
+					PrevNext($x_new + $L_dirx, $y_new + $L_diry) ;New value
+
+				Case $EMPTY ;Normal
+
+					If $g_Status0Off = 0 Then
+						Status(0, "", 0)
+					EndIf
+					$g_Status0Off -= 1
+
+					PrevNext($x_new + $L_dirx, $y_new + $L_diry) ;New value
 					RemoveSnake()
-				ElseIf $L_change > 0 Then ; snake get longer don't remove end
-					Switch $L_changeHalf
-						Case 0
-							$L_change -= 1
-							$L_changeHalf = $L_ChangeStr
-						Case Else
-							RemoveSnake()
-							$L_changeHalf -= 1
-					EndSwitch
 
-				ElseIf $L_change < 0 Then ; snake get shorter remove end twice
-					Switch $L_changeHalf
-						Case 0
-							$L_change += 1
-							$L_changeHalf = $L_ChangeStr
-							If RemoveSnake() Then
-								ExitLoop ;no snake
-							EndIf
-							If RemoveSnake() Then
-								ExitLoop ;no snake
-							EndIf
-						Case Else
-							$L_changeHalf -= 1
-							RemoveSnake()
-					EndSwitch
+			EndSwitch
+			;Score NORMAL
+			$a = $Map[$num][$x_new][$y_new] - $Map[$num][$x_end][$y_end] + 1
+			If $L_ScoreLast <> $a Then
+				$L_ScoreLast = $a
+				Status(1, "Snake length: " & $a, 2)
+			EndIf
 
-				EndIf
-		EndSwitch
-
-		$a = $Map[$num][$x_new][$y_new] - $Map[$num][$x_end][$y_end] + 1
-		If $g_GameWhich = 0 Then ; 0 Normal, 1 Mine
-			Status(1, "Normal: Snake length: " & $a, 2)
-		Else
-			Status(1, "Snake length: " & $a & " Score: " & $a + $g_iScore, 2)
+			; END NORMAL
 		EndIf
+
 	WEnd
+
 	GUISetAccelerators(1, $g_ctrlBoard) ; Turn off Accelerator
 	If $g_GameWhich = 0 Then ; 0 Normal, 1 Mine
 		$g_iScore = $a
@@ -494,7 +545,7 @@ MouseMove(0, 0, 0)
 
 EndFunc   ;==>Game
 #CS INFO
-	455228 V15 6/9/2019 5:40:22 PM V14 6/9/2019 1:07:49 PM V13 6/6/2019 11:09:42 PM V12 6/5/2019 11:59:45 PM
+	519168 V17 6/10/2019 8:01:23 PM V16 6/10/2019 6:01:37 PM V15 6/9/2019 5:40:22 PM V14 6/9/2019 1:07:49 PM
 #CE
 
 Func Tick() ;
@@ -848,8 +899,13 @@ EndFunc   ;==>DisplayHiScore
 #CE
 
 Func UpDateHiScore()
+	Local $Form1
 	If $g_aHiScore[8][0] < $g_iScore Then
-		MsgBox($MB_TOPMOST, "High Score", "New High Score: " & $g_iScore, 5)
+		;		MsgBox($MB_TOPMOST, "High Score", "New High Score: " & $g_iScore, 5)
+		$Form1 = GUICreate("", 250, 100, -1, -1, $WS_DLGFRAME, BitOR($WS_EX_TOPMOST, $WS_EX_STATICEDGE))
+		GUICtrlCreateLabel("New High Score: " & $g_iScore, 25, 30, 200, 25)
+		GUICtrlSetFont(-1, 12, 400, 0, "Arial")
+		GUISetState(@SW_SHOW)
 
 		$g_aHiScore[9][0] = $g_iScore
 		$g_aHiScore[9][1] = _Now()
@@ -863,12 +919,14 @@ Func UpDateHiScore()
 
 		_ArraySort($g_aHiScore, 1, 1, 9)
 		SaveHiScore()
+		Sleep(5000)
+		GUIDelete($Form1)
 	Else
 		Sleep(5000)
 	EndIf
 EndFunc   ;==>UpDateHiScore
 #CS INFO
-	39261 V4 6/6/2019 11:09:42 PM V3 6/5/2019 11:59:45 PM V2 6/5/2019 2:01:25 AM V1 6/4/2019 8:01:23 PM
+	57542 V5 6/10/2019 8:01:23 PM V4 6/6/2019 11:09:42 PM V3 6/5/2019 11:59:45 PM V2 6/5/2019 2:01:25 AM
 #CE
 
 Func SaveHiScore()
@@ -928,4 +986,4 @@ Main()
 FileDelete($s_ini)
 Exit
 
-;~T ScriptFunc.exe V0.54a 15 May 2019 - 6/9/2019 5:40:22 PM
+;~T ScriptFunc.exe V0.54a 15 May 2019 - 6/10/2019 8:01:23 PM
