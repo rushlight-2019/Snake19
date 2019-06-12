@@ -5,7 +5,7 @@ Global Static $MESSAGE = True ;Define then DataOut will show in script or compil
 ;Global Static $MESSAGE =  False   ;Pause will still work in script  No Dataout
 
 ; Must be Declared before _Prf_startup
-Global $ver = "0.24 10 Jun 2019 High Box without OK"
+Global $ver = "0.25 12 Jun 2019 DEBUG - See Lower Left, Harder to die"
 
 If @Compiled = 0 Then
 	Global Static $useLog = True
@@ -15,9 +15,15 @@ EndIf
 
 ;$TESTING
 #include "R:\!Autoit\Blank\_prf_startup.au3"
+Global $CantDie
+If $TESTING Then
+	$CantDie = True
+Else
+	$CantDie = False
+EndIf
 
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
-#AutoIt3Wrapper_Res_Fileversion=0.0.2.4
+#AutoIt3Wrapper_Res_Fileversion=0.0.2.5
 #AutoIt3Wrapper_Icon=R:\!Autoit\Ico\prf.ico
 #AutoIt3Wrapper_Res_Description=Another snake game
 #AutoIt3Wrapper_Res_LegalCopyright=© Phillip Forrestal 2019
@@ -76,7 +82,8 @@ EndIf
 	Eat Me in half
 	Make 2 games loops Normal / Extra
 
-	0.24 10 Jun 2019 High Box withou OK
+	0.25 12 Jun 2019 DEBUG - Harder to die box  Upper Left
+	0.24 10 Jun 2019 High Box without OK
 	0.23 10 Jun 2019 Make 2 games loops Normal / Extra
 	0.22 10 Jun 2019 Status score only when change flicker 99% gone
 	0.21 9 Jun 2019 Mouse cursor
@@ -114,6 +121,7 @@ EndIf
 ;Static
 Static $s_pic = @ScriptDir & "\Pic\"
 Static $s_ini = @WorkingDir & "\snake.ini"
+Static $WALL = -1
 Static $cEDGE = $s_pic & "Edge.jpg"
 Static $EMPTY = 0
 Static $cEMPTY1 = $s_pic & "blue.jpg"
@@ -290,6 +298,11 @@ Func Game()
 	GUISetAccelerators($aAccelKey2, $g_ctrlBoard)
 	MouseMove(0, 0, 0)
 
+	If $CantDie Then
+		$g_ScoreFood = 40
+		$L_change = 100
+	EndIf
+
 	$g_hTick = TimerInit()
 
 	While 1 ; Game Loop
@@ -300,8 +313,8 @@ Func Game()
 			DataOut("EVENT", $nMsg)
 			$nMsg = 0
 		EndIf
-		If $nMsg > 0 Then
 
+		If $nMsg > 0 Then
 			Switch $nMsg
 
 				Case $L_idEsc
@@ -355,11 +368,33 @@ Func Game()
 		If $g_GameWhich = 1 Then ; 0 Normal, 1 Mine
 
 			;EXTRA
-
 			Switch $Map[$what][$x_new + $L_dirx][$y_new + $L_diry]
-				Case -1
-					Status(0, "Ate wall", 1)
-					ExitLoop
+				Case $WALL
+					dataout("WALL~~")
+					dataout($CantDie)
+					If $CantDie Then
+						; Check  prev to be the same  last location
+						DataOut("Eat wall Double back on self")
+						DataOut($x_new, $y_new)
+						DataOut($Map[$prX][$x_new][$y_new], $Map[$prY][$x_new][$y_new])
+
+						;	If $Map[$prX][$x_new][$y_new] = $x_new  And $Map[$prY][$x_new][$y_new] = $y_new  Then ; Double back
+						DataOut("Eat wall Double back on self")
+
+						$flag = DoubleBackWall($L_dirx, $L_diry)
+						If $flag Then
+							Status(0, "Double back", 3)
+							$L_change -= 2
+							$g_iScore -= 100
+						Else
+							Status(0, "Ate Wallf", 1)
+							ExitLoop
+						EndIf
+						;	EndIf
+					Else
+						Status(0, "Ate wall", 1)
+						ExitLoop
+					EndIf
 
 				Case $SNAKE
 
@@ -493,7 +528,7 @@ Func Game()
 		Else ;Normal
 
 			Switch $Map[$what][$x_new + $L_dirx][$y_new + $L_diry]
-				Case -1 ;Normal Wall
+				Case $WALL ;Normal Wall
 					Status(0, "Ate wall", 1)
 					ExitLoop
 
@@ -545,7 +580,7 @@ Func Game()
 
 EndFunc   ;==>Game
 #CS INFO
-	519168 V17 6/10/2019 8:01:23 PM V16 6/10/2019 6:01:37 PM V15 6/9/2019 5:40:22 PM V14 6/9/2019 1:07:49 PM
+	566594 V18 6/12/2019 12:36:42 PM V17 6/10/2019 8:01:23 PM V16 6/10/2019 6:01:37 PM V15 6/9/2019 5:40:22 PM
 #CE
 
 Func Tick() ;
@@ -620,6 +655,61 @@ EndFunc   ;==>StartSnake
 	32789 V4 6/6/2019 11:09:42 PM V3 6/3/2019 8:05:25 PM V2 6/3/2019 10:34:22 AM V1 6/3/2019 1:09:45 AM
 #CE
 
+; Dirx& Diry moving to wall not like Double Back which has reserves direction
+; So they will change, I can't make them Global because I used this name as Local in a number of Function.
+Func DoubleBackWall(ByRef $dirx, ByRef $diry) ; ~~
+	Local $a, $flag
+
+	;Reverse $dirx and $diry here and after that they must not change.
+	$dirx *= -1 ;1 to -1: 0 to 0: -1 to 1
+	$diry *= -1
+
+	;new+dir  is one back.
+	; Find which X or Y which is the same, then random _+ one on there
+	DataOut($dirx, $diry)
+	If $dirx = 0 Then
+		$a = Random(0, 1, 1)
+		If $a = 0 Then
+			$a = -1
+		EndIf
+		$flag = False
+		If $Map[$what][$x_new + $a][$y_new] = 0 Then
+			$flag = True
+		Else
+			$a *= -1
+			If $Map[$what][$x_new + $a][$y_new] = 0 Then
+				$flag = True
+			EndIf
+		EndIf
+		If $flag Then
+			PrevNext($x_new + $a, $y_new + $diry)
+		EndIf
+	Else ;$diry =0
+		$a = Random(0, 1, 1)
+		If $a = 0 Then
+			$a = -1
+		EndIf
+		$flag = False
+		If $Map[$what][$x_new][$y_new + $a] = 0 Then
+			$flag = True
+		Else
+			$a *= -1
+			If $Map[$what][$x_new][$y_new + $a] = 0 Then
+				$flag = True
+			EndIf
+		EndIf
+		If $flag Then
+			PrevNext($x_new + $dirx, $y_new + $a)
+		EndIf
+
+	EndIf
+	Return $flag
+
+EndFunc   ;==>DoubleBackWall
+#CS INFO
+	64509 V1 6/12/2019 12:36:42 PM
+#CE
+
 Func DoubleBack($dirx, $diry)
 	Local $a, $flag
 	;new+dir  is one back.
@@ -640,6 +730,7 @@ Func DoubleBack($dirx, $diry)
 			EndIf
 		EndIf
 		If $flag Then
+
 			PrevNext($x_new + $a, $y_new + $diry)
 		EndIf
 	Else ;$diry =0
@@ -758,7 +849,8 @@ Func ClearBoard()
 		For $x = 0 To $g_bx - 1
 			Select
 				Case $x = 0 Or $x = $g_bx - 1 Or $y = 0 Or $y = $g_by - 1
-					$Map[$what][$x][$y] = -1 ;outside edge
+					$Map[$what][$x][$y] = $WALL ;outside edge
+
 					$var = $cEDGE
 				Case Else
 					$Map[$what][$x][$y] = $EMPTY ; empty
@@ -770,101 +862,7 @@ Func ClearBoard()
 
 EndFunc   ;==>ClearBoard
 #CS INFO
-	24151 V7 6/3/2019 1:09:45 AM V6 6/2/2019 7:12:26 PM V5 6/2/2019 1:14:05 AM V4 5/31/2019 6:26:23 PM
-#CE
-
-Func StartForm()
-	Local $Form1, $Group1
-	Local $Radio3, $Checkbox1, $b_start
-	Local $nMsg
-
-	$Form1 = GUICreate("Snake 19 - " & $ver, 600, 600, -1, -1)
-	If IsArray($Mouse) Then
-		MouseMove($Mouse[0], $Mouse[1], 0)
-	EndIf
-
-	GUICtrlCreateLabel("Snake 19", 0, 0, 600, 24, $SS_CENTER)
-	GUICtrlSetFont(-1, 12, 800, 0, "Arial")
-
-	GUICtrlCreateLabel($ver, 0, 24, 600, 20, $SS_CENTER)
-	GUICtrlSetFont(-1, 10, 400, 0, "Arial")
-
-	Local $a = 260
-	Local $b = 50
-	Local $c = 120
-	$Group1 = GUICtrlCreateGroup("", $a - 10, $b - 10, $c + 30, 40)
-	$Radio1 = GUICtrlCreateRadio("Normal", $a, $b, $c, 20)
-	GUICtrlSetFont(-1, 10, 400, 0, "Arial")
-	$Radio2 = GUICtrlCreateRadio("Extra", $a, $b + 20, $c, 20)
-	GUICtrlSetFont(-1, 10, 400, 0, "Arial")
-
-	;$Radio3 = GUICtrlCreateRadio("Radio3", $a, $b + 60, 120, 20)
-	;	GUICtrlSetFont(-1, 10, 400, 0, "Arial")
-	;	$Checkbox1 = GUICtrlCreateCheckbox("Checkbox1", $a, $b + 90, 120, 20)
-	;	GUICtrlSetFont(-1, 10, 400, 0, "Arial")
-	;	GUICtrlCreateGroup("", -99, -99, 1, 1)
-	$b += 40
-
-	$g_HiScoreWho = GUICtrlCreateLabel("High Score - Extra", $a, $b, $c + 30, 24) ; Height is twice font size
-	GUICtrlSetFont(-1, 10, 400, 0, "Arial")
-	$a = 100
-	$b += 40
-	For $x = 0 To 7
-		$g_HiScore[$x] = GUICtrlCreateLabel(String($x + 1), $a, $b, 400, 24) ; Height is twice font size
-		GUICtrlSetFont($g_HiScore[$x], 10, 400, 0, "Arial")
-		$b += 20
-	Next
-
-	$b_start = GUICtrlCreateButton("GO", 270, 550, 100, 35)
-
-	Local $Edit1 = GUICtrlCreateEdit("", 20, $b, 550, 250)
-	GUICtrlSetData($Edit1, "Press ESC to quit." & @CRLF, 1)
-	GUICtrlSetData($Edit1, @CRLF, 1)
-
-	GUICtrlSetData($Edit1, "Normal" & @CRLF, 1)
-	GUICtrlSetData($Edit1, "  Food increase Snake by 1.  Score +1 per food pickup " & @CRLF, 1)
-	GUICtrlSetData($Edit1, @CRLF, 1)
-
-	;	GUICtrlSetData($Edit1, "NOT WORKING  Maybe optional Jump snake. Snake slower and shorted" & @CRLF, 1)
-	GUICtrlSetData($Edit1, "Extra:" & @CRLF, 1)
-	GUICtrlSetData($Edit1, "  Food increase snake by 2" & @CRLF, 1)
-	GUICtrlSetData($Edit1, @CRLF, 1)
-	GUICtrlSetData($Edit1, "Bonus:" & @CRLF, 1)
-	GUICtrlSetData($Edit1, " Snake does not like to turn so, so few turns and Food increase snake & score" & @CRLF, 1)
-	;	GUICtrlSetData($Edit1, "NOT WORKING: Snake does not like to travel far for next meal. So get there quick. So Food increase snake & score" & @CRLF, 1)
-	GUICtrlSetData($Edit1, " Snake does not like to travel far for next meal. Snake does get shorter & score get smaller" & @CRLF, 1)
-	;	GUICtrlSetData($Edit1, "NOT WORKING: Snake can eat itself - hurts. bloody. It it does snake get shorter & score get smaller" & @CRLF, 1)
-	;	GUICtrlSetData($Edit1, "NOT WORKING: When Snake is bloody, Not sure what happen with the food." & @CRLF, 1)
-	GUISetState(@SW_SHOW)
-
-	NormalExtra()
-
-	While 1
-		$nMsg = GUIGetMsg()
-		Switch $nMsg
-			Case $GUI_EVENT_CLOSE
-				GUIDelete($Form1)
-				Return True
-
-			Case $b_start
-				$Mouse = MouseGetPos()
-				GUIDelete($Form1)
-				Return False
-
-			Case $Radio1 ;Normal
-				$g_GameWhich = 0
-				NormalExtra()
-
-			Case $Radio2 ; Extra
-				$g_GameWhich = 1
-				NormalExtra()
-
-		EndSwitch
-	WEnd
-
-EndFunc   ;==>StartForm
-#CS INFO
-	209358 V11 6/9/2019 5:40:22 PM V10 6/6/2019 11:09:42 PM V9 6/5/2019 11:59:45 PM V8 6/5/2019 2:01:25 AM
+	24397 V8 6/12/2019 12:36:42 PM V7 6/3/2019 1:09:45 AM V6 6/2/2019 7:12:26 PM V5 6/2/2019 1:14:05 AM
 #CE
 
 Func NormalExtra()
@@ -985,5 +983,104 @@ EndFunc   ;==>ReadHiScore
 Main()
 FileDelete($s_ini)
 Exit
+Func StartForm()
+	Local $Form1, $Group1
+	Local $Radio3, $Checkbox1, $b_start
+	Local $nMsg
 
-;~T ScriptFunc.exe V0.54a 15 May 2019 - 6/10/2019 8:01:23 PM
+	$Form1 = GUICreate("Snake 19 - " & $ver, 600, 600, -1, -1)
+	If IsArray($Mouse) Then
+		MouseMove($Mouse[0], $Mouse[1], 0)
+	EndIf
+
+	GUICtrlCreateLabel("Snake 19", 0, 0, 600, 24, $SS_CENTER)
+	GUICtrlSetFont(-1, 12, 800, 0, "Arial")
+
+	GUICtrlCreateLabel($ver, 0, 24, 600, 20, $SS_CENTER)
+	GUICtrlSetFont(-1, 10, 400, 0, "Arial")
+
+	Local $a = 260
+	Local $b = 50
+	Local $c = 120
+	$Group1 = GUICtrlCreateGroup("", $a - 10, $b - 10, $c + 30, 40)
+	$Radio1 = GUICtrlCreateRadio("Normal", $a, $b, $c, 20)
+	GUICtrlSetFont(-1, 10, 400, 0, "Arial")
+	$Radio2 = GUICtrlCreateRadio("Extra", $a, $b + 20, $c, 20)
+	GUICtrlSetFont(-1, 10, 400, 0, "Arial")
+
+	;$Radio3 = GUICtrlCreateRadio("Radio3", $a, $b + 60, 120, 20)
+	;	GUICtrlSetFont(-1, 10, 400, 0, "Arial")
+
+	;	GUICtrlSetFont(-1, 10, 400, 0, "Arial")
+	;		GUICtrlCreateGroup("", -99, -99, 1, 1)
+
+	$b += 40
+
+	$g_HiScoreWho = GUICtrlCreateLabel("High Score - Extra", $a, $b, $c + 30, 24) ; Height is twice font size
+	GUICtrlSetFont(-1, 10, 400, 0, "Arial")
+	$a = 100
+	$b += 40
+	For $x = 0 To 7
+		$g_HiScore[$x] = GUICtrlCreateLabel(String($x + 1), $a, $b, 400, 24) ; Height is twice font size
+		GUICtrlSetFont($g_HiScore[$x], 10, 400, 0, "Arial")
+		$b += 20
+	Next
+
+	$b_start = GUICtrlCreateButton("GO", 270, 550, 100, 35)
+	$Checkbox1 = GUICtrlCreateCheckbox("Debug", 1, 555)
+
+	Local $Edit1 = GUICtrlCreateEdit("", 20, $b, 550, 250)
+	GUICtrlSetData($Edit1, "Press ESC to quit." & @CRLF, 1)
+	GUICtrlSetData($Edit1, @CRLF, 1)
+
+	GUICtrlSetData($Edit1, "Normal" & @CRLF, 1)
+	GUICtrlSetData($Edit1, "  Food increase Snake by 1.  Score +1 per food pickup " & @CRLF, 1)
+	GUICtrlSetData($Edit1, @CRLF, 1)
+
+	;	GUICtrlSetData($Edit1, "NOT WORKING  Maybe optional Jump snake. Snake slower and shorted" & @CRLF, 1)
+	GUICtrlSetData($Edit1, "Extra:" & @CRLF, 1)
+	GUICtrlSetData($Edit1, "  Food increase snake by 2" & @CRLF, 1)
+	GUICtrlSetData($Edit1, @CRLF, 1)
+	GUICtrlSetData($Edit1, "Bonus:" & @CRLF, 1)
+	GUICtrlSetData($Edit1, " Snake does not like to turn so, so few turns and Food increase snake & score" & @CRLF, 1)
+	GUICtrlSetData($Edit1, " Snake can double back most of the times. But lose length and score" & @CRLF, 1)
+	GUICtrlSetData($Edit1, " Snake does not like to travel far for next meal. Snake does get shorter & score get smaller" & @CRLF, 1)
+	;	GUICtrlSetData($Edit1, "NOT WORKING: Snake can eat itself - hurts. bloody. It it does snake get shorter & score get smaller" & @CRLF, 1)
+	;	GUICtrlSetData($Edit1, "NOT WORKING: When Snake is bloody, Not sure what happen with the food." & @CRLF, 1)
+	GUISetState(@SW_SHOW)
+
+	NormalExtra()
+
+	While 1
+		$nMsg = GUIGetMsg()
+		Switch $nMsg
+			Case $GUI_EVENT_CLOSE
+				GUIDelete($Form1)
+				Return True
+
+			Case $b_start
+				$Mouse = MouseGetPos()
+				GUIDelete($Form1)
+				Return False
+
+			Case $Radio1 ;Normal
+				$g_GameWhich = 0
+				NormalExtra()
+
+			Case $Radio2 ; Extra
+				$g_GameWhich = 1
+				NormalExtra()
+
+			Case $Checkbox1 ;debug
+				$CantDie = BitAND(GUICtrlRead($Checkbox1), $GUI_CHECKED) = $GUI_CHECKED
+				Dataout($CantDie)
+
+		EndSwitch
+	WEnd
+
+EndFunc   ;==>StartForm
+#CS INFO
+	213321 V12 6/12/2019 12:36:42 PM V11 6/9/2019 5:40:22 PM V10 6/6/2019 11:09:42 PM V9 6/5/2019 11:59:45 PM
+#CE
+
+;~T ScriptFunc.exe V0.54a 15 May 2019 - 6/12/2019 12:36:42 PM
