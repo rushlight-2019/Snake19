@@ -5,7 +5,7 @@ Global Static $MESSAGE = True ;Define then DataOut will show in script or compil
 ;Global Static $MESSAGE =  False   ;Pause will still work in script  No Dataout
 
 ; Must be Declared before _Prf_startup
-Global $ver = "0.25 12 Jun 2019 DEBUG - See Lower Left, Harder to die"
+Global $ver = "0.26 16 Jun 2019 Keep top 5 scores on boot."
 
 If @Compiled = 0 Then
 	Global Static $useLog = True
@@ -23,7 +23,7 @@ Else
 EndIf
 
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
-#AutoIt3Wrapper_Res_Fileversion=0.0.2.5
+#AutoIt3Wrapper_Res_Fileversion=0.0.2.6
 #AutoIt3Wrapper_Icon=R:\!Autoit\Ico\prf.ico
 #AutoIt3Wrapper_Res_Description=Another snake game
 #AutoIt3Wrapper_Res_LegalCopyright=© Phillip Forrestal 2019
@@ -73,15 +73,19 @@ EndIf
 	6 = snake cell number (to computer size)
 
 	to do
-	near end
-	Status score  change just
 	One color background
 	Setting:  background, snake pic, food, speed, size cell,  number of cells (high score will clear) default 40x50 2000 cells
 
 	current
 	Eat Me in half
-	Make 2 games loops Normal / Extra
+	Add max lenght in Extra
 
+	Problem
+	Bounce off wall fails to see snake there
+
+	17 Jun 2019 Eat snake across bloody
+
+	0.26 15 Jun 2019 Keep top 5 scores on boot.
 	0.25 12 Jun 2019 DEBUG - Harder to die box  Upper Left
 	0.24 10 Jun 2019 High Box without OK
 	0.23 10 Jun 2019 Make 2 games loops Normal / Extra
@@ -133,7 +137,7 @@ Static $cFOOD = $s_pic & "green.jpg"
 Static $cRED = $s_pic & "red.jpg"
 
 ;Global
-
+Global $g_first = True
 Global $g_sx = 50
 Global $g_sy = 40
 Global $g_bx = $g_sx + 2
@@ -170,7 +174,7 @@ Global $g_Status[2]
 Global $g_StatusText[2]
 Global $g_StatusOff = 2
 
-Global $g_aHiScore[10][5] ; data load by INI.  10 =  score,  date, len.food, turns
+Global $g_aHiScore[10][6] ; data load by INI.  10 =  score,  date, len.food, turns, Max
 Global $g_iScore
 Global $g_cSetting ;ini
 
@@ -279,7 +283,7 @@ Func Game()
 	AddFood()
 
 	;Default before start
-	DataOut("New Game ~~")
+	DataOut("New Game ~~~")
 	$L_turnLast = 0
 	$g_ScoreTurn = 0
 	$g_ScoreFood = 0
@@ -370,7 +374,7 @@ Func Game()
 			;EXTRA
 			Switch $Map[$what][$x_new + $L_dirx][$y_new + $L_diry]
 				Case $WALL
-					dataout("WALL~~")
+					dataout("WALL~~~")
 					dataout($CantDie)
 					If $CantDie Then
 						; Check  prev to be the same  last location
@@ -411,6 +415,13 @@ Func Game()
 							ExitLoop
 						EndIf
 					Else
+
+						dataout($x_new, $y_new)
+						dataout($x_new + $L_dirx, $y_new + $L_diry)
+
+						ShowRow($x_new, $y_new)
+						ShowRow($x_new + $L_dirx, $y_new + $L_diry)
+
 						Status(0, "Ate self", 1)
 						ExitLoop
 					EndIf
@@ -580,7 +591,22 @@ Func Game()
 
 EndFunc   ;==>Game
 #CS INFO
-	566594 V18 6/12/2019 12:36:42 PM V17 6/10/2019 8:01:23 PM V16 6/10/2019 6:01:37 PM V15 6/9/2019 5:40:22 PM
+	577722 V19 6/16/2019 10:16:04 AM V18 6/12/2019 12:36:42 PM V17 6/10/2019 8:01:23 PM V16 6/10/2019 6:01:37 PM
+#CE
+
+Func ShowRow($x, $y)
+	If $TESTING Then
+
+		Local $aa[7]
+
+		For $Z = 0 To 6
+			$aa[$Z] = $Map[$Z][$x][$y]
+		Next
+		_ArrayDisplay($aa)
+	EndIf
+EndFunc   ;==>ShowRow
+#CS INFO
+	10527 V1 6/16/2019 10:16:04 AM
 #CE
 
 Func Tick() ;
@@ -882,7 +908,7 @@ Func DisplayHiScore()
 	If $g_GameWhich = 0 Then ; 0 Normal, 1 Mine
 		GUICtrlSetData($g_HiScoreWho, "High Score - Normal")
 		For $i = 0 To 7
-			GUICtrlSetData($g_HiScore[$i], $i + 1 & " - " & $g_aHiScore[$i + 1][0] & " - " & $g_aHiScore[$i + 1][1] & " Travel: " & $g_aHiScore[$i + 1][2] & " Turn: " & $g_aHiScore[$i + 1][4])
+			GUICtrlSetData($g_HiScore[$i], $i + 1 & " - " & $g_aHiScore[$i + 1][0] & " - " & $g_aHiScore[$i + 1][1] & " Travel: " & $g_aHiScore[$i + 1][2] & " Turn: " & $g_aHiScore[$i + 1][4] & " Max: " & $g_aHiScore[$i + 1][5])
 		Next
 	Else
 		GUICtrlSetData($g_HiScoreWho, "High Score - Extra")
@@ -893,7 +919,7 @@ Func DisplayHiScore()
 
 EndFunc   ;==>DisplayHiScore
 #CS INFO
-	44017 V1 6/5/2019 11:59:45 PM
+	46183 V2 6/16/2019 10:16:04 AM V1 6/5/2019 11:59:45 PM
 #CE
 
 Func UpDateHiScore()
@@ -932,7 +958,7 @@ Func SaveHiScore()
 
 	For $x = 1 To 8
 		$a[$x][0] = String($x)
-		$a[$x][1] = $g_aHiScore[$x][0] & "|" & $g_aHiScore[$x][1] & "|" & $g_aHiScore[$x][2] & "|" & $g_aHiScore[$x][3] & "|" & $g_aHiScore[$x][4]
+		$a[$x][1] = $g_aHiScore[$x][0] & "|" & $g_aHiScore[$x][1] & "|" & $g_aHiScore[$x][2] & "|" & $g_aHiScore[$x][3] & "|" & $g_aHiScore[$x][4] & "|" & $g_aHiScore[$x][5]
 	Next
 	$a[0][0] = 8
 
@@ -944,26 +970,38 @@ Func SaveHiScore()
 
 EndFunc   ;==>SaveHiScore
 #CS INFO
-	30372 V3 6/5/2019 11:59:45 PM V2 6/5/2019 2:01:25 AM V1 6/4/2019 8:01:23 PM
+	32233 V4 6/16/2019 10:16:04 AM V3 6/5/2019 11:59:45 PM V2 6/5/2019 2:01:25 AM V1 6/4/2019 8:01:23 PM
 #CE
 
 Func ReadHiScore()
-	Local $a, $c
+	Local $a, $c, $Z
 	If $g_GameWhich = 0 Then ; 0 Normal, 1 Mine
 		$a = IniReadSection($s_ini, "HighScoreNormal")
 	Else
 		$a = IniReadSection($s_ini, "HighScoreExtra")
 	EndIf
 	If @error = 0 Then
-		For $i = 1 To 8
-			$c = StringSplit($a[$i][1], "|")
-			$g_aHiScore[$i][0] = Int($c[1])
-			$g_aHiScore[$i][1] = $c[2]
-			$g_aHiScore[$i][2] = $c[3]
-			$g_aHiScore[$i][3] = $c[4]
-			$g_aHiScore[$i][4] = $c[5]
 
+		For $i = 1 To 8
+			If $g_first And $i > 5 Then
+				$g_aHiScore[$i][0] = 0 ;
+				$g_aHiScore[$i][1] = "" ;date
+				$g_aHiScore[$i][2] = "" ;len
+				$g_aHiScore[$i][3] = "" ;food
+				$g_aHiScore[$i][4] = "" ;turns
+				$g_aHiScore[$i][5] = "" ;Max
+			Else
+				$c = StringSplit($a[$i][1], "|")
+				$g_aHiScore[$i][0] = Int($c[1])
+				$g_aHiScore[$i][1] = $c[2]
+				$g_aHiScore[$i][2] = $c[3]
+				$g_aHiScore[$i][3] = $c[4]
+				$g_aHiScore[$i][4] = $c[5]
+				$g_aHiScore[$i][5] = $c[6]
+			EndIf
 		Next
+		$g_first = False ; first run since startup
+
 	Else
 		For $i = 1 To 8 ; not found load
 			$g_aHiScore[$i][0] = 0 ;
@@ -971,22 +1009,27 @@ Func ReadHiScore()
 			$g_aHiScore[$i][2] = "" ;len
 			$g_aHiScore[$i][3] = "" ;food
 			$g_aHiScore[$i][4] = "" ;turns
+			$g_aHiScore[$i][5] = "" ;Max
 		Next
 		SaveHiScore()
 	EndIf
 EndFunc   ;==>ReadHiScore
 #CS INFO
-	46170 V3 6/5/2019 11:59:45 PM V2 6/5/2019 2:01:25 AM V1 6/4/2019 8:01:23 PM
+	69341 V4 6/16/2019 10:16:04 AM V3 6/5/2019 11:59:45 PM V2 6/5/2019 2:01:25 AM V1 6/4/2019 8:01:23 PM
 #CE
 
 ;Main
 Main()
-FileDelete($s_ini)
+;FileDelete($s_ini)
 Exit
 Func StartForm()
 	Local $Form1, $Group1
 	Local $Radio3, $Checkbox1, $b_start
 	Local $nMsg
+	Local $a = 260
+	Local $b = 50
+	Local $c = 120
+	Local $Z
 
 	$Form1 = GUICreate("Snake 19 - " & $ver, 600, 600, -1, -1)
 	If IsArray($Mouse) Then
@@ -999,9 +1042,6 @@ Func StartForm()
 	GUICtrlCreateLabel($ver, 0, 24, 600, 20, $SS_CENTER)
 	GUICtrlSetFont(-1, 10, 400, 0, "Arial")
 
-	Local $a = 260
-	Local $b = 50
-	Local $c = 120
 	$Group1 = GUICtrlCreateGroup("", $a - 10, $b - 10, $c + 30, 40)
 	$Radio1 = GUICtrlCreateRadio("Normal", $a, $b, $c, 20)
 	GUICtrlSetFont(-1, 10, 400, 0, "Arial")
@@ -1020,6 +1060,7 @@ Func StartForm()
 	GUICtrlSetFont(-1, 10, 400, 0, "Arial")
 	$a = 100
 	$b += 40
+
 	For $x = 0 To 7
 		$g_HiScore[$x] = GUICtrlCreateLabel(String($x + 1), $a, $b, 400, 24) ; Height is twice font size
 		GUICtrlSetFont($g_HiScore[$x], 10, 400, 0, "Arial")
@@ -1080,7 +1121,7 @@ Func StartForm()
 
 EndFunc   ;==>StartForm
 #CS INFO
-	213321 V12 6/12/2019 12:36:42 PM V11 6/9/2019 5:40:22 PM V10 6/6/2019 11:09:42 PM V9 6/5/2019 11:59:45 PM
+	213938 V13 6/16/2019 10:16:04 AM V12 6/12/2019 12:36:42 PM V11 6/9/2019 5:40:22 PM V10 6/6/2019 11:09:42 PM
 #CE
 
-;~T ScriptFunc.exe V0.54a 15 May 2019 - 6/12/2019 12:36:42 PM
+;~T ScriptFunc.exe V0.54a 15 May 2019 - 6/16/2019 10:16:04 AM

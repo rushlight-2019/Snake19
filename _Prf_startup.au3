@@ -1,6 +1,8 @@
 #include-once
 #include "R:\!Autoit\Blank\_Debug.au3"
 
+;Ver 14 Jun 2019
+
 Global Static $TESTING = @Compiled = 0
 If Not IsDeclared("MESSAGE") Then
 	Global Static $MESSAGE = $TESTING
@@ -11,7 +13,7 @@ Global $LOG = ""
 If $useLOG Then
 	$LOG = @WorkingDir & "\Log.txt"
 	Local $hLOG = FileOpen($LOG, 2)
-	FileWriteLine($hLOG, $ver)
+
 	FileWriteLine($hLOG, "")
 	FileClose($hLOG)
 EndIf
@@ -25,14 +27,14 @@ EndIf
 Func DataOut($sString = "", $sString2 = "")
 
 	If $MESSAGE Then
-		If StringInStr($sString, "~~") Then
+		If StringInStr($sString, "~~~") Then
 			_DebugOut(" ")
 		EndIf
 		_DebugOut($sString & " " & $sString2)
 
 		If $useLOG Then
 			Local $hLOG = FileOpen($LOG, 1)
-			If StringInStr($sString, "~~") Then
+			If StringInStr($sString, "~~~") Then
 				FileWriteLine($hLOG, "")
 			EndIf
 			FileWriteLine($hLOG, $sString & " " & $sString2)
@@ -51,8 +53,8 @@ Func Pause($sString = "", $sString2 = "")
 
 	If $TESTING Or $nMsg Then
 
-		If StringInStr($sString, "~~") Then
-			DataOut("~~")
+		If StringInStr($sString, "~~~") Then
+			DataOut("~~~")
 		EndIf
 
 		$PauseForm = GUICreate($ver, 383, 90, -1, 0)
