@@ -5,7 +5,7 @@ Global Static $MESSAGE = True ;Define then DataOut will show in script or compil
 ;Global Static $MESSAGE =  False   ;Pause will still work in script  No Dataout
 
 ; Must be Declared before _Prf_startup
-Global $ver = "0.26 16 Jun 2019 Keep top 5 scores on boot."
+Global $ver = "0.28 19 Jun 2019 just do first blood"
 
 If @Compiled = 0 Then
 	Global Static $useLog = True
@@ -16,14 +16,13 @@ EndIf
 ;$TESTING
 #include "R:\!Autoit\Blank\_prf_startup.au3"
 Global $CantDie
+$CantDie = False
 If $TESTING Then
 	$CantDie = True
-Else
-	$CantDie = False
 EndIf
 
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
-#AutoIt3Wrapper_Res_Fileversion=0.0.2.6
+#AutoIt3Wrapper_Res_Fileversion=0.0.2.8
 #AutoIt3Wrapper_Icon=R:\!Autoit\Ico\prf.ico
 #AutoIt3Wrapper_Res_Description=Another snake game
 #AutoIt3Wrapper_Res_LegalCopyright=© Phillip Forrestal 2019
@@ -83,7 +82,8 @@ EndIf
 	Problem
 	Bounce off wall fails to see snake there
 
-	17 Jun 2019 Eat snake across bloody
+	0.28 19 Jun 2019 just do first blood
+	0.27 17 Jun 2019 Start Eat snake across bloody
 
 	0.26 15 Jun 2019 Keep top 5 scores on boot.
 	0.25 12 Jun 2019 DEBUG - Harder to die box  Upper Left
@@ -134,7 +134,8 @@ Static $SNAKE = 1
 Static $cSNAKE = $s_pic & "gold.jpg"
 Static $FOOD = 10
 Static $cFOOD = $s_pic & "green.jpg"
-Static $cRED = $s_pic & "red.jpg"
+Static $BLOOD = 20
+Static $cBLOOD = $s_pic & "red.jpg"
 
 ;Global
 Global $g_first = True
@@ -191,6 +192,23 @@ Global $g_Status0Off = 1000
 ; Size can be zero at the begin so once size is > 0 then hunger is active.
 Global $RemoveBegining = False
 Global $Mouse = 0
+
+;0.27+  ~~
+Static $s_bdCycle = 0 ;No active -1, 1 or 0
+Static $s_bdX = 1
+Static $s_bdY = 2
+Static $s_size = 3
+Static $M1 = -1
+
+Global $g_bdPrev[$s_size] ;Cycle , X, Y Pre 2,3
+Global $g_bdNext[$s_size] ;Cycle , X, Y Nx 4,5
+
+$g_bdPrev[$s_bdCycle] = $M1
+$g_bdNext[$s_bdCycle] = $M1
+
+Global $g_bdEnd ;Cycle
+
+$g_bdEnd = $M1
 
 ; Main is call at end
 Func Main()
@@ -283,7 +301,7 @@ Func Game()
 	AddFood()
 
 	;Default before start
-	DataOut("New Game ~~~")
+	DataOut("New Game")
 	$L_turnLast = 0
 	$g_ScoreTurn = 0
 	$g_ScoreFood = 0
@@ -311,6 +329,9 @@ Func Game()
 
 	While 1 ; Game Loop
 		Tick()
+
+		;Blood Loop ~~
+		DoBlood()
 
 		$nMsg = GUIGetMsg()
 		If $nMsg = $GUI_EVENT_MINIMIZE Or $nMsg = $GUI_EVENT_CLOSE Then
@@ -374,7 +395,7 @@ Func Game()
 			;EXTRA
 			Switch $Map[$what][$x_new + $L_dirx][$y_new + $L_diry]
 				Case $WALL
-					dataout("WALL~~~")
+					dataout("WALL")
 					dataout($CantDie)
 					If $CantDie Then
 						; Check  prev to be the same  last location
@@ -419,11 +440,19 @@ Func Game()
 						dataout($x_new, $y_new)
 						dataout($x_new + $L_dirx, $y_new + $L_diry)
 
-						ShowRow($x_new, $y_new)
-						ShowRow($x_new + $L_dirx, $y_new + $L_diry)
+;~~ 0.28
+						If StartBlood($x_new + $L_dirx, $y_new + $L_diry) = False Then
+							Status(0, "Ate self to many times", 1)
+							ExitLoop
+						EndIf
 
-						Status(0, "Ate self", 1)
-						ExitLoop
+						PrevNext($x_new + $L_dirx, $y_new + $L_diry) ;New value
+
+						;ShowRow($x_new, $y_new)
+						;ShowRow($x_new + $L_dirx, $y_new + $L_diry)
+
+						;	Status(0, "Ate self", 1)
+						;	ExitLoop
 					EndIf
 
 				Case $FOOD
@@ -591,7 +620,135 @@ Func Game()
 
 EndFunc   ;==>Game
 #CS INFO
-	577722 V19 6/16/2019 10:16:04 AM V18 6/12/2019 12:36:42 PM V17 6/10/2019 8:01:23 PM V16 6/10/2019 6:01:37 PM
+	593064 V20 6/19/2019 2:58:37 AM V19 6/16/2019 10:16:04 AM V18 6/12/2019 12:36:42 PM V17 6/10/2019 8:01:23 PM
+#CE
+
+;~~
+Func DoBlood()
+	Local $x, $y, $x1, $y1
+
+	If $g_bdPrev[$s_bdCycle] > $M1 Then ;  active cycle count down
+		$g_bdPrev[$s_bdCycle] -= 1
+		If $g_bdPrev[$s_bdCycle] = 0 Then ; do move
+
+			$x = $g_bdPrev[$s_bdX]
+			$y = $g_bdPrev[$s_bdY]
+
+			;: Clear current location
+			$Map[$what][$x][$y] = $EMPTY
+			GUICtrlSetImage($Map[$ctrl][$x][$y], $cEMPTY)
+
+			;next location current prev
+			$x1 = $Map[$prX][$x][$y]
+			$y1 = $Map[$prY][$x][$y]
+
+			;Save in Prev  Active Cycle
+			$g_bdPrev[$s_bdX] = $x1
+			$g_bdPrev[$s_bdY] = $y1
+			$g_bdPrev[$s_bdCycle] = 4 ; -1 no active if active cycle count down
+
+			;clear nx
+			$Map[$nxX][$x1][$y1] = 0
+			$Map[$nxY][$x1][$y1] = 0
+
+			If $Map[$what][$x1][$y1] <> $SNAKE Then
+				DataOut("DO PREV is not Snake", $Map[$what][$x1][$y1])
+				$g_bdPrev[$s_bdCycle] = $M1 ; -1 no active if active cycle count down
+			Else
+
+				$Map[$what][$x1][$y1] = $BLOOD
+				GUICtrlSetImage($Map[$ctrl][$x1][$y1], $cBLOOD)
+			EndIf
+			;ShowRow($x, $y)
+
+			;pause()
+
+		EndIf
+
+	EndIf
+
+EndFunc   ;==>DoBlood
+#CS INFO
+	70303 V1 6/19/2019 2:58:37 AM
+#CE
+
+Func StartBlood($inX, $inY) ;~~
+	Local $x, $y
+
+	;Global $g_bdPrev[4] ;Cycle, CycleStr , X, Y Pre 2,3
+	;Global $g_bdNext[4] ;Cycle, CycleStr , X, Y Nx 4,5
+	;Global $g_bdEnd[4] ;Cycle, CycleStr,  X, Y
+
+	;.0.28 Do First
+	; Here to old tail
+	;Check to see if active, if Active snake dies because it ate itself twice.  Return False
+	If $g_bdPrev[$s_bdCycle] <> -1 Then
+		Return False
+	EndIf
+
+	;Blood start with previous cross location so Zero out next location  And this location RED
+	$x = $Map[$prX][$inX][$inY]
+	$y = $Map[$prY][$inX][$inY]
+
+	;Save in Prev  Active Cycle
+	$g_bdPrev[$s_bdX] = $x
+	$g_bdPrev[$s_bdY] = $y
+	$g_bdPrev[$s_bdCycle] = 4 ; -1 no active if active cycle count down
+
+	;clear nx
+	$Map[$nxX][$x][$y] = 0
+	$Map[$nxY][$x][$y] = 0
+
+	$Map[$what][$x][$y] = $BLOOD
+	GUICtrlSetImage($Map[$ctrl][$x][$y], $cBLOOD)
+
+	;	ShowRow($x, $y)
+	;	pause()
+
+	;This one will be the new end.  The old end will be bdStart2
+
+	$x = $x_end
+	$y = $y_end
+	;ShowRow($x, $y)
+;~~~~~~~~~~~~~~~~
+	$Map[$prX][$x][$y] = 0
+	$Map[$prY][$x][$y] = 0
+
+	$Map[$what][$x][$y] = $BLOOD
+	GUICtrlSetImage($Map[$ctrl][$x][$y], $cBLOOD)
+
+	;	ShowRow($x, $y)
+
+	;$g_bdEnd[$s_bdX] = $x ;~~
+	;$g_bdEnd[$s_bdY] = $y
+
+	;pause()
+
+	;Blood 2nd with next cross location so Zero out prv location  And this location RED
+	;This one will be the new end.  The old end will be bdStart2
+	$x = $Map[$nxX][$inX][$inY]
+	$y = $Map[$nxY][$inX][$inY]
+
+	$Map[$prX][$x][$y] = 0
+	$Map[$prY][$x][$y] = 0
+
+	$Map[$what][$x][$y] = $BLOOD
+	GUICtrlSetImage($Map[$ctrl][$x][$y], $cBLOOD)
+
+	;ShowRow($x, $y)
+
+	$g_bdNext[$s_bdX] = $x
+	$g_bdNext[$s_bdY] = $y
+
+	$x_end = $x
+	$y_end = $y
+
+	;pause()
+
+	Return True
+EndFunc   ;==>StartBlood
+#CS INFO
+	123247 V1 6/19/2019 2:58:37 AM
 #CE
 
 Func ShowRow($x, $y)
@@ -1124,4 +1281,4 @@ EndFunc   ;==>StartForm
 	213938 V13 6/16/2019 10:16:04 AM V12 6/12/2019 12:36:42 PM V11 6/9/2019 5:40:22 PM V10 6/6/2019 11:09:42 PM
 #CE
 
-;~T ScriptFunc.exe V0.54a 15 May 2019 - 6/16/2019 10:16:04 AM
+;~T ScriptFunc.exe V0.54a 15 May 2019 - 6/19/2019 2:58:37 AM
