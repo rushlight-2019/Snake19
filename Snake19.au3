@@ -5,7 +5,7 @@ Global Static $MESSAGE = True ;Define then DataOut will show in script or compil
 ;Global Static $MESSAGE =  False   ;Pause will still work in script  No Dataout
 
 ; Must be Declared before _Prf_startup
-Global $ver = "0.28 19 Jun 2019 just do first blood"
+Global $ver = "0.29 19 Jun 2019 just do 2nd blood old tail"
 
 If @Compiled = 0 Then
 	Global Static $useLog = True
@@ -22,7 +22,7 @@ If $TESTING Then
 EndIf
 
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
-#AutoIt3Wrapper_Res_Fileversion=0.0.2.8
+#AutoIt3Wrapper_Res_Fileversion=0.0.2.9
 #AutoIt3Wrapper_Icon=R:\!Autoit\Ico\prf.ico
 #AutoIt3Wrapper_Res_Description=Another snake game
 #AutoIt3Wrapper_Res_LegalCopyright=© Phillip Forrestal 2019
@@ -76,12 +76,18 @@ EndIf
 	Setting:  background, snake pic, food, speed, size cell,  number of cells (high score will clear) default 40x50 2000 cells
 
 	current
-	Eat Me in half
+	Eat Me in half  2/3 done
 	Add max lenght in Extra
+	Message eat unheath meat
+	died meat
+	OUCH
+	Score -value after eat me
+	-value end game messsage about snake not beening feed right.
 
 	Problem
 	Bounce off wall fails to see snake there
 
+	0.29 19 Jun 2019 just do 2nd blood old tail
 	0.28 19 Jun 2019 just do first blood
 	0.27 17 Jun 2019 Start Eat snake across bloody
 
@@ -199,6 +205,8 @@ Static $s_bdX = 1
 Static $s_bdY = 2
 Static $s_size = 3
 Static $M1 = -1
+Static $s_delay = 20
+Static $s_rand = 10
 
 Global $g_bdPrev[$s_size] ;Cycle , X, Y Pre 2,3
 Global $g_bdNext[$s_size] ;Cycle , X, Y Nx 4,5
@@ -316,6 +324,10 @@ Func Game()
 	; Size can be zero at the begin so once size is > 0 then hunger is active.
 	$RemoveBegining = False
 
+	;.29
+	$g_bdPrev[$s_bdCycle] = $M1
+	$g_bdNext[$s_bdCycle] = $M1
+
 	Local $aAccelKey2[][] = [["{RIGHT}", $L_idRight], ["{LEFT}", $L_idLeft], ["{DOWN}", $L_idDown], ["{UP}", $L_idUp], ["{ESC}", $L_idEsc]]
 	GUISetAccelerators($aAccelKey2, $g_ctrlBoard)
 	MouseMove(0, 0, 0)
@@ -429,7 +441,7 @@ Func Game()
 						$flag = DoubleBack($L_dirx, $L_diry)
 						If $flag Then
 							Status(0, "Double back", 3)
-							$L_change -= 2
+							$L_change -= 5
 							$g_iScore -= 100
 						Else
 							Status(0, "Ate self", 1)
@@ -440,7 +452,7 @@ Func Game()
 						dataout($x_new, $y_new)
 						dataout($x_new + $L_dirx, $y_new + $L_diry)
 
-;~~ 0.28
+;~~ 0.28, 0.29
 						If StartBlood($x_new + $L_dirx, $y_new + $L_diry) = False Then
 							Status(0, "Ate self to many times", 1)
 							ExitLoop
@@ -517,7 +529,7 @@ Func Game()
 						$g_iScore -= $L_HungerCnt
 						$L_change -= $L_HungerCnt
 						dataout($L_HungerCnt, "$L_HungerCnt")
-						dataout("~~")
+
 					Else
 						$L_Hunger -= 1
 					EndIf
@@ -620,10 +632,10 @@ Func Game()
 
 EndFunc   ;==>Game
 #CS INFO
-	593064 V20 6/19/2019 2:58:37 AM V19 6/16/2019 10:16:04 AM V18 6/12/2019 12:36:42 PM V17 6/10/2019 8:01:23 PM
+	596755 V21 6/19/2019 11:41:56 AM V20 6/19/2019 2:58:37 AM V19 6/16/2019 10:16:04 AM V18 6/12/2019 12:36:42 PM
 #CE
 
-;~~
+;~~ .28 .29
 Func DoBlood()
 	Local $x, $y, $x1, $y1
 
@@ -637,6 +649,7 @@ Func DoBlood()
 			;: Clear current location
 			$Map[$what][$x][$y] = $EMPTY
 			GUICtrlSetImage($Map[$ctrl][$x][$y], $cEMPTY)
+			$g_iScore -= 10
 
 			;next location current prev
 			$x1 = $Map[$prX][$x][$y]
@@ -645,7 +658,7 @@ Func DoBlood()
 			;Save in Prev  Active Cycle
 			$g_bdPrev[$s_bdX] = $x1
 			$g_bdPrev[$s_bdY] = $y1
-			$g_bdPrev[$s_bdCycle] = 4 ; -1 no active if active cycle count down
+			$g_bdPrev[$s_bdCycle] = $s_delay + Random(-$s_rand, $s_rand, 1)
 
 			;clear nx
 			$Map[$nxX][$x1][$y1] = 0
@@ -655,7 +668,48 @@ Func DoBlood()
 				DataOut("DO PREV is not Snake", $Map[$what][$x1][$y1])
 				$g_bdPrev[$s_bdCycle] = $M1 ; -1 no active if active cycle count down
 			Else
+				$Map[$what][$x1][$y1] = $BLOOD
+				GUICtrlSetImage($Map[$ctrl][$x1][$y1], $cBLOOD)
+			EndIf
+		EndIf
 
+	EndIf
+	;Save in Next  Active Cycle
+	;$g_bdNext[$s_bdX] = $x
+	;$g_bdNext[$s_bdY] = $y
+	;$g_bdNext[$s_bdCycle] = 6 ; -1 no active if active cycle count down  start slower
+	;.29
+	If $g_bdNext[$s_bdCycle] > $M1 Then ;  active cycle count down
+		dataout("NEXT started")
+		$g_bdNext[$s_bdCycle] -= 1
+		If $g_bdNext[$s_bdCycle] = 0 Then ; do move
+			dataout("Next zero")
+
+			$x = $g_bdNext[$s_bdX]
+			$y = $g_bdNext[$s_bdY]
+
+			; Clear current location
+			$Map[$what][$x][$y] = $EMPTY
+			GUICtrlSetImage($Map[$ctrl][$x][$y], $cEMPTY)
+			$g_iScore -= 10
+
+			;next location current Next
+			$x1 = $Map[$nxX][$x][$y]
+			$y1 = $Map[$nxY][$x][$y]
+
+			;Save in Next  Active Cycle
+			$g_bdNext[$s_bdX] = $x1
+			$g_bdNext[$s_bdY] = $y1
+			$g_bdNext[$s_bdCycle] = $s_delay + Random(-$s_rand, $s_rand, 1)
+
+			;clear pv  not sure this is needed
+			$Map[$prX][$x1][$y1] = 0
+			$Map[$prY][$x1][$y1] = 0
+
+			If $Map[$what][$x1][$y1] <> $SNAKE Then
+				DataOut("DO Next is not Snake", $Map[$what][$x1][$y1])
+				$g_bdNext[$s_bdCycle] = $M1 ; -1 no active if active cycle count down
+			Else
 				$Map[$what][$x1][$y1] = $BLOOD
 				GUICtrlSetImage($Map[$ctrl][$x1][$y1], $cBLOOD)
 			EndIf
@@ -669,10 +723,10 @@ Func DoBlood()
 
 EndFunc   ;==>DoBlood
 #CS INFO
-	70303 V1 6/19/2019 2:58:37 AM
+	154557 V2 6/19/2019 11:41:56 AM V1 6/19/2019 2:58:37 AM
 #CE
 
-Func StartBlood($inX, $inY) ;~~
+Func StartBlood($inX, $inY) ;~~  .28, .29
 	Local $x, $y
 
 	;Global $g_bdPrev[4] ;Cycle, CycleStr , X, Y Pre 2,3
@@ -693,7 +747,7 @@ Func StartBlood($inX, $inY) ;~~
 	;Save in Prev  Active Cycle
 	$g_bdPrev[$s_bdX] = $x
 	$g_bdPrev[$s_bdY] = $y
-	$g_bdPrev[$s_bdCycle] = 4 ; -1 no active if active cycle count down
+	$g_bdPrev[$s_bdCycle] = $s_delay
 
 	;clear nx
 	$Map[$nxX][$x][$y] = 0
@@ -701,21 +755,32 @@ Func StartBlood($inX, $inY) ;~~
 
 	$Map[$what][$x][$y] = $BLOOD
 	GUICtrlSetImage($Map[$ctrl][$x][$y], $cBLOOD)
+	;-----------------------------end prev
 
-	;	ShowRow($x, $y)
-	;	pause()
-
+	;-------------------------start old tail
 	;This one will be the new end.  The old end will be bdStart2
 
 	$x = $x_end
 	$y = $y_end
 	;ShowRow($x, $y)
-;~~~~~~~~~~~~~~~~
+
+	;Save in Next  Active Cycle
+	$g_bdNext[$s_bdX] = $x
+	$g_bdNext[$s_bdY] = $y
+	$g_bdNext[$s_bdCycle] = $s_delay + 1 ;offset
+
+	;Clear prv   Not sure I need to do this
 	$Map[$prX][$x][$y] = 0
 	$Map[$prY][$x][$y] = 0
 
+	;Add blood to old tail
 	$Map[$what][$x][$y] = $BLOOD
 	GUICtrlSetImage($Map[$ctrl][$x][$y], $cBLOOD)
+
+	;--------------------end old tail
+
+	;	ShowRow($x, $y)
+	;	pause()
 
 	;	ShowRow($x, $y)
 
@@ -737,9 +802,6 @@ Func StartBlood($inX, $inY) ;~~
 
 	;ShowRow($x, $y)
 
-	$g_bdNext[$s_bdX] = $x
-	$g_bdNext[$s_bdY] = $y
-
 	$x_end = $x
 	$y_end = $y
 
@@ -748,7 +810,7 @@ Func StartBlood($inX, $inY) ;~~
 	Return True
 EndFunc   ;==>StartBlood
 #CS INFO
-	123247 V1 6/19/2019 2:58:37 AM
+	136110 V2 6/19/2019 11:41:56 AM V1 6/19/2019 2:58:37 AM
 #CE
 
 Func ShowRow($x, $y)
@@ -1177,7 +1239,7 @@ EndFunc   ;==>ReadHiScore
 
 ;Main
 Main()
-;FileDelete($s_ini)
+FileDelete($s_ini)
 Exit
 Func StartForm()
 	Local $Form1, $Group1
@@ -1281,4 +1343,4 @@ EndFunc   ;==>StartForm
 	213938 V13 6/16/2019 10:16:04 AM V12 6/12/2019 12:36:42 PM V11 6/9/2019 5:40:22 PM V10 6/6/2019 11:09:42 PM
 #CE
 
-;~T ScriptFunc.exe V0.54a 15 May 2019 - 6/19/2019 2:58:37 AM
+;~T ScriptFunc.exe V0.54a 15 May 2019 - 6/19/2019 11:41:56 AM
