@@ -5,7 +5,7 @@ Global Static $MESSAGE = True ;Define then DataOut will show in script or compil
 ;Global Static $MESSAGE =  False   ;Pause will still work in script  No Dataout
 
 ; Must be Declared before _Prf_startup
-Global $ver = "0.29 19 Jun 2019 just do 2nd blood old tail"
+Global $ver = "0.31 20 Jun 2019 Lost Focus Stop Game"
 
 If @Compiled = 0 Then
 	Global Static $useLog = True
@@ -22,7 +22,7 @@ If $TESTING Then
 EndIf
 
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
-#AutoIt3Wrapper_Res_Fileversion=0.0.2.9
+#AutoIt3Wrapper_Res_Fileversion=0.0.3.1
 #AutoIt3Wrapper_Icon=R:\!Autoit\Ico\prf.ico
 #AutoIt3Wrapper_Res_Description=Another snake game
 #AutoIt3Wrapper_Res_LegalCopyright=© Phillip Forrestal 2019
@@ -83,10 +83,13 @@ EndIf
 	OUCH
 	Score -value after eat me
 	-value end game messsage about snake not beening feed right.
+	Last part of blood  new tail beedling
 
 	Problem
 	Bounce off wall fails to see snake there
 
+	0.31 20 Jun 2019  Lost Focus Stop Game
+	0.30 20 Jun 2019 If PIC file missing  add warning and exit
 	0.29 19 Jun 2019 just do 2nd blood old tail
 	0.28 19 Jun 2019 just do first blood
 	0.27 17 Jun 2019 Start Eat snake across bloody
@@ -134,8 +137,8 @@ Static $s_ini = @WorkingDir & "\snake.ini"
 Static $WALL = -1
 Static $cEDGE = $s_pic & "Edge.jpg"
 Static $EMPTY = 0
-Static $cEMPTY1 = $s_pic & "blue.jpg"
-Static $cEMPTY = $s_pic & "black.jpg"
+Static $cEMPTY = $s_pic & "blue.jpg"
+;Static $cEMPTY = $s_pic & "black.jpg"
 Static $SNAKE = 1
 Static $cSNAKE = $s_pic & "gold.jpg"
 Static $FOOD = 10
@@ -215,26 +218,29 @@ $g_bdPrev[$s_bdCycle] = $M1
 $g_bdNext[$s_bdCycle] = $M1
 
 Global $g_bdEnd ;Cycle
-
 $g_bdEnd = $M1
+
+;.31
+Global $g_Focus = "Snake19 - " & $ver
+DataOut($g_Focus)
 
 ; Main is call at end
 Func Main()
-	;	If Not $TESTING Then
-
-	If True Then
-		Do
-			If StartForm() Then
-				Return
-			EndIf
-			Game()
-		Until False
-	Else
-		Game()
+	If Not FileExists($cSNAKE) Then
+		MsgBox(0, "Problem Pictures", $s_pic & " Folder missing. Should 6 color JPG in it")
+		Return
 	EndIf
+
+	Do
+		If StartForm() Then
+			Return
+		EndIf
+		Game()
+	Until False
+
 EndFunc   ;==>Main
 #CS INFO
-	10317 V10 6/5/2019 11:59:45 PM V9 6/5/2019 2:01:25 AM V8 6/2/2019 1:14:05 AM V7 5/31/2019 6:26:23 PM
+	16494 V11 6/20/2019 9:30:52 PM V10 6/5/2019 11:59:45 PM V9 6/5/2019 2:01:25 AM V8 6/2/2019 1:14:05 AM
 #CE
 
 Func Game()
@@ -400,7 +406,6 @@ Func Game()
 		If $L_dirx = 0 And $L_diry = 0 Then
 			ContinueLoop
 		EndIf
-		;DataOut($x_new, $y_new)
 
 		If $g_GameWhich = 1 Then ; 0 Normal, 1 Mine
 
@@ -449,8 +454,8 @@ Func Game()
 						EndIf
 					Else
 
-						dataout($x_new, $y_new)
-						dataout($x_new + $L_dirx, $y_new + $L_diry)
+						;dataout($x_new, $y_new)
+						;dataout($x_new + $L_dirx, $y_new + $L_diry)
 
 ;~~ 0.28, 0.29
 						If StartBlood($x_new + $L_dirx, $y_new + $L_diry) = False Then
@@ -632,7 +637,34 @@ Func Game()
 
 EndFunc   ;==>Game
 #CS INFO
-	596755 V21 6/19/2019 11:41:56 AM V20 6/19/2019 2:58:37 AM V19 6/16/2019 10:16:04 AM V18 6/12/2019 12:36:42 PM
+	594836 V22 6/20/2019 9:30:52 PM V21 6/19/2019 11:41:56 AM V20 6/19/2019 2:58:37 AM V19 6/16/2019 10:16:04 AM
+#CE
+
+Func Tick() ;
+	Local $fdiff = -1
+
+	If $g_Focus <> WinGetTitle("[ACTIVE]") Then
+		Status(0, "Lost Focus - Pause", 1)
+		While $g_Focus <> WinGetTitle("[ACTIVE]")
+			Sleep(1000)
+		WEnd
+		Status(0, "Found Focus - Wait 3 seconds", 4)
+		Sleep(3000)
+		MouseMove(0, 0, 0)
+		Status(0, "", 0)
+	EndIf
+
+	While 1
+		$fdiff = TimerDiff($g_hTick)
+		;If $fdiff > 1000 then ;150 Then ;150
+		If $fdiff > 150 Then ;150
+			ExitLoop
+		EndIf
+	WEnd
+	$g_hTick = TimerInit()
+EndFunc   ;==>Tick
+#CS INFO
+	29211 V4 6/20/2019 9:30:52 PM V3 6/3/2019 10:34:22 AM V2 5/30/2019 10:14:46 AM V1 5/30/2019 1:07:20 AM
 #CE
 
 ;~~ .28 .29
@@ -680,10 +712,9 @@ Func DoBlood()
 	;$g_bdNext[$s_bdCycle] = 6 ; -1 no active if active cycle count down  start slower
 	;.29
 	If $g_bdNext[$s_bdCycle] > $M1 Then ;  active cycle count down
-		dataout("NEXT started")
+
 		$g_bdNext[$s_bdCycle] -= 1
 		If $g_bdNext[$s_bdCycle] = 0 Then ; do move
-			dataout("Next zero")
 
 			$x = $g_bdNext[$s_bdX]
 			$y = $g_bdNext[$s_bdY]
@@ -723,7 +754,7 @@ Func DoBlood()
 
 EndFunc   ;==>DoBlood
 #CS INFO
-	154557 V2 6/19/2019 11:41:56 AM V1 6/19/2019 2:58:37 AM
+	150810 V3 6/20/2019 9:30:52 PM V2 6/19/2019 11:41:56 AM V1 6/19/2019 2:58:37 AM
 #CE
 
 Func StartBlood($inX, $inY) ;~~  .28, .29
@@ -828,22 +859,6 @@ EndFunc   ;==>ShowRow
 	10527 V1 6/16/2019 10:16:04 AM
 #CE
 
-Func Tick() ;
-	Local $fdiff = -1
-
-	While 1
-		$fdiff = TimerDiff($g_hTick)
-		;If $fdiff > 1000 then ;150 Then ;150
-		If $fdiff > 150 Then ;150
-			ExitLoop
-		EndIf
-	WEnd
-	$g_hTick = TimerInit()
-EndFunc   ;==>Tick
-#CS INFO
-	13561 V3 6/3/2019 10:34:22 AM V2 5/30/2019 10:14:46 AM V1 5/30/2019 1:07:20 AM
-#CE
-
 Func Status($status, $string, $color)
 	Local $c
 	;dataout($status, $string)
@@ -911,7 +926,7 @@ Func DoubleBackWall(ByRef $dirx, ByRef $diry) ; ~~
 
 	;new+dir  is one back.
 	; Find which X or Y which is the same, then random _+ one on there
-	DataOut($dirx, $diry)
+	;DataOut($dirx, $diry)
 	If $dirx = 0 Then
 		$a = Random(0, 1, 1)
 		If $a = 0 Then
@@ -952,14 +967,14 @@ Func DoubleBackWall(ByRef $dirx, ByRef $diry) ; ~~
 
 EndFunc   ;==>DoubleBackWall
 #CS INFO
-	64509 V1 6/12/2019 12:36:42 PM
+	64568 V2 6/20/2019 9:30:52 PM V1 6/12/2019 12:36:42 PM
 #CE
 
 Func DoubleBack($dirx, $diry)
 	Local $a, $flag
 	;new+dir  is one back.
 	; Find which X or Y which is the same, then random _+ one on there
-	DataOut($dirx, $diry)
+	;DataOut($dirx, $diry)
 	If $dirx = 0 Then
 		$a = Random(0, 1, 1)
 		If $a = 0 Then
@@ -1001,7 +1016,7 @@ Func DoubleBack($dirx, $diry)
 
 EndFunc   ;==>DoubleBack
 #CS INFO
-	54236 V1 6/9/2019 1:07:49 PM
+	54295 V2 6/20/2019 9:30:52 PM V1 6/9/2019 1:07:49 PM
 #CE
 
 Func PrevNext($x, $y) ;New value
@@ -1099,7 +1114,7 @@ Func ClearBoard()
 					$var = $cEDGE
 				Case Else
 					$Map[$what][$x][$y] = $EMPTY ; empty
-					$var = $cEMPTY1
+					$var = $cEMPTY
 			EndSelect
 			GUICtrlSetImage($Map[$ctrl][$x][$y], $var)
 		Next
@@ -1107,7 +1122,7 @@ Func ClearBoard()
 
 EndFunc   ;==>ClearBoard
 #CS INFO
-	24397 V8 6/12/2019 12:36:42 PM V7 6/3/2019 1:09:45 AM V6 6/2/2019 7:12:26 PM V5 6/2/2019 1:14:05 AM
+	24348 V9 6/20/2019 9:30:52 PM V8 6/12/2019 12:36:42 PM V7 6/3/2019 1:09:45 AM V6 6/2/2019 7:12:26 PM
 #CE
 
 Func NormalExtra()
@@ -1237,10 +1252,6 @@ EndFunc   ;==>ReadHiScore
 	69341 V4 6/16/2019 10:16:04 AM V3 6/5/2019 11:59:45 PM V2 6/5/2019 2:01:25 AM V1 6/4/2019 8:01:23 PM
 #CE
 
-;Main
-Main()
-FileDelete($s_ini)
-Exit
 Func StartForm()
 	Local $Form1, $Group1
 	Local $Radio3, $Checkbox1, $b_start
@@ -1291,6 +1302,7 @@ Func StartForm()
 
 	Local $Edit1 = GUICtrlCreateEdit("", 20, $b, 550, 250)
 	GUICtrlSetData($Edit1, "Press ESC to quit." & @CRLF, 1)
+	GUICtrlSetData($Edit1, "If you lose Focus the game will PAUSE" & @CRLF, 1)
 	GUICtrlSetData($Edit1, @CRLF, 1)
 
 	GUICtrlSetData($Edit1, "Normal" & @CRLF, 1)
@@ -1340,7 +1352,14 @@ Func StartForm()
 
 EndFunc   ;==>StartForm
 #CS INFO
-	213938 V13 6/16/2019 10:16:04 AM V12 6/12/2019 12:36:42 PM V11 6/9/2019 5:40:22 PM V10 6/6/2019 11:09:42 PM
+	219432 V14 6/20/2019 9:39:13 PM V13 6/16/2019 10:16:04 AM V12 6/12/2019 12:36:42 PM V11 6/9/2019 5:40:22 PM
 #CE
 
-;~T ScriptFunc.exe V0.54a 15 May 2019 - 6/19/2019 11:41:56 AM
+;Main
+Main()
+If Not $TESTING Then
+	FileDelete($s_ini)
+EndIf
+Exit
+
+;~T ScriptFunc.exe V0.54a 15 May 2019 - 6/20/2019 9:39:13 PM
