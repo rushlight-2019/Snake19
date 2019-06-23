@@ -5,7 +5,7 @@ Global Static $MESSAGE = True ;Define then DataOut will show in script or compil
 ;Global Static $MESSAGE =  False   ;Pause will still work in script  No Dataout
 
 ; Must be Declared before _Prf_startup
-Global $ver = "0.31 20 Jun 2019 Lost Focus Stop Game"
+Global $ver = "0.32 22 Jun 2019 Internal changes"
 
 If @Compiled = 0 Then
 	Global Static $useLog = True
@@ -18,11 +18,11 @@ EndIf
 Global $CantDie
 $CantDie = False
 If $TESTING Then
-	$CantDie = True
+	;$CantDie = True
 EndIf
 
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
-#AutoIt3Wrapper_Res_Fileversion=0.0.3.1
+#AutoIt3Wrapper_Res_Fileversion=0.0.3.2
 #AutoIt3Wrapper_Icon=R:\!Autoit\Ico\prf.ico
 #AutoIt3Wrapper_Res_Description=Another snake game
 #AutoIt3Wrapper_Res_LegalCopyright=© Phillip Forrestal 2019
@@ -88,7 +88,13 @@ EndIf
 	Problem
 	Bounce off wall fails to see snake there
 
-	0.31 20 Jun 2019  Lost Focus Stop Game
+	Jun 2019 TESTING 2 food
+
+	Create Testing
+	Create Hard to die
+
+	0.32 22 Jun 2019 Internal changes
+	0.31 20 Jun 2019 Lost Focus Stop Game
 	0.30 20 Jun 2019 If PIC file missing  add warning and exit
 	0.29 19 Jun 2019 just do 2nd blood old tail
 	0.28 19 Jun 2019 just do first blood
@@ -166,14 +172,13 @@ Static $num = 6 ;	6 = snake cell number
 Global $Map[7][$g_bx][$g_by]
 ;$Map[$what][x][y]
 
-Global $count
+Global $g_SnakeCount
 Global $x_new
 Global $y_new
 Global $x_end
 Global $y_end
 
-Global $g_foodX
-Global $g_foodY
+Global $g_foodCnt = 1
 
 Global $g_hTick
 
@@ -199,8 +204,8 @@ Global $g_ScoreFood
 
 Global $g_Status0Off = 1000
 ; Size can be zero at the begin so once size is > 0 then hunger is active.
-Global $RemoveBegining = False
-Global $Mouse = 0
+Global $g_RemoveBegining = False
+Global $g_Mouse = 0
 
 ;0.27+  ~~
 Static $s_bdCycle = 0 ;No active -1, 1 or 0
@@ -223,6 +228,20 @@ $g_bdEnd = $M1
 ;.31
 Global $g_Focus = "Snake19 - " & $ver
 DataOut($g_Focus)
+
+;0.32  Taking types out of game loop put into function
+Global $g_endgame = False
+Global $g_gChange, $g_gChangeHalf
+Static $s_gChange = 3
+Global $g_gHunger
+Global $g_gHungerCnt
+Static $g_gHungerStr = 50
+Global $g_turnBonus
+Static $g_turnBonusStr = 6
+Global $g_turnNo
+Global $g_turnLast
+Global $g_dirX
+Global $g_dirY
 
 ; Main is call at end
 Func Main()
@@ -252,20 +271,9 @@ Func Game()
 	Local Static $L_idUp
 	Local Static $L_idEsc
 
-	Local $L_dirx
-	Local $L_diry
-	Local $L_change, $L_changeHalf
-	Static $L_ChangeStr = 3
 	Local $a, $b
-	Local $L_ScoreLast = 0
 
-	Local $L_turnNo, $L_turnLast
-	Local $L_turnBonus
-	Static $L_turnBonusStr = 6
-
-	Local $L_Hunger
-	Local $L_HungerCnt
-	Static $L_HungerStr = 50
+	$g_turnBonus = $g_turnBonusStr + 1 ; The way it start with 1 turn on start. To fix start with +1
 
 	If $g_ctrlBoard = -1 Then
 
@@ -302,11 +310,8 @@ Func Game()
 	EndIf
 	GUISetState(@SW_SHOW, $g_ctrlBoard)
 
-	$L_dirx = 0
-	$L_diry = 0
-	$L_change = 0 ; change $g_cnt  snake lenght
-
-	$L_changeHalf = $L_ChangeStr
+	$g_dirX = 0
+	$g_dirY = 0
 
 	Status(1, "", 0)
 	Status(0, "", 0)
@@ -316,19 +321,20 @@ Func Game()
 
 	;Default before start
 	DataOut("New Game")
-	$L_turnLast = 0
+	$g_turnLast = 0
 	$g_ScoreTurn = 0
 	$g_ScoreFood = 0
-	$count = 1
+	$g_SnakeCount = 1
 	$g_iScore = 0
-	$L_turnBonus = $L_turnBonusStr + 1 ; The way it start with 1 turn on start. To fix start with +1
+	$g_gChange = 0
+	$g_gChangeHalf = 0
+	$g_foodCnt = 1
 
-	$L_HungerCnt = 0
-	$L_Hunger = 1000
-	$L_ScoreLast = 0
+	$g_gHungerCnt = 0
+	$g_gHunger = 1000
 
 	; Size can be zero at the begin so once size is > 0 then hunger is active.
-	$RemoveBegining = False
+	$g_RemoveBegining = False
 
 	;.29
 	$g_bdPrev[$s_bdCycle] = $M1
@@ -340,12 +346,13 @@ Func Game()
 
 	If $CantDie Then
 		$g_ScoreFood = 40
-		$L_change = 100
+		$g_gChange = 100
 	EndIf
 
-	$g_hTick = TimerInit()
+	$g_endgame = False
 
-	While 1 ; Game Loop
+	$g_hTick = TimerInit()
+	Do ;game Loop
 		Tick()
 
 		;Blood Loop ~~
@@ -366,270 +373,62 @@ Func Game()
 				Case $L_idLeft
 					Do
 					Until GUIGetMsg() <> $L_idLeft
-					$L_turnNo = 1
-					$L_dirx = -1
-					$L_diry = 0
+					$g_turnNo = 1
+					$g_dirX = -1
+					$g_dirY = 0
 
 				Case $L_idRight
 					Do
 					Until GUIGetMsg() <> $L_idRight
-					$L_turnNo = 2
-					$L_dirx = 1
-					$L_diry = 0
+					$g_turnNo = 2
+					$g_dirX = 1
+					$g_dirY = 0
 
 				Case $L_idUp
 
 					Do
 					Until GUIGetMsg() <> $L_idUp
-					$L_turnNo = 3
-					$L_dirx = 0
-					$L_diry = -1
+					$g_turnNo = 3
+					$g_dirX = 0
+					$g_dirY = -1
 
 				Case $L_idDown
 					Do
 					Until GUIGetMsg() <> $L_idDown
-					$L_turnNo = 4
-					$L_dirx = 0
-					$L_diry = 1
+					$g_turnNo = 4
+					$g_dirX = 0
+					$g_dirY = 1
 
 			EndSwitch
-			If $L_turnNo <> $L_turnLast Then
-				$L_turnLast = $L_turnNo
+			If $g_turnNo <> $g_turnLast Then
+				$g_turnLast = $g_turnNo
 				$g_ScoreTurn += 1
-				$L_turnBonus -= 1
+				$g_turnBonus -= 1
 			EndIf
 
 		Else
 			Do
 			Until GUIGetMsg() = 0
 		EndIf
-		If $L_dirx = 0 And $L_diry = 0 Then
+		If $g_dirX = 0 And $g_dirY = 0 Then
 			ContinueLoop
 		EndIf
 
-		If $g_GameWhich = 1 Then ; 0 Normal, 1 Mine
+		Switch $g_GameWhich
+			Case 1
+				Extra()
+			Case 0
+				Normal()
+		EndSwitch
 
-			;EXTRA
-			Switch $Map[$what][$x_new + $L_dirx][$y_new + $L_diry]
-				Case $WALL
-					dataout("WALL")
-					dataout($CantDie)
-					If $CantDie Then
-						; Check  prev to be the same  last location
-						DataOut("Eat wall Double back on self")
-						DataOut($x_new, $y_new)
-						DataOut($Map[$prX][$x_new][$y_new], $Map[$prY][$x_new][$y_new])
-
-						;	If $Map[$prX][$x_new][$y_new] = $x_new  And $Map[$prY][$x_new][$y_new] = $y_new  Then ; Double back
-						DataOut("Eat wall Double back on self")
-
-						$flag = DoubleBackWall($L_dirx, $L_diry)
-						If $flag Then
-							Status(0, "Double back", 3)
-							$L_change -= 2
-							$g_iScore -= 100
-						Else
-							Status(0, "Ate Wallf", 1)
-							ExitLoop
-						EndIf
-						;	EndIf
-					Else
-						Status(0, "Ate wall", 1)
-						ExitLoop
-					EndIf
-
-				Case $SNAKE
-
-					; Check  prev to be the same  last location
-					If $Map[$prX][$x_new][$y_new] = $x_new + $L_dirx And $Map[$prY][$x_new][$y_new] = $y_new + $L_diry Then ; Double back
-						DataOut("Eat me Double back on self")
-						$flag = DoubleBack($L_dirx, $L_diry)
-						If $flag Then
-							Status(0, "Double back", 3)
-							$L_change -= 5
-							$g_iScore -= 100
-						Else
-							Status(0, "Ate self", 1)
-							ExitLoop
-						EndIf
-					Else
-
-						;dataout($x_new, $y_new)
-						;dataout($x_new + $L_dirx, $y_new + $L_diry)
-
-;~~ 0.28, 0.29
-						If StartBlood($x_new + $L_dirx, $y_new + $L_diry) = False Then
-							Status(0, "Ate self to many times", 1)
-							ExitLoop
-						EndIf
-
-						PrevNext($x_new + $L_dirx, $y_new + $L_diry) ;New value
-
-						;ShowRow($x_new, $y_new)
-						;ShowRow($x_new + $L_dirx, $y_new + $L_diry)
-
-						;	Status(0, "Ate self", 1)
-						;	ExitLoop
-					EndIf
-
-				Case $FOOD
-					$g_ScoreFood += 1
-
-					$L_Hunger = ($L_HungerStr * 2) - $g_ScoreFood
-					If $L_Hunger < 30 Then
-						$L_Hunger = 30
-					EndIf
-					$L_HungerCnt = 0
-					dataout("$L_Hunger at food", $L_Hunger)
-
-					Switch $L_turnBonus
-						Case 6, 5, 4
-							$L_change += 3
-							$g_iScore += 100
-							Status(0, "Turn bonus 100 Snake 3", 4)
-						Case 3
-							$L_change += 2
-							$g_iScore += 80
-							Status(0, "Turn bonus 80 Snake 2", 4)
-						Case 2
-							$L_change += 2
-							$g_iScore += 60
-							Status(0, "Turn bonus 60 Snake 2", 4)
-						Case 1
-							$L_change += 1
-							$g_iScore += 30
-							Status(0, "Turn bonus 30 Snake 1", 4)
-						Case 0
-							$g_iScore += 10
-							Status(0, "Turn bonus 10", 4)
-						Case Else
-							Status(0, "", 0)
-					EndSwitch
-
-					$L_turnBonus = $L_turnBonusStr
-					$L_change += 1 ; doing this way because furture versions might not be one ***************************
-
-					;RemoveFood()  NOT needed because  snake will over write with out looking
-					AddFood()
-					PrevNext($x_new + $L_dirx, $y_new + $L_diry) ;New value
-
-				Case $EMPTY
-
-					If $g_Status0Off = 0 Then
-						Status(0, "", 0)
-					EndIf
-					$g_Status0Off -= 1
-
-					If $L_Hunger = 0 Then
-						$L_HungerCnt += 1
-						Status(0, "Hungery - " & $L_HungerCnt & " Snake shorter", 3)
-						$g_Status0Off = 50
-
-						$L_Hunger = $L_HungerStr - $L_HungerCnt
-						If $L_Hunger < 30 Then
-							$L_Hunger = 30
-						EndIf
-						Dataout($L_Hunger, "$L_Hunger")
-
-						$g_iScore -= $L_HungerCnt
-						$L_change -= $L_HungerCnt
-						dataout($L_HungerCnt, "$L_HungerCnt")
-
-					Else
-						$L_Hunger -= 1
-					EndIf
-
-					PrevNext($x_new + $L_dirx, $y_new + $L_diry) ;New value
-
-					;Check to see if snake grow longer or shorter
-					;Dataout("Change", $L_change)
-
-					If $L_change = 0 Then
-						RemoveSnake()
-					ElseIf $L_change > 0 Then ; snake get longer don't remove end
-						Switch $L_changeHalf
-							Case 0
-								$L_change -= 1
-								$L_changeHalf = $L_ChangeStr
-							Case Else
-								RemoveSnake()
-								$L_changeHalf -= 1
-						EndSwitch
-
-					ElseIf $L_change < 0 Then ; snake get shorter remove end twice
-						Switch $L_changeHalf
-							Case 0
-								$L_change += 1
-								$L_changeHalf = $L_ChangeStr
-								If RemoveSnake() Then
-									ExitLoop ;no snake
-								EndIf
-								If RemoveSnake() Then
-									ExitLoop ;no snake
-								EndIf
-							Case Else
-								$L_changeHalf -= 1
-								RemoveSnake()
-						EndSwitch
-					EndIf
-
-			EndSwitch
-
-			;Score
-			$a = $Map[$num][$x_new][$y_new] - $Map[$num][$x_end][$y_end] + 1
-			If $L_ScoreLast <> $a Then
-				$L_ScoreLast = $a
-				Status(1, "Snake length: " & $a & " Score: " & $a + $g_iScore, 2)
-			EndIf
-
-		Else ;Normal
-
-			Switch $Map[$what][$x_new + $L_dirx][$y_new + $L_diry]
-				Case $WALL ;Normal Wall
-					Status(0, "Ate wall", 1)
-					ExitLoop
-
-				Case $SNAKE ;Normal
-					Status(0, "Ate self", 1)
-					ExitLoop
-
-				Case $FOOD ;Normal
-					$g_ScoreFood += 1
-
-					; Normal is 1 which adds below						$L_change += 1 ; doing this way because furture versions might not be one ***************************
-
-					;RemoveFood()  NOT needed because  snake will over write with out looking
-					AddFood()
-					PrevNext($x_new + $L_dirx, $y_new + $L_diry) ;New value
-
-				Case $EMPTY ;Normal
-
-					If $g_Status0Off = 0 Then
-						Status(0, "", 0)
-					EndIf
-					$g_Status0Off -= 1
-
-					PrevNext($x_new + $L_dirx, $y_new + $L_diry) ;New value
-					RemoveSnake()
-
-			EndSwitch
-			;Score NORMAL
-			$a = $Map[$num][$x_new][$y_new] - $Map[$num][$x_end][$y_end] + 1
-			If $L_ScoreLast <> $a Then
-				$L_ScoreLast = $a
-				Status(1, "Snake length: " & $a, 2)
-			EndIf
-
-			; END NORMAL
-		EndIf
-
-	WEnd
+	Until $g_endgame
 
 	GUISetAccelerators(1, $g_ctrlBoard) ; Turn off Accelerator
+
 	If $g_GameWhich = 0 Then ; 0 Normal, 1 Mine
-		$g_iScore = $a
+
 	Else
-		$g_iScore += $Map[$num][$x_new][$y_new] - $Map[$num][$x_end][$y_end] + 1
+
 	EndIf
 
 	UpDateHiScore()
@@ -637,7 +436,7 @@ Func Game()
 
 EndFunc   ;==>Game
 #CS INFO
-	594836 V22 6/20/2019 9:30:52 PM V21 6/19/2019 11:41:56 AM V20 6/19/2019 2:58:37 AM V19 6/16/2019 10:16:04 AM
+	239244 V24 6/22/2019 7:09:09 PM V23 6/22/2019 3:41:30 AM V22 6/20/2019 9:30:52 PM V21 6/19/2019 11:41:56 AM
 #CE
 
 Func Tick() ;
@@ -664,7 +463,249 @@ Func Tick() ;
 	$g_hTick = TimerInit()
 EndFunc   ;==>Tick
 #CS INFO
-	29211 V4 6/20/2019 9:30:52 PM V3 6/3/2019 10:34:22 AM V2 5/30/2019 10:14:46 AM V1 5/30/2019 1:07:20 AM
+	30452 V5 6/22/2019 3:41:30 AM V4 6/20/2019 9:30:52 PM V3 6/3/2019 10:34:22 AM V2 5/30/2019 10:14:46 AM
+#CE
+
+; $g_iscore is extra + length
+Func Extra()
+	Local $a
+	Local Static $LS_ScoreLast
+	Local $flag
+
+	;EXTRA
+	Switch $Map[$what][$x_new + $g_dirX][$y_new + $g_dirY]
+		Case $WALL
+			dataout("WALL")
+			dataout($CantDie)
+			If $CantDie Then
+				; Check  prev to be the same  last location
+				DataOut("Eat wall Double back on self")
+				DataOut($x_new, $y_new)
+				DataOut($Map[$prX][$x_new][$y_new], $Map[$prY][$x_new][$y_new])
+
+				;	If $Map[$prX][$x_new][$y_new] = $x_new  And $Map[$prY][$x_new][$y_new] = $y_new  Then ; Double back
+				DataOut("Eat wall Double back on self")
+
+				$flag = DoubleBackWall($g_dirX, $g_dirY)
+				If $flag Then
+					Status(0, "Double back", 3)
+					$g_gChange -= 2
+					$g_iScore -= 100
+				Else
+					Status(0, "Ate Wallf", 1)
+					$g_endgame = True
+					Return
+				EndIf
+				;	EndIf
+			Else
+				Status(0, "Ate wall", 1)
+				$g_endgame = True
+				Return
+
+			EndIf
+
+		Case $SNAKE
+
+			; Check  prev to be the same  last location
+			If $Map[$prX][$x_new][$y_new] = $x_new + $g_dirX And $Map[$prY][$x_new][$y_new] = $y_new + $g_dirY Then ; Double back
+				DataOut("Eat me Double back on self")
+				$flag = DoubleBack($g_dirX, $g_dirY)
+				If $flag Then
+					Status(0, "Double back", 3)
+					$g_gChange -= 5
+					$g_iScore -= 100
+				Else
+					Status(0, "Ate self", 1)
+					$g_endgame = True
+					Return
+				EndIf
+			Else
+
+				;dataout($x_new, $y_new)
+				;dataout($x_new + $g_dirX, $y_new + $g_dirY)
+
+;~~ 0.28, 0.29
+				If StartBlood($x_new + $g_dirX, $y_new + $g_dirY) = False Then
+					Status(0, "Ate self to many times", 1)
+					$g_endgame = True
+					Return
+
+				EndIf
+
+				PrevNext($x_new + $g_dirX, $y_new + $g_dirY) ;New value
+
+				;ShowRow($x_new, $y_new)
+				;ShowRow($x_new + $g_dirX, $y_new + $g_dirY)
+
+				;	Status(0, "Ate self", 1)
+				;	ExitLoop
+			EndIf
+
+		Case $FOOD
+			$g_ScoreFood += 1
+
+			$g_gHunger = ($g_gHungerStr * 2) - $g_ScoreFood
+			If $g_gHunger < 30 Then
+				$g_gHunger = 30
+			EndIf
+			$g_gHungerCnt = 0
+			dataout("$g_gHunger at food", $g_gHunger)
+
+			Switch $g_turnBonus
+				Case 6, 5, 4
+					$g_gChange += 3
+					$g_iScore += 100
+					Status(0, "Turn bonus 100 Snake 3", 4)
+				Case 3
+					$g_gChange += 2
+					$g_iScore += 80
+					Status(0, "Turn bonus 80 Snake 2", 4)
+				Case 2
+					$g_gChange += 2
+					$g_iScore += 60
+					Status(0, "Turn bonus 60 Snake 2", 4)
+				Case 1
+					$g_gChange += 1
+					$g_iScore += 30
+					Status(0, "Turn bonus 30 Snake 1", 4)
+				Case 0
+					$g_iScore += 10
+					Status(0, "Turn bonus 10", 4)
+				Case Else
+					Status(0, "", 0)
+			EndSwitch
+
+			$g_turnBonus = $g_turnBonusStr
+			$g_gChange += 1 ; doing this way because furture versions might not be one ***************************
+
+			;RemoveFood()  NOT needed because  snake will over write with out looking
+			AddFood()
+			PrevNext($x_new + $g_dirX, $y_new + $g_dirY) ;New value
+
+		Case $EMPTY
+
+			If $g_Status0Off = 0 Then
+				Status(0, "", 0)
+			EndIf
+			$g_Status0Off -= 1
+
+			If $g_gHunger = 0 Then
+				$g_gHungerCnt += 1
+				Status(0, "Hungery - " & $g_gHungerCnt & " Snake shorter", 3)
+				$g_Status0Off = 50
+
+				$g_gHunger = $g_gHungerStr - $g_gHungerCnt
+				If $g_gHunger < 30 Then
+					$g_gHunger = 30
+				EndIf
+				Dataout($g_gHunger, "$g_gHunger")
+
+				$g_iScore -= $g_gHungerCnt
+				$g_gChange -= $g_gHungerCnt
+				dataout($g_gHungerCnt, "$g_gHungerCnt")
+
+			Else
+				$g_gHunger -= 1
+			EndIf
+
+			PrevNext($x_new + $g_dirX, $y_new + $g_dirY) ;New value
+
+			;Check to see if snake grow longer or shorter
+			If $g_gChange = 0 Then
+				RemoveSnake()
+			ElseIf $g_gChange > 0 Then ; snake get longer don't remove end
+				Switch $g_gChangeHalf
+					Case 0
+						$g_gChange -= 1
+						$g_gChangeHalf = $s_gChange
+					Case Else
+						RemoveSnake() ;Same size
+						$g_gChangeHalf -= 1
+				EndSwitch
+
+			ElseIf $g_gChange < 0 Then ; snake get shorter remove end twice
+				Switch $g_gChangeHalf
+					Case 0
+						$g_gChange += 1
+						$g_gChangeHalf = $s_gChange
+						If RemoveSnake() Then ;one smaller
+							$g_endgame = True
+							Return ;no snake
+						EndIf
+						If RemoveSnake() Then
+							$g_endgame = True
+							Return ;no snake
+						EndIf
+					Case Else
+						$g_gChangeHalf -= 1
+						RemoveSnake() ;same size
+				EndSwitch
+			EndIf
+
+	EndSwitch
+
+	;Score
+
+	$a = $Map[$num][$x_new][$y_new] - $Map[$num][$x_end][$y_end] + 1
+	If $LS_ScoreLast <> $g_iScore + $a Then
+		$LS_ScoreLast = $g_iScore + $a
+		If $Testing Then
+			Status(1, "Snake length: " & $a & " Score: " & $g_iScore & " (" & $g_iScore + $a & ")", 2)
+		Else
+			Status(1, "Snake length: " & $a & " Score: " & $g_iScore + $a, 2)
+		EndIf
+	EndIf
+
+EndFunc   ;==>Extra
+#CS INFO
+	295703 V1 6/22/2019 7:09:09 PM
+#CE
+
+Func Normal()
+	Local Static $LS_ScoreLast = 0
+
+	Switch $Map[$what][$x_new + $g_dirX][$y_new + $g_dirY]
+		Case $WALL ;Normal Wall
+			Status(0, "Ate wall", 1)
+			$g_endgame = True
+			Return
+
+		Case $SNAKE ;Normal
+			Status(0, "Ate self", 1)
+			$g_endgame = True
+			Return
+
+		Case $FOOD ;Normal
+			$g_ScoreFood += 1
+
+			; Normal is 1 which adds below						$L_change += 1 ; doing this way because furture versions might not be one ***************************
+
+			;RemoveFood()  NOT needed because  snake will over write with out looking
+			AddFood()
+			PrevNext($x_new + $g_dirX, $y_new + $g_dirY) ;New value
+
+		Case $EMPTY ;Normal
+
+			If $g_Status0Off = 0 Then
+				Status(0, "", 0)
+			EndIf
+			$g_Status0Off -= 1
+
+			PrevNext($x_new + $g_dirX, $y_new + $g_dirY) ;New value
+			RemoveSnake()
+
+	EndSwitch
+	;Score NORMAL
+	$g_iScore = $Map[$num][$x_new][$y_new] - $Map[$num][$x_end][$y_end] + 1
+	If $LS_ScoreLast <> $g_iScore Then
+		$LS_ScoreLast = $g_iScore
+		Status(1, "Snake length: " & $g_iScore, 2)
+	EndIf
+
+	; END NORMAL
+EndFunc   ;==>Normal
+#CS INFO
+	72685 V1 6/22/2019 7:09:09 PM
 #CE
 
 ;~~ .28 .29
@@ -902,7 +943,7 @@ Func StartSnake()
 	$Map[$nxX][$x_new][$y_new] = 0
 	$Map[$nxY][$x_new][$y_new] = 0
 
-	$Map[$num][$x_new][$y_new] = $count
+	$Map[$num][$x_new][$y_new] = $g_SnakeCount
 
 	$Map[$what][$x_new][$y_new] = $SNAKE
 	GUICtrlSetImage($Map[$ctrl][$x_new][$y_new], $cSNAKE)
@@ -912,7 +953,7 @@ Func StartSnake()
 
 EndFunc   ;==>StartSnake
 #CS INFO
-	32789 V4 6/6/2019 11:09:42 PM V3 6/3/2019 8:05:25 PM V2 6/3/2019 10:34:22 AM V1 6/3/2019 1:09:45 AM
+	33453 V5 6/22/2019 7:09:09 PM V4 6/6/2019 11:09:42 PM V3 6/3/2019 8:05:25 PM V2 6/3/2019 10:34:22 AM
 #CE
 
 ; Dirx& Diry moving to wall not like Double Back which has reserves direction
@@ -1032,20 +1073,20 @@ Func PrevNext($x, $y) ;New value
 	$Map[$nxX][$x_prv][$y_prv] = $x_new
 	$Map[$nxY][$x_prv][$y_prv] = $y_new
 
-	$count += 1
-	$Map[$num][$x_new][$y_new] = $count
+	$g_SnakeCount += 1
+	$Map[$num][$x_new][$y_new] = $g_SnakeCount
 
 	$Map[$what][$x_new][$y_new] = $SNAKE
 	GUICtrlSetImage($Map[$ctrl][$x_new][$y_new], $cSNAKE)
 EndFunc   ;==>PrevNext
 #CS INFO
-	33652 V3 6/3/2019 8:05:25 PM V2 6/3/2019 10:34:22 AM V1 6/3/2019 1:09:45 AM
+	34980 V4 6/22/2019 7:09:09 PM V3 6/3/2019 8:05:25 PM V2 6/3/2019 10:34:22 AM V1 6/3/2019 1:09:45 AM
 #CE
 
 Func RemoveSnake() ; at end
 	Local $x, $y
 	; Size can be zero at the begin so once size is > 0 then hunger is active.
-	;Global $RemoveBegining = False
+	;Global $g_RemoveBegining = False
 
 	$x = $x_end
 	$y = $y_end
@@ -1066,40 +1107,49 @@ Func RemoveSnake() ; at end
 	;$Map[$nxY][$x_end][$y_end] = 0
 
 	;dataout("remove", $Map[$num][$x_new][$y_new] - $Map[$num][$x_end][$y_end])
-	;dataout($RemoveBegining)
+	;dataout($g_RemoveBegining)
 	; Size can be zero at the begin so once size is > 0 then hunger is active.
-	;Global $RemoveBegining = False
+	;Global $g_RemoveBegining = False
 
 	If $Map[$num][$x_new][$y_new] - $Map[$num][$x_end][$y_end] = 0 Then
-		If $RemoveBegining Then
+		If $g_RemoveBegining Then
 			Status(0, "Died of hunger:", 1)
 			Return True
 		EndIf
 		Return False
 	EndIf
-	$RemoveBegining = True
+	$g_RemoveBegining = True
 	Return False
 
 EndFunc   ;==>RemoveSnake
 #CS INFO
-	78266 V7 6/6/2019 11:09:42 PM V6 6/3/2019 10:34:22 AM V5 6/3/2019 1:09:45 AM V4 6/2/2019 7:12:26 PM
+	79256 V8 6/22/2019 7:09:09 PM V7 6/6/2019 11:09:42 PM V6 6/3/2019 10:34:22 AM V5 6/3/2019 1:09:45 AM
 #CE
 
 Func AddFood()
 	Local $x, $y
+
+	$x = Int(($Map[$num][$x_new][$y_new] - $Map[$num][$x_end][$y_end]) / 100) + 1
+
+	If $g_foodCnt > $x Then
+		$g_foodCnt -= 1
+		Return
+	ElseIf $g_foodCnt < $x Then
+		$g_foodCnt += 1
+		AddFood()
+	EndIf
 
 	Do
 		$x = Int(Random(1, $g_sx))
 		$y = Int(Random(1, $g_sy))
 	Until $Map[$what][$x][$y] = $EMPTY
 
-	$g_foodX = $x ; x, y, ctrl
-	$g_foodY = $y
 	$Map[$what][$x][$y] = $FOOD
 	GUICtrlSetImage($Map[$ctrl][$x][$y], $cFOOD)
+
 EndFunc   ;==>AddFood
 #CS INFO
-	18553 V7 6/3/2019 1:09:45 AM V6 6/2/2019 7:12:26 PM V5 6/2/2019 1:14:05 AM V4 5/31/2019 9:17:59 AM
+	29506 V8 6/22/2019 7:09:09 PM V7 6/3/2019 1:09:45 AM V6 6/2/2019 7:12:26 PM V5 6/2/2019 1:14:05 AM
 #CE
 
 Func ClearBoard()
@@ -1168,7 +1218,7 @@ Func UpDateHiScore()
 		$g_aHiScore[9][0] = $g_iScore
 		$g_aHiScore[9][1] = _Now()
 		If $g_GameWhich = 0 Then ; 0 Normal, 1 Mine
-			$g_aHiScore[9][2] = $count
+			$g_aHiScore[9][2] = $g_SnakeCount
 		Else
 			$g_aHiScore[9][2] = $Map[$num][$x_new][$y_new] - $Map[$num][$x_end][$y_end] + 1
 		EndIf
@@ -1184,7 +1234,7 @@ Func UpDateHiScore()
 	EndIf
 EndFunc   ;==>UpDateHiScore
 #CS INFO
-	57542 V5 6/10/2019 8:01:23 PM V4 6/6/2019 11:09:42 PM V3 6/5/2019 11:59:45 PM V2 6/5/2019 2:01:25 AM
+	58206 V6 6/22/2019 7:09:09 PM V5 6/10/2019 8:01:23 PM V4 6/6/2019 11:09:42 PM V3 6/5/2019 11:59:45 PM
 #CE
 
 Func SaveHiScore()
@@ -1262,8 +1312,8 @@ Func StartForm()
 	Local $Z
 
 	$Form1 = GUICreate("Snake 19 - " & $ver, 600, 600, -1, -1)
-	If IsArray($Mouse) Then
-		MouseMove($Mouse[0], $Mouse[1], 0)
+	If IsArray($g_Mouse) Then
+		MouseMove($g_Mouse[0], $g_Mouse[1], 0)
 	EndIf
 
 	GUICtrlCreateLabel("Snake 19", 0, 0, 600, 24, $SS_CENTER)
@@ -1331,7 +1381,7 @@ Func StartForm()
 				Return True
 
 			Case $b_start
-				$Mouse = MouseGetPos()
+				$g_Mouse = MouseGetPos()
 				GUIDelete($Form1)
 				Return False
 
@@ -1352,7 +1402,7 @@ Func StartForm()
 
 EndFunc   ;==>StartForm
 #CS INFO
-	219432 V14 6/20/2019 9:39:13 PM V13 6/16/2019 10:16:04 AM V12 6/12/2019 12:36:42 PM V11 6/9/2019 5:40:22 PM
+	220224 V15 6/22/2019 7:09:09 PM V14 6/20/2019 9:39:13 PM V13 6/16/2019 10:16:04 AM V12 6/12/2019 12:36:42 PM
 #CE
 
 ;Main
@@ -1362,4 +1412,4 @@ If Not $TESTING Then
 EndIf
 Exit
 
-;~T ScriptFunc.exe V0.54a 15 May 2019 - 6/20/2019 9:39:13 PM
+;~T ScriptFunc.exe V0.54a 15 May 2019 - 6/22/2019 7:09:09 PM
