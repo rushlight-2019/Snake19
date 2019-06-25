@@ -1,5 +1,8 @@
 #include-once
 
+; What I changed search for PF
+; at 2 locations  Jun 2019
+
 #include "ArrayDisplayInternals.au3"
 #include "AutoItConstants.au3"
 #include "MsgBoxConstants.au3"
@@ -492,7 +495,7 @@ Func __Debug_ReportWindowWaitClose()
 	Local Const $GUI_EVENT_CLOSE = -3
 	Local $aMsg
 	While WinExists(HWnd($hWndReportWindow))
-		GUIDelete($hWndReportWindow)  ; PF added and removed below 2 lines 9509
+		GUIDelete($hWndReportWindow)  ; PF added this line and removed below 2 lines 9509
 		;$aMsg = GUIGetMsg(1)
 		;If $aMsg[1] = $hWndReportWindow And $aMsg[0] = $GUI_EVENT_CLOSE Then GUIDelete($hWndReportWindow)
 	WEnd

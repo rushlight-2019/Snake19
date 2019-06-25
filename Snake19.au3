@@ -1,28 +1,19 @@
 AutoItSetOption("MustDeclareVars", 1)
 
 ;If not define then only in script
-Global Static $MESSAGE = True ;Define then DataOut will show in script or compiled
+;Global Static $MESSAGE = True ;Define then DataOut will show in script or compiled
 ;Global Static $MESSAGE =  False   ;Pause will still work in script  No Dataout
 
 ; Must be Declared before _Prf_startup
-Global $ver = "0.32 22 Jun 2019 Internal changes"
+Global $ver = "0.33 24 Jun 2019 Final score wrong"
+Global $ini_ver = "1"
 
-If @Compiled = 0 Then
-	Global Static $useLog = True
-Else
-	Global Static $useLog = False
-EndIf
+;Global $TESTING = False
 
-;$TESTING
 #include "R:\!Autoit\Blank\_prf_startup.au3"
-Global $CantDie
-$CantDie = False
-If $TESTING Then
-	;$CantDie = True
-EndIf
 
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
-#AutoIt3Wrapper_Res_Fileversion=0.0.3.2
+#AutoIt3Wrapper_Res_Fileversion=0.0.3.3
 #AutoIt3Wrapper_Icon=R:\!Autoit\Ico\prf.ico
 #AutoIt3Wrapper_Res_Description=Another snake game
 #AutoIt3Wrapper_Res_LegalCopyright=© Phillip Forrestal 2019
@@ -72,27 +63,30 @@ EndIf
 	6 = snake cell number (to computer size)
 
 	to do
-	One color background
-	Setting:  background, snake pic, food, speed, size cell,  number of cells (high score will clear) default 40x50 2000 cells
+	poop
+	Health of snake
 
 	current
-	Eat Me in half  2/3 done
 	Add max lenght in Extra
 	Message eat unheath meat
 	died meat
 	OUCH
-	Score -value after eat me
-	-value end game messsage about snake not beening feed right.
-	Last part of blood  new tail beedling
 
-	Problem
-	Bounce off wall fails to see snake there
+	Need Poop chain  after 20 po0p turn to 25% of time food what does creat new food.
+	What happen it snake eat Poop  10% health
+	Snake Poop
 
-	Jun 2019 TESTING 2 food
+	As eat snake 50% sick  Sick snake uses 50% new off too get healty
 
-	Create Testing
-	Create Hard to die
+	Mouse as arrow keys????
+	Pick different arrow keys.
 
+	Change dead snake to brown
+
+	Need head for snake. need 4 picture for each directiion.
+
+	0.34  Jun 2019 Health snake.
+	0.33 24 Jun 2019 Final score wrong
 	0.32 22 Jun 2019 Internal changes
 	0.31 20 Jun 2019 Lost Focus Stop Game
 	0.30 20 Jun 2019 If PIC file missing  add warning and exit
@@ -136,6 +130,8 @@ EndIf
 #include <Constants.au3>
 #include <ButtonConstants.au3>
 #include <Date.au3>
+#include <File.au3>
+
 
 ;Static
 Static $s_pic = @ScriptDir & "\Pic\"
@@ -151,6 +147,8 @@ Static $FOOD = 10
 Static $cFOOD = $s_pic & "green.jpg"
 Static $BLOOD = 20
 Static $cBLOOD = $s_pic & "red.jpg"
+Static $cPOOP = $s_pic & "earth.jpg"
+Static $POOP = -30
 
 ;Global
 Global $g_first = True
@@ -213,8 +211,8 @@ Static $s_bdX = 1
 Static $s_bdY = 2
 Static $s_size = 3
 Static $M1 = -1
-Static $s_delay = 20
-Static $s_rand = 10
+Static $s_delay = 10
+Static $s_rand = 5
 
 Global $g_bdPrev[$s_size] ;Cycle , X, Y Pre 2,3
 Global $g_bdNext[$s_size] ;Cycle , X, Y Nx 4,5
@@ -243,11 +241,39 @@ Global $g_turnLast
 Global $g_dirX
 Global $g_dirY
 
+;0.33
+Global $g_GameScore = 0
+
+;0.34
+Global $g_PoopCnt = 0
+
 ; Main is call at end
 Func Main()
+	Local $a
+
 	If Not FileExists($cSNAKE) Then
-		MsgBox(0, "Problem Pictures", $s_pic & " Folder missing. Should 6 color JPG in it")
+		MsgBox(0, "Problem Pictures", $s_pic & " Folder missing. Should 7 color JPG in it")
 		Return
+	EndIf
+
+	$a = _FileListToArray($s_pic, "*.jpg", $FLTA_FILES)
+	If $a[0] <> 7 Then
+		MsgBox(0, "ERROR", "Not enough jpg files in " & $s_pic & @CRLF & "Found " & $a[0] & ". Should have 7.")
+		Return
+	EndIf
+
+
+	;Check Version of INI if wrong version delete Hi Scores
+	;because wrong highscore layout crashed the game.
+	$a = IniRead($s_ini, "Score", "Version", "x")
+	If $a = "x" Then ; old layout or ini missing
+		FileDelete($s_ini)
+		Sleep(500)
+		IniWrite($s_ini, "Score", "Version", $ini_ver)
+	ElseIf $a <> $ini_ver Then
+		IniDelete($s_ini, "HighScoreExtra")
+		IniDelete($s_ini, "HighScoreNormal")
+		IniWrite($s_ini, "Score", "Version", $ini_ver)
 	EndIf
 
 	Do
@@ -259,7 +285,7 @@ Func Main()
 
 EndFunc   ;==>Main
 #CS INFO
-	16494 V11 6/20/2019 9:30:52 PM V10 6/5/2019 11:59:45 PM V9 6/5/2019 2:01:25 AM V8 6/2/2019 1:14:05 AM
+	51344 V12 6/24/2019 11:22:57 PM V11 6/20/2019 9:30:52 PM V10 6/5/2019 11:59:45 PM V9 6/5/2019 2:01:25 AM
 #CE
 
 Func Game()
@@ -317,7 +343,7 @@ Func Game()
 	Status(0, "", 0)
 	ClearBoard()
 	StartSnake()
-	AddFood()
+	AddFood(True)
 
 	;Default before start
 	DataOut("New Game")
@@ -329,6 +355,7 @@ Func Game()
 	$g_gChange = 0
 	$g_gChangeHalf = 0
 	$g_foodCnt = 1
+	$g_PoopCnt = 0
 
 	$g_gHungerCnt = 0
 	$g_gHunger = 1000
@@ -344,10 +371,10 @@ Func Game()
 	GUISetAccelerators($aAccelKey2, $g_ctrlBoard)
 	MouseMove(0, 0, 0)
 
-	If $CantDie Then
-		$g_ScoreFood = 40
-		$g_gChange = 100
-	EndIf
+	;	If $TESTING Then
+	;		$g_ScoreFood = 40
+	$g_gChange = 50
+	;	EndIf
 
 	$g_endgame = False
 
@@ -424,19 +451,12 @@ Func Game()
 	Until $g_endgame
 
 	GUISetAccelerators(1, $g_ctrlBoard) ; Turn off Accelerator
-
-	If $g_GameWhich = 0 Then ; 0 Normal, 1 Mine
-
-	Else
-
-	EndIf
-
 	UpDateHiScore()
 	GUISetState(@SW_HIDE, $g_ctrlBoard)
 
 EndFunc   ;==>Game
 #CS INFO
-	239244 V24 6/22/2019 7:09:09 PM V23 6/22/2019 3:41:30 AM V22 6/20/2019 9:30:52 PM V21 6/19/2019 11:41:56 AM
+	236870 V26 6/24/2019 11:22:57 PM V25 6/24/2019 9:33:41 AM V24 6/22/2019 7:09:09 PM V23 6/22/2019 3:41:30 AM
 #CE
 
 Func Tick() ;
@@ -476,33 +496,10 @@ Func Extra()
 	Switch $Map[$what][$x_new + $g_dirX][$y_new + $g_dirY]
 		Case $WALL
 			dataout("WALL")
-			dataout($CantDie)
-			If $CantDie Then
-				; Check  prev to be the same  last location
-				DataOut("Eat wall Double back on self")
-				DataOut($x_new, $y_new)
-				DataOut($Map[$prX][$x_new][$y_new], $Map[$prY][$x_new][$y_new])
 
-				;	If $Map[$prX][$x_new][$y_new] = $x_new  And $Map[$prY][$x_new][$y_new] = $y_new  Then ; Double back
-				DataOut("Eat wall Double back on self")
-
-				$flag = DoubleBackWall($g_dirX, $g_dirY)
-				If $flag Then
-					Status(0, "Double back", 3)
-					$g_gChange -= 2
-					$g_iScore -= 100
-				Else
-					Status(0, "Ate Wallf", 1)
-					$g_endgame = True
-					Return
-				EndIf
-				;	EndIf
-			Else
-				Status(0, "Ate wall", 1)
-				$g_endgame = True
-				Return
-
-			EndIf
+			Status(0, "Ate wall", 1)
+			$g_endgame = True
+			Return
 
 		Case $SNAKE
 
@@ -581,6 +578,7 @@ Func Extra()
 			;RemoveFood()  NOT needed because  snake will over write with out looking
 			AddFood()
 			PrevNext($x_new + $g_dirX, $y_new + $g_dirY) ;New value
+			$g_PoopCnt = Random(5, 10, 1)
 
 		Case $EMPTY
 
@@ -592,7 +590,7 @@ Func Extra()
 			If $g_gHunger = 0 Then
 				$g_gHungerCnt += 1
 				Status(0, "Hungery - " & $g_gHungerCnt & " Snake shorter", 3)
-				$g_Status0Off = 50
+				$g_Status0Off = 30
 
 				$g_gHunger = $g_gHungerStr - $g_gHungerCnt
 				If $g_gHunger < 30 Then
@@ -612,14 +610,14 @@ Func Extra()
 
 			;Check to see if snake grow longer or shorter
 			If $g_gChange = 0 Then
-				RemoveSnake()
+				RemoveSnakeExtra()
 			ElseIf $g_gChange > 0 Then ; snake get longer don't remove end
 				Switch $g_gChangeHalf
 					Case 0
 						$g_gChange -= 1
 						$g_gChangeHalf = $s_gChange
 					Case Else
-						RemoveSnake() ;Same size
+						RemoveSnakeExtra() ;Same size
 						$g_gChangeHalf -= 1
 				EndSwitch
 
@@ -628,17 +626,17 @@ Func Extra()
 					Case 0
 						$g_gChange += 1
 						$g_gChangeHalf = $s_gChange
-						If RemoveSnake() Then ;one smaller
+						If RemoveSnakeExtra() Then ;one smaller
 							$g_endgame = True
 							Return ;no snake
 						EndIf
-						If RemoveSnake() Then
+						If RemoveSnakeExtra() Then
 							$g_endgame = True
 							Return ;no snake
 						EndIf
 					Case Else
 						$g_gChangeHalf -= 1
-						RemoveSnake() ;same size
+						RemoveSnakeExtra() ;same size
 				EndSwitch
 			EndIf
 
@@ -649,16 +647,17 @@ Func Extra()
 	$a = $Map[$num][$x_new][$y_new] - $Map[$num][$x_end][$y_end] + 1
 	If $LS_ScoreLast <> $g_iScore + $a Then
 		$LS_ScoreLast = $g_iScore + $a
-		If $Testing Then
+		If $TESTING Then
 			Status(1, "Snake length: " & $a & " Score: " & $g_iScore & " (" & $g_iScore + $a & ")", 2)
 		Else
 			Status(1, "Snake length: " & $a & " Score: " & $g_iScore + $a, 2)
 		EndIf
+		$g_GameScore = $g_iScore + $a
 	EndIf
 
 EndFunc   ;==>Extra
 #CS INFO
-	295703 V1 6/22/2019 7:09:09 PM
+	259507 V3 6/24/2019 11:22:57 PM V2 6/24/2019 9:33:41 AM V1 6/22/2019 7:09:09 PM
 #CE
 
 Func Normal()
@@ -678,8 +677,6 @@ Func Normal()
 		Case $FOOD ;Normal
 			$g_ScoreFood += 1
 
-			; Normal is 1 which adds below						$L_change += 1 ; doing this way because furture versions might not be one ***************************
-
 			;RemoveFood()  NOT needed because  snake will over write with out looking
 			AddFood()
 			PrevNext($x_new + $g_dirX, $y_new + $g_dirY) ;New value
@@ -692,7 +689,7 @@ Func Normal()
 			$g_Status0Off -= 1
 
 			PrevNext($x_new + $g_dirX, $y_new + $g_dirY) ;New value
-			RemoveSnake()
+			RemoveSnakeNormal()
 
 	EndSwitch
 	;Score NORMAL
@@ -701,11 +698,12 @@ Func Normal()
 		$LS_ScoreLast = $g_iScore
 		Status(1, "Snake length: " & $g_iScore, 2)
 	EndIf
+	$g_GameScore = $g_iScore
 
 	; END NORMAL
 EndFunc   ;==>Normal
 #CS INFO
-	72685 V1 6/22/2019 7:09:09 PM
+	65639 V3 6/24/2019 11:22:57 PM V2 6/24/2019 9:33:41 AM V1 6/22/2019 7:09:09 PM
 #CE
 
 ;~~ .28 .29
@@ -873,20 +871,17 @@ Func StartBlood($inX, $inY) ;~~  .28, .29
 	GUICtrlSetImage($Map[$ctrl][$x][$y], $cBLOOD)
 
 	;ShowRow($x, $y)
-
 	$x_end = $x
 	$y_end = $y
-
-	;pause()
 
 	Return True
 EndFunc   ;==>StartBlood
 #CS INFO
-	136110 V2 6/19/2019 11:41:56 AM V1 6/19/2019 2:58:37 AM
+	135428 V3 6/24/2019 11:22:57 PM V2 6/19/2019 11:41:56 AM V1 6/19/2019 2:58:37 AM
 #CE
 
 Func ShowRow($x, $y)
-	If $TESTING Then
+	If $TESTING Then ; Not used in compiled, in case if forget to comment out.
 
 		Local $aa[7]
 
@@ -897,7 +892,7 @@ Func ShowRow($x, $y)
 	EndIf
 EndFunc   ;==>ShowRow
 #CS INFO
-	10527 V1 6/16/2019 10:16:04 AM
+	15281 V2 6/24/2019 11:22:57 PM V1 6/16/2019 10:16:04 AM
 #CE
 
 Func Status($status, $string, $color)
@@ -1083,7 +1078,7 @@ EndFunc   ;==>PrevNext
 	34980 V4 6/22/2019 7:09:09 PM V3 6/3/2019 8:05:25 PM V2 6/3/2019 10:34:22 AM V1 6/3/2019 1:09:45 AM
 #CE
 
-Func RemoveSnake() ; at end
+Func RemoveSnakeExtra() ; at end
 	Local $x, $y
 	; Size can be zero at the begin so once size is > 0 then hunger is active.
 	;Global $g_RemoveBegining = False
@@ -1093,9 +1088,15 @@ Func RemoveSnake() ; at end
 
 	;MsgBox(0, "Remove snake", "x " & $x & " y " & $y & " Num: " & $Map[$num][$x][$y], 10)
 
-	$Map[$what][$x][$y] = $EMPTY
-	GUICtrlSetImage($Map[$ctrl][$x][$y], $cEMPTY)
-	;$Map[$num][$x][$y] = 0 ; don't really need to zero out
+	$g_PoopCnt -= 1
+	$g_PoopCnt = 1
+	If $g_PoopCnt = 0 Then
+		$Map[$what][$x][$y] = $POOP
+		GUICtrlSetImage($Map[$ctrl][$x][$y], $cPOOP)
+	Else
+		$Map[$what][$x][$y] = $EMPTY
+		GUICtrlSetImage($Map[$ctrl][$x][$y], $cEMPTY)
+	EndIf
 
 	$x_end = $Map[$nxX][$x][$y]
 	$y_end = $Map[$nxY][$x][$y]
@@ -1121,24 +1122,44 @@ Func RemoveSnake() ; at end
 	$g_RemoveBegining = True
 	Return False
 
-EndFunc   ;==>RemoveSnake
+EndFunc   ;==>RemoveSnakeExtra
 #CS INFO
-	79256 V8 6/22/2019 7:09:09 PM V7 6/6/2019 11:09:42 PM V6 6/3/2019 10:34:22 AM V5 6/3/2019 1:09:45 AM
+	86293 V9 6/24/2019 11:22:57 PM V8 6/22/2019 7:09:09 PM V7 6/6/2019 11:09:42 PM V6 6/3/2019 10:34:22 AM
 #CE
 
-Func AddFood()
+Func RemoveSnakeNormal() ; at end
 	Local $x, $y
 
-	$x = Int(($Map[$num][$x_new][$y_new] - $Map[$num][$x_end][$y_end]) / 100) + 1
+	$x = $x_end
+	$y = $y_end
 
-	If $g_foodCnt > $x Then
-		$g_foodCnt -= 1
-		Return
-	ElseIf $g_foodCnt < $x Then
-		$g_foodCnt += 1
-		AddFood()
+	$Map[$what][$x][$y] = $EMPTY
+	GUICtrlSetImage($Map[$ctrl][$x][$y], $cEMPTY)
+
+	$x_end = $Map[$nxX][$x][$y]
+	$y_end = $Map[$nxY][$x][$y]
+
+EndFunc   ;==>RemoveSnakeNormal
+#CS INFO
+	18081 V9 6/24/2019 11:22:57 PM V8 6/22/2019 7:09:09 PM V7 6/6/2019 11:09:42 PM V6 6/3/2019 10:34:22 AM
+#CE
+
+Func AddFood($start = False)
+	Local $x, $y
+
+	If Not $start Then ;Force start with one food  below math sometime cause 0 food on start
+
+		$x = Int(($Map[$num][$x_new][$y_new] - $Map[$num][$x_end][$y_end]) / 100) + 1
+
+		If $g_foodCnt > $x Then
+			$g_foodCnt -= 1
+			Return
+		ElseIf $g_foodCnt < $x Then
+			$g_foodCnt += 1
+			AddFood()
+		EndIf
+
 	EndIf
-
 	Do
 		$x = Int(Random(1, $g_sx))
 		$y = Int(Random(1, $g_sy))
@@ -1149,7 +1170,7 @@ Func AddFood()
 
 EndFunc   ;==>AddFood
 #CS INFO
-	29506 V8 6/22/2019 7:09:09 PM V7 6/3/2019 1:09:45 AM V6 6/2/2019 7:12:26 PM V5 6/2/2019 1:14:05 AM
+	38491 V9 6/24/2019 11:22:57 PM V8 6/22/2019 7:09:09 PM V7 6/3/2019 1:09:45 AM V6 6/2/2019 7:12:26 PM
 #CE
 
 Func ClearBoard()
@@ -1208,14 +1229,14 @@ EndFunc   ;==>DisplayHiScore
 
 Func UpDateHiScore()
 	Local $Form1
-	If $g_aHiScore[8][0] < $g_iScore Then
+	If $g_aHiScore[8][0] < $g_GameScore Then
 		;		MsgBox($MB_TOPMOST, "High Score", "New High Score: " & $g_iScore, 5)
 		$Form1 = GUICreate("", 250, 100, -1, -1, $WS_DLGFRAME, BitOR($WS_EX_TOPMOST, $WS_EX_STATICEDGE))
-		GUICtrlCreateLabel("New High Score: " & $g_iScore, 25, 30, 200, 25)
+		GUICtrlCreateLabel("New High Score: " & $g_GameScore, 25, 30, 200, 25)
 		GUICtrlSetFont(-1, 12, 400, 0, "Arial")
 		GUISetState(@SW_SHOW)
 
-		$g_aHiScore[9][0] = $g_iScore
+		$g_aHiScore[9][0] = $g_GameScore
 		$g_aHiScore[9][1] = _Now()
 		If $g_GameWhich = 0 Then ; 0 Normal, 1 Mine
 			$g_aHiScore[9][2] = $g_SnakeCount
@@ -1234,7 +1255,7 @@ Func UpDateHiScore()
 	EndIf
 EndFunc   ;==>UpDateHiScore
 #CS INFO
-	58206 V6 6/22/2019 7:09:09 PM V5 6/10/2019 8:01:23 PM V4 6/6/2019 11:09:42 PM V3 6/5/2019 11:59:45 PM
+	59025 V7 6/24/2019 9:33:41 AM V6 6/22/2019 7:09:09 PM V5 6/10/2019 8:01:23 PM V4 6/6/2019 11:09:42 PM
 #CE
 
 Func SaveHiScore()
@@ -1348,7 +1369,7 @@ Func StartForm()
 	Next
 
 	$b_start = GUICtrlCreateButton("GO", 270, 550, 100, 35)
-	$Checkbox1 = GUICtrlCreateCheckbox("Debug", 1, 555)
+	$Checkbox1 = GUICtrlCreateCheckbox("Testing", 1, 555)
 
 	Local $Edit1 = GUICtrlCreateEdit("", 20, $b, 550, 250)
 	GUICtrlSetData($Edit1, "Press ESC to quit." & @CRLF, 1)
@@ -1394,22 +1415,55 @@ Func StartForm()
 				NormalExtra()
 
 			Case $Checkbox1 ;debug
-				$CantDie = BitAND(GUICtrlRead($Checkbox1), $GUI_CHECKED) = $GUI_CHECKED
-				Dataout($CantDie)
+				$TESTING = BitAND(GUICtrlRead($Checkbox1), $GUI_CHECKED) = $GUI_CHECKED
+				Dataout($TESTING)
 
 		EndSwitch
 	WEnd
 
 EndFunc   ;==>StartForm
 #CS INFO
-	220224 V15 6/22/2019 7:09:09 PM V14 6/20/2019 9:39:13 PM V13 6/16/2019 10:16:04 AM V12 6/12/2019 12:36:42 PM
+	220227 V17 6/24/2019 11:22:57 PM V16 6/24/2019 9:33:41 AM V15 6/22/2019 7:09:09 PM V14 6/20/2019 9:39:13 PM
 #CE
+
+#cs
+	Extra Wall removed 0.32
+	Case $WALL
+	dataout("WALL")
+
+	;Nice I ideal but too much
+	;dataout($CantDie)
+	;If $CantDie Then
+	; Check  prev to be the same  last location
+	;	DataOut("Eat wall Double back on self")
+	;	DataOut($x_new, $y_new)
+	;	DataOut($Map[$prX][$x_new][$y_new], $Map[$prY][$x_new][$y_new])
+
+	;	If $Map[$prX][$x_new][$y_new] = $x_new  And $Map[$prY][$x_new][$y_new] = $y_new  Then ; Double back
+	;	DataOut("Eat wall Double back on self")
+
+	;	$flag = DoubleBackWall($g_dirX, $g_dirY)
+	;	If $flag Then
+	;		Status(0, "Double back", 3)
+	;		$g_gChange -= 2
+	;		$g_iScore -= 100
+	;	Else
+	;		Status(0, "Ate Wallf", 1)
+	;		$g_endgame = True
+	;		Return
+	;	EndIf
+	;	EndIf
+	;Else
+	Status(0, "Ate wall", 1)
+	$g_endgame = True
+	Return
+
+	;EndIf
+#ce
 
 ;Main
 Main()
-If Not $TESTING Then
-	FileDelete($s_ini)
-EndIf
+
 Exit
 
-;~T ScriptFunc.exe V0.54a 15 May 2019 - 6/22/2019 7:09:09 PM
+;~T ScriptFunc.exe V0.54a 15 May 2019 - 6/24/2019 11:22:57 PM
