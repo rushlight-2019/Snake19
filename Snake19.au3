@@ -5,7 +5,7 @@ AutoItSetOption("MustDeclareVars", 1)
 ;Global Static $MESSAGE =  False   ;Pause will still work in script  No Dataout
 
 ; Must be Declared before _Prf_startup
-Global $ver = "0.34 27 Jun 2019 2 more status - add ms used"
+Global $ver = "0.36 27 Jun 2019 Please wait boxes"
 Global $ini_ver = "1"
 
 ;Global $TESTING = False
@@ -13,7 +13,7 @@ Global $ini_ver = "1"
 #include "R:\!Autoit\Blank\_prf_startup.au3"
 
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
-#AutoIt3Wrapper_Res_Fileversion=0.0.3.4
+#AutoIt3Wrapper_Res_Fileversion=0.0.3.6
 #AutoIt3Wrapper_Icon=R:\!Autoit\Ico\prf.ico
 #AutoIt3Wrapper_Res_Description=Another snake game
 #AutoIt3Wrapper_Res_LegalCopyright=© Phillip Forrestal 2019
@@ -88,7 +88,9 @@ Global $ini_ver = "1"
 
 	Better clean /  Please wait while cleaning.
 
-	0.34 27 Jn 2019 add 2 more status - add ms used
+	0.36 27 Jun 2019  Please wait boxes
+	0.35 27 Jun 2019 Testing Check add Bounce Wall
+	0.34 27 Jun 2019 add 2 more status - add ms used
 	0.33 24 Jun 2019 Final score wrong
 	0.32 22 Jun 2019 Internal changes
 	0.31 20 Jun 2019 Lost Focus Stop Game
@@ -146,7 +148,7 @@ Static $cEMPTY = $s_pic & "blue.jpg"
 Static $SNAKE = 1
 Static $cSNAKE = $s_pic & "gold.jpg"
 Static $FOOD = 10
-Static $cFOOD = $s_pic & "green.jpg"
+Static $cFOOD = $s_pic & "brightgreen.jpg"
 Static $BLOOD = 20
 Static $cBLOOD = $s_pic & "red.jpg"
 Static $cPOOP = $s_pic & "earth.jpg"
@@ -253,6 +255,9 @@ Global $g_Health = 100
 Global $timing[100]
 Global $timingCnt = -0
 
+;0.35
+Global $BounceWall = False
+
 ; Main is call at end
 Func Main()
 	Local $a
@@ -263,8 +268,8 @@ Func Main()
 	EndIf
 
 	$a = _FileListToArray($s_pic, "*.jpg", $FLTA_FILES)
-	If $a[0] <> 7 Then
-		MsgBox(0, "ERROR", "Not enough jpg files in " & $s_pic & @CRLF & "Found " & $a[0] & ". Should have 7.")
+	If $a[0] <> 8 Then
+		MsgBox(0, "ERROR", "Not enough jpg files in " & $s_pic & @CRLF & "Found " & $a[0] & ". Should have 8.")
 		Return
 	EndIf
 
@@ -290,7 +295,7 @@ Func Main()
 
 EndFunc   ;==>Main
 #CS INFO
-	64018 V13 6/27/2019 1:22:34 AM V12 6/24/2019 11:22:57 PM V11 6/20/2019 9:30:52 PM V10 6/5/2019 11:59:45 PM
+	64020 V14 6/27/2019 5:39:48 PM V13 6/27/2019 1:22:34 AM V12 6/24/2019 11:22:57 PM V11 6/20/2019 9:30:52 PM
 #CE
 
 Func Game()
@@ -309,8 +314,10 @@ Func Game()
 	If $g_ctrlBoard = -1 Then
 
 		$b = $g_Font * 2
+		SayClearBoard(True)
 
 		$g_ctrlBoard = GUICreate("Snake19 - " & $ver, $g_bx * $g_Size, $g_by * $g_Size + $b + 2)
+
 		MouseMove(0, 0, 0)
 
 		$L_idDown = GUICtrlCreateDummy()
@@ -348,6 +355,7 @@ Func Game()
 
 		$g_StatusText[3] = GUICtrlCreateLabel("Health", $a + $g_Size / 2, $g_StatusOff + $g_Font, $a - $g_Size, $g_Font)
 		GUICtrlSetFont(-1, 10, 700, 0, "Arial")
+		SayClearBoard()
 
 	EndIf
 	GUISetState(@SW_SHOW, $g_ctrlBoard)
@@ -390,7 +398,7 @@ Func Game()
 	MouseMove(0, 0, 0)
 
 	;	If $TESTING Then
-	;		$g_ScoreFood = 40
+	;	$g_ScoreFood = 40
 	$g_gChange = 50
 	;	EndIf
 
@@ -474,7 +482,7 @@ Func Game()
 
 EndFunc   ;==>Game
 #CS INFO
-	272713 V27 6/27/2019 1:22:34 AM V26 6/24/2019 11:22:57 PM V25 6/24/2019 9:33:41 AM V24 6/22/2019 7:09:09 PM
+	275843 V28 6/27/2019 5:39:48 PM V27 6/27/2019 1:22:34 AM V26 6/24/2019 11:22:57 PM V25 6/24/2019 9:33:41 AM
 #CE
 
 Func Tick() ;
@@ -504,8 +512,8 @@ Func Tick() ;
 		While $g_Focus <> WinGetTitle("[ACTIVE]")
 			Sleep(1000)
 		WEnd
-		Status(0, "Found Focus - Wait 3 seconds", 4)
-		Sleep(3000)
+		Status(0, "Found Focus - Wait 2 seconds", 4)
+		Sleep(2000)
 		MouseMove(0, 0, 0)
 		Status(0, "", 0)
 	EndIf
@@ -513,7 +521,7 @@ Func Tick() ;
 	$g_hTick = TimerInit()
 EndFunc   ;==>Tick
 #CS INFO
-	44315 V6 6/27/2019 1:22:34 AM V5 6/22/2019 3:41:30 AM V4 6/20/2019 9:30:52 PM V3 6/3/2019 10:34:22 AM
+	44313 V7 6/27/2019 5:39:48 PM V6 6/27/2019 1:22:34 AM V5 6/22/2019 3:41:30 AM V4 6/20/2019 9:30:52 PM
 #CE
 
 ; $g_iscore is extra + length
@@ -525,10 +533,38 @@ Func Extra()
 	;EXTRA
 	Switch $Map[$what][$x_new + $g_dirX][$y_new + $g_dirY]
 		Case $WALL
-			Status(0, "Ate wall", 1)
-			$g_endgame = True
-			Return
+			;	Extra Wall removed 0.32 = return 0.35
+			If $BounceWall Then
 
+				dataout("WALL")
+
+				;Nice I ideal but too much
+				;dataout($CantDie)
+
+				; Check  prev to be the same  last location
+				DataOut("Eat wall Double back on self")
+				;	DataOut($x_new, $y_new)
+				;	DataOut($Map[$prX][$x_new][$y_new], $Map[$prY][$x_new][$y_new])
+
+				If $Map[$prX][$x_new][$y_new] = $x_new And $Map[$prY][$x_new][$y_new] = $y_new Then ; Double back
+					DataOut("Eat wall Double back on self")
+
+					$flag = DoubleBackWall()
+					If $flag Then
+						Status(0, "Double back", 3)
+						$g_gChange -= 2
+						$g_iScore -= 100
+					Else
+						Status(0, "Ate Wallf", 1)
+						$g_endgame = True
+						Return
+					EndIf
+				EndIf
+			Else ;.35
+				Status(0, "Ate wall", 1)
+				$g_endgame = True
+				Return
+			EndIf
 		Case $SNAKE
 
 			; Check  prev to be the same  last location
@@ -568,9 +604,11 @@ Func Extra()
 		Case $FOOD
 			$g_ScoreFood += 1
 
-			$g_gHunger = ($g_gHungerStr * 2) - $g_ScoreFood
-			If $g_gHunger < 30 Then
-				$g_gHunger = 30
+			; .36 $g_gHunger = ($g_gHungerStr * 2) - $g_ScoreFood
+
+			$g_gHunger = ($g_gHungerStr) - $g_ScoreFood
+			If $g_gHunger < 20 Then
+				$g_gHunger = 20
 			EndIf
 			$g_gHungerCnt = 0
 			dataout("$g_gHunger at food", $g_gHunger)
@@ -684,7 +722,7 @@ Func Extra()
 
 EndFunc   ;==>Extra
 #CS INFO
-	257544 V4 6/27/2019 1:22:34 AM V3 6/24/2019 11:22:57 PM V2 6/24/2019 9:33:41 AM V1 6/22/2019 7:09:09 PM
+	309526 V5 6/27/2019 5:39:48 PM V4 6/27/2019 1:22:34 AM V3 6/24/2019 11:22:57 PM V2 6/24/2019 9:33:41 AM
 #CE
 
 Func Normal()
@@ -980,17 +1018,18 @@ EndFunc   ;==>StartSnake
 
 ; Dirx& Diry moving to wall not like Double Back which has reserves direction
 ; So they will change, I can't make them Global because I used this name as Local in a number of Function.
-Func DoubleBackWall(ByRef $dirx, ByRef $diry) ;
+Func DoubleBackWall() ;(ByRef $dirx, ByRef $diry) ;
+	;	$g_dirX, $g_dirY
 	Local $a, $flag
 
-	;Reverse $dirx and $diry here and after that they must not change.
-	$dirx *= -1 ;1 to -1: 0 to 0: -1 to 1
-	$diry *= -1
+	;Reverse $dirx and $g_diry here and after that they must not change.
+	$g_dirX *= -1 ;1 to -1: 0 to 0: -1 to 1
+	$g_dirY *= -1
 
 	;new+dir  is one back.
 	; Find which X or Y which is the same, then random _+ one on there
-	;DataOut($dirx, $diry)
-	If $dirx = 0 Then
+	;DataOut($g_dirX, $g_diry)
+	If $g_dirX = 0 Then
 		$a = Random(0, 1, 1)
 		If $a = 0 Then
 			$a = -1
@@ -1005,9 +1044,9 @@ Func DoubleBackWall(ByRef $dirx, ByRef $diry) ;
 			EndIf
 		EndIf
 		If $flag Then
-			PrevNext($x_new + $a, $y_new + $diry)
+			PrevNext($x_new + $a, $y_new + $g_dirY)
 		EndIf
-	Else ;$diry =0
+	Else ;$g_diry =0
 		$a = Random(0, 1, 1)
 		If $a = 0 Then
 			$a = -1
@@ -1022,7 +1061,7 @@ Func DoubleBackWall(ByRef $dirx, ByRef $diry) ;
 			EndIf
 		EndIf
 		If $flag Then
-			PrevNext($x_new + $dirx, $y_new + $a)
+			PrevNext($x_new + $g_dirX, $y_new + $a)
 		EndIf
 
 	EndIf
@@ -1030,7 +1069,7 @@ Func DoubleBackWall(ByRef $dirx, ByRef $diry) ;
 
 EndFunc   ;==>DoubleBackWall
 #CS INFO
-	64316 V3 6/27/2019 1:22:34 AM V2 6/20/2019 9:30:52 PM V1 6/12/2019 12:36:42 PM
+	67432 V4 6/27/2019 5:39:48 PM V3 6/27/2019 1:22:34 AM V2 6/20/2019 9:30:52 PM V1 6/12/2019 12:36:42 PM
 #CE
 
 Func DoubleBack($dirx, $diry)
@@ -1202,6 +1241,7 @@ EndFunc   ;==>AddFood
 
 Func ClearBoard()
 	Local $var
+	SayClearBoard(True, False)
 
 	For $y = 0 To $g_by - 1
 		For $x = 0 To $g_bx - 1
@@ -1217,10 +1257,11 @@ Func ClearBoard()
 			GUICtrlSetImage($Map[$ctrl][$x][$y], $var)
 		Next
 	Next
+	SayClearBoard()
 
 EndFunc   ;==>ClearBoard
 #CS INFO
-	24348 V9 6/20/2019 9:30:52 PM V8 6/12/2019 12:36:42 PM V7 6/3/2019 1:09:45 AM V6 6/2/2019 7:12:26 PM
+	28013 V10 6/27/2019 5:39:48 PM V9 6/20/2019 9:30:52 PM V8 6/12/2019 12:36:42 PM V7 6/3/2019 1:09:45 AM
 #CE
 
 Func NormalExtra()
@@ -1275,14 +1316,14 @@ Func UpDateHiScore()
 
 		_ArraySort($g_aHiScore, 1, 1, 9)
 		SaveHiScore()
-		Sleep(5000)
+		Sleep(4000)
 		GUIDelete($Form1)
 	Else
 		Sleep(5000)
 	EndIf
 EndFunc   ;==>UpDateHiScore
 #CS INFO
-	59025 V7 6/24/2019 9:33:41 AM V6 6/22/2019 7:09:09 PM V5 6/10/2019 8:01:23 PM V4 6/6/2019 11:09:42 PM
+	59024 V8 6/27/2019 5:39:48 PM V7 6/24/2019 9:33:41 AM V6 6/22/2019 7:09:09 PM V5 6/10/2019 8:01:23 PM
 #CE
 
 Func SaveHiScore()
@@ -1348,6 +1389,42 @@ Func ReadHiScore()
 EndFunc   ;==>ReadHiScore
 #CS INFO
 	69341 V4 6/16/2019 10:16:04 AM V3 6/5/2019 11:59:45 PM V2 6/5/2019 2:01:25 AM V1 6/4/2019 8:01:23 PM
+#CE
+
+;Load Level from THE GAME ~~
+; to remove Run again
+Func SayClearBoard($OnOff = False, $Mode = True) ; $OnOff = True/False
+
+	Local Static $PleaseWait = 0
+	Local $x, $y, $aPos
+
+	If $OnOff Then
+		If $Mode Then
+			$PleaseWait = GUICreate("", 186, 92, -1, -1, -1, BitOR($WS_EX_TOPMOST, $WS_EX_WINDOWEDGE))
+			GUICtrlCreateLabel("Generating  Board", 8, 8, 170, 25, $SS_CENTER)
+		Else
+			$aPos = WinGetPos($g_ctrlBoard) ;786/708
+			$x = $aPos[0] + ((786 - 186) / 2)
+			$y = $aPos[1] + ((708 - 92) / 2)
+			$PleaseWait = GUICreate("", 186, 92, $x, $y, -1, BitOR($WS_EX_TOPMOST, $WS_EX_WINDOWEDGE))
+			GUICtrlCreateLabel("Clearing Board", 8, 8, 170, 25, $SS_CENTER)
+		EndIf
+		GUICtrlSetFont(-1, 12, 800, 0, "Arial Black")
+
+		GUICtrlCreateLabel("Please Wait", 8, 68, 170, 25, $SS_CENTER)
+		GUICtrlSetFont(-1, 12, 400, 0, "Arial")
+		GUISetState(@SW_SHOW)
+	Else
+		If $PleaseWait <> 0 Then
+			GUIDelete($PleaseWait)
+			$PleaseWait = 0
+		EndIf
+
+	EndIf
+
+EndFunc   ;==>SayClearBoard
+#CS INFO
+	59050 V1 6/27/2019 5:39:48 PM
 #CE
 
 Func StartForm()
@@ -1442,7 +1519,7 @@ Func StartForm()
 				NormalExtra()
 
 			Case $Checkbox1 ;debug
-				$TESTING = BitAND(GUICtrlRead($Checkbox1), $GUI_CHECKED) = $GUI_CHECKED
+				$BounceWall = BitAND(GUICtrlRead($Checkbox1), $GUI_CHECKED) = $GUI_CHECKED
 				Dataout($TESTING)
 
 		EndSwitch
@@ -1450,47 +1527,12 @@ Func StartForm()
 
 EndFunc   ;==>StartForm
 #CS INFO
-	220227 V17 6/24/2019 11:22:57 PM V16 6/24/2019 9:33:41 AM V15 6/22/2019 7:09:09 PM V14 6/20/2019 9:39:13 PM
+	220689 V18 6/27/2019 5:39:48 PM V17 6/24/2019 11:22:57 PM V16 6/24/2019 9:33:41 AM V15 6/22/2019 7:09:09 PM
 #CE
-
-#cs
-	Extra Wall removed 0.32
-	Case $WALL
-	dataout("WALL")
-
-	;Nice I ideal but too much
-	;dataout($CantDie)
-	;If $CantDie Then
-	; Check  prev to be the same  last location
-	;	DataOut("Eat wall Double back on self")
-	;	DataOut($x_new, $y_new)
-	;	DataOut($Map[$prX][$x_new][$y_new], $Map[$prY][$x_new][$y_new])
-
-	;	If $Map[$prX][$x_new][$y_new] = $x_new  And $Map[$prY][$x_new][$y_new] = $y_new  Then ; Double back
-	;	DataOut("Eat wall Double back on self")
-
-	;	$flag = DoubleBackWall($g_dirX, $g_dirY)
-	;	If $flag Then
-	;		Status(0, "Double back", 3)
-	;		$g_gChange -= 2
-	;		$g_iScore -= 100
-	;	Else
-	;		Status(0, "Ate Wallf", 1)
-	;		$g_endgame = True
-	;		Return
-	;	EndIf
-	;	EndIf
-	;Else
-	Status(0, "Ate wall", 1)
-	$g_endgame = True
-	Return
-
-	;EndIf
-#ce
 
 ;Main
 Main()
 
 Exit
 
-;~T ScriptFunc.exe V0.54a 15 May 2019 - 6/27/2019 1:22:34 AM
+;~T ScriptFunc.exe V0.54a 15 May 2019 - 6/27/2019 5:39:48 PM
