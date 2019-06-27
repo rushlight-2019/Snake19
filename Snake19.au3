@@ -5,7 +5,7 @@ AutoItSetOption("MustDeclareVars", 1)
 ;Global Static $MESSAGE =  False   ;Pause will still work in script  No Dataout
 
 ; Must be Declared before _Prf_startup
-Global $ver = "0.33 24 Jun 2019 Final score wrong"
+Global $ver = "0.34 27 Jun 2019 2 more status - add ms used"
 Global $ini_ver = "1"
 
 ;Global $TESTING = False
@@ -13,7 +13,7 @@ Global $ini_ver = "1"
 #include "R:\!Autoit\Blank\_prf_startup.au3"
 
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
-#AutoIt3Wrapper_Res_Fileversion=0.0.3.3
+#AutoIt3Wrapper_Res_Fileversion=0.0.3.4
 #AutoIt3Wrapper_Icon=R:\!Autoit\Ico\prf.ico
 #AutoIt3Wrapper_Res_Description=Another snake game
 #AutoIt3Wrapper_Res_LegalCopyright=© Phillip Forrestal 2019
@@ -84,8 +84,11 @@ Global $ini_ver = "1"
 	Change dead snake to brown
 
 	Need head for snake. need 4 picture for each directiion.
+	Health
 
-	0.34  Jun 2019 Health snake.
+	Better clean /  Please wait while cleaning.
+
+	0.34 27 Jn 2019 add 2 more status - add ms used
 	0.33 24 Jun 2019 Final score wrong
 	0.32 22 Jun 2019 Internal changes
 	0.31 20 Jun 2019 Lost Focus Stop Game
@@ -131,7 +134,6 @@ Global $ini_ver = "1"
 #include <ButtonConstants.au3>
 #include <Date.au3>
 #include <File.au3>
-
 
 ;Static
 Static $s_pic = @ScriptDir & "\Pic\"
@@ -183,8 +185,8 @@ Global $g_hTick
 Global $g_Size = 15 ;10
 Global $g_Font = 24
 
-Global $g_Status[2]
-Global $g_StatusText[2]
+Global $g_Status[4]
+Global $g_StatusText[4]
 Global $g_StatusOff = 2
 
 Global $g_aHiScore[10][6] ; data load by INI.  10 =  score,  date, len.food, turns, Max
@@ -205,7 +207,7 @@ Global $g_Status0Off = 1000
 Global $g_RemoveBegining = False
 Global $g_Mouse = 0
 
-;0.27+  ~~
+;0.27+
 Static $s_bdCycle = 0 ;No active -1, 1 or 0
 Static $s_bdX = 1
 Static $s_bdY = 2
@@ -246,6 +248,10 @@ Global $g_GameScore = 0
 
 ;0.34
 Global $g_PoopCnt = 0
+Global $g_Health = 100
+
+Global $timing[100]
+Global $timingCnt = -0
 
 ; Main is call at end
 Func Main()
@@ -261,7 +267,6 @@ Func Main()
 		MsgBox(0, "ERROR", "Not enough jpg files in " & $s_pic & @CRLF & "Found " & $a[0] & ". Should have 7.")
 		Return
 	EndIf
-
 
 	;Check Version of INI if wrong version delete Hi Scores
 	;because wrong highscore layout crashed the game.
@@ -285,7 +290,7 @@ Func Main()
 
 EndFunc   ;==>Main
 #CS INFO
-	51344 V12 6/24/2019 11:22:57 PM V11 6/20/2019 9:30:52 PM V10 6/5/2019 11:59:45 PM V9 6/5/2019 2:01:25 AM
+	64018 V13 6/27/2019 1:22:34 AM V12 6/24/2019 11:22:57 PM V11 6/20/2019 9:30:52 PM V10 6/5/2019 11:59:45 PM
 #CE
 
 Func Game()
@@ -303,7 +308,9 @@ Func Game()
 
 	If $g_ctrlBoard = -1 Then
 
-		$g_ctrlBoard = GUICreate("Snake19 - " & $ver, $g_bx * $g_Size, $g_by * $g_Size + $g_Font + 2)
+		$b = $g_Font * 2
+
+		$g_ctrlBoard = GUICreate("Snake19 - " & $ver, $g_bx * $g_Size, $g_by * $g_Size + $b + 2)
 		MouseMove(0, 0, 0)
 
 		$L_idDown = GUICtrlCreateDummy()
@@ -316,7 +323,7 @@ Func Game()
 		For $y = 0 To $g_by - 1
 			For $x = 0 To $g_bx - 1
 				$a = $cEDGE
-				$Map[$ctrl][$x][$y] = GUICtrlCreatePic($a, $x * $g_Size, $y * $g_Size + $g_Font + $g_StatusOff, $g_Size, $g_Size)
+				$Map[$ctrl][$x][$y] = GUICtrlCreatePic($a, $x * $g_Size, $y * $g_Size + $b + $g_StatusOff, $g_Size, $g_Size)
 			Next
 		Next
 
@@ -326,11 +333,20 @@ Func Game()
 
 		$g_Status[0] = GUICtrlCreateLabel("", 0, 0, $a, $g_Font + $g_StatusOff)
 		$g_Status[1] = GUICtrlCreateLabel("", $a, 0, $a, $g_Font + $g_StatusOff)
+		$g_Status[2] = GUICtrlCreateLabel("", 0, $g_Font, $a, $g_Font + $g_StatusOff)
+		$g_Status[3] = GUICtrlCreateLabel("", $a, $g_Font, $a, $g_Font + $g_StatusOff)
 
 		$g_StatusText[0] = GUICtrlCreateLabel("Status1", $g_Size / 2, $g_StatusOff, $a - $g_Size, $g_Font)
 		GUICtrlSetFont(-1, 10, 700, 0, "Arial")
+;~~
 
 		$g_StatusText[1] = GUICtrlCreateLabel("Status2", $a + ($g_Size / 2), $g_StatusOff, $a - $g_Size, $g_Font)
+		GUICtrlSetFont(-1, 10, 700, 0, "Arial")
+
+		$g_StatusText[2] = GUICtrlCreateLabel("Health", $g_Size / 2, $g_StatusOff + $g_Font, $a - $g_Size, $g_Font)
+		GUICtrlSetFont(-1, 10, 700, 0, "Arial")
+
+		$g_StatusText[3] = GUICtrlCreateLabel("Health", $a + $g_Size / 2, $g_StatusOff + $g_Font, $a - $g_Size, $g_Font)
 		GUICtrlSetFont(-1, 10, 700, 0, "Arial")
 
 	EndIf
@@ -341,6 +357,8 @@ Func Game()
 
 	Status(1, "", 0)
 	Status(0, "", 0)
+	Status(2, "", 0)
+	Status(3, "", 0)
 	ClearBoard()
 	StartSnake()
 	AddFood(True)
@@ -456,11 +474,30 @@ Func Game()
 
 EndFunc   ;==>Game
 #CS INFO
-	236870 V26 6/24/2019 11:22:57 PM V25 6/24/2019 9:33:41 AM V24 6/22/2019 7:09:09 PM V23 6/22/2019 3:41:30 AM
+	272713 V27 6/27/2019 1:22:34 AM V26 6/24/2019 11:22:57 PM V25 6/24/2019 9:33:41 AM V24 6/22/2019 7:09:09 PM
 #CE
 
 Func Tick() ;
-	Local $fdiff = -1
+	Local $fdiff
+
+	$timing[$timingCnt] = TimerDiff($g_hTick)
+	$timingCnt += 1
+	If $timingCnt = 100 Then
+		$timingCnt = 0
+		$fdiff = 0
+		For $x = 0 To 99
+			$fdiff += $timing[$x]
+		Next
+		Status(2, String($fdiff / 100), 4)
+	EndIf
+
+	While 1
+		$fdiff = TimerDiff($g_hTick)
+		;If $fdiff > 1000 then ;150 Then ;150
+		If $fdiff > 150 Then ;150
+			ExitLoop
+		EndIf
+	WEnd
 
 	If $g_Focus <> WinGetTitle("[ACTIVE]") Then
 		Status(0, "Lost Focus - Pause", 1)
@@ -473,17 +510,10 @@ Func Tick() ;
 		Status(0, "", 0)
 	EndIf
 
-	While 1
-		$fdiff = TimerDiff($g_hTick)
-		;If $fdiff > 1000 then ;150 Then ;150
-		If $fdiff > 150 Then ;150
-			ExitLoop
-		EndIf
-	WEnd
 	$g_hTick = TimerInit()
 EndFunc   ;==>Tick
 #CS INFO
-	30452 V5 6/22/2019 3:41:30 AM V4 6/20/2019 9:30:52 PM V3 6/3/2019 10:34:22 AM V2 5/30/2019 10:14:46 AM
+	44315 V6 6/27/2019 1:22:34 AM V5 6/22/2019 3:41:30 AM V4 6/20/2019 9:30:52 PM V3 6/3/2019 10:34:22 AM
 #CE
 
 ; $g_iscore is extra + length
@@ -495,8 +525,6 @@ Func Extra()
 	;EXTRA
 	Switch $Map[$what][$x_new + $g_dirX][$y_new + $g_dirY]
 		Case $WALL
-			dataout("WALL")
-
 			Status(0, "Ate wall", 1)
 			$g_endgame = True
 			Return
@@ -521,7 +549,6 @@ Func Extra()
 				;dataout($x_new, $y_new)
 				;dataout($x_new + $g_dirX, $y_new + $g_dirY)
 
-;~~ 0.28, 0.29
 				If StartBlood($x_new + $g_dirX, $y_new + $g_dirY) = False Then
 					Status(0, "Ate self to many times", 1)
 					$g_endgame = True
@@ -657,7 +684,7 @@ Func Extra()
 
 EndFunc   ;==>Extra
 #CS INFO
-	259507 V3 6/24/2019 11:22:57 PM V2 6/24/2019 9:33:41 AM V1 6/22/2019 7:09:09 PM
+	257544 V4 6/27/2019 1:22:34 AM V3 6/24/2019 11:22:57 PM V2 6/24/2019 9:33:41 AM V1 6/22/2019 7:09:09 PM
 #CE
 
 Func Normal()
@@ -706,7 +733,6 @@ EndFunc   ;==>Normal
 	65639 V3 6/24/2019 11:22:57 PM V2 6/24/2019 9:33:41 AM V1 6/22/2019 7:09:09 PM
 #CE
 
-;~~ .28 .29
 Func DoBlood()
 	Local $x, $y, $x1, $y1
 
@@ -796,7 +822,7 @@ EndFunc   ;==>DoBlood
 	150810 V3 6/20/2019 9:30:52 PM V2 6/19/2019 11:41:56 AM V1 6/19/2019 2:58:37 AM
 #CE
 
-Func StartBlood($inX, $inY) ;~~  .28, .29
+Func StartBlood($inX, $inY) ;  .28, .29
 	Local $x, $y
 
 	;Global $g_bdPrev[4] ;Cycle, CycleStr , X, Y Pre 2,3
@@ -854,7 +880,7 @@ Func StartBlood($inX, $inY) ;~~  .28, .29
 
 	;	ShowRow($x, $y)
 
-	;$g_bdEnd[$s_bdX] = $x ;~~
+	;$g_bdEnd[$s_bdX] = $x ;
 	;$g_bdEnd[$s_bdY] = $y
 
 	;pause()
@@ -877,7 +903,7 @@ Func StartBlood($inX, $inY) ;~~  .28, .29
 	Return True
 EndFunc   ;==>StartBlood
 #CS INFO
-	135428 V3 6/24/2019 11:22:57 PM V2 6/19/2019 11:41:56 AM V1 6/19/2019 2:58:37 AM
+	134924 V4 6/27/2019 1:22:34 AM V3 6/24/2019 11:22:57 PM V2 6/19/2019 11:41:56 AM V1 6/19/2019 2:58:37 AM
 #CE
 
 Func ShowRow($x, $y)
@@ -895,6 +921,7 @@ EndFunc   ;==>ShowRow
 	15281 V2 6/24/2019 11:22:57 PM V1 6/16/2019 10:16:04 AM
 #CE
 
+;~~
 Func Status($status, $string, $color)
 	Local $c
 	;dataout($status, $string)
@@ -953,7 +980,7 @@ EndFunc   ;==>StartSnake
 
 ; Dirx& Diry moving to wall not like Double Back which has reserves direction
 ; So they will change, I can't make them Global because I used this name as Local in a number of Function.
-Func DoubleBackWall(ByRef $dirx, ByRef $diry) ; ~~
+Func DoubleBackWall(ByRef $dirx, ByRef $diry) ;
 	Local $a, $flag
 
 	;Reverse $dirx and $diry here and after that they must not change.
@@ -1003,7 +1030,7 @@ Func DoubleBackWall(ByRef $dirx, ByRef $diry) ; ~~
 
 EndFunc   ;==>DoubleBackWall
 #CS INFO
-	64568 V2 6/20/2019 9:30:52 PM V1 6/12/2019 12:36:42 PM
+	64316 V3 6/27/2019 1:22:34 AM V2 6/20/2019 9:30:52 PM V1 6/12/2019 12:36:42 PM
 #CE
 
 Func DoubleBack($dirx, $diry)
@@ -1466,4 +1493,4 @@ Main()
 
 Exit
 
-;~T ScriptFunc.exe V0.54a 15 May 2019 - 6/24/2019 11:22:57 PM
+;~T ScriptFunc.exe V0.54a 15 May 2019 - 6/27/2019 1:22:34 AM
