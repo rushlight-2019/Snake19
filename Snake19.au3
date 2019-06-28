@@ -5,7 +5,7 @@ AutoItSetOption("MustDeclareVars", 1)
 ;Global Static $MESSAGE =  False   ;Pause will still work in script  No Dataout
 
 ; Must be Declared before _Prf_startup
-Global $ver = "0.36 27 Jun 2019 Please wait boxes"
+Global $ver = "0.37 28 Jun 2019 Better Create vs Clean board"
 Global $ini_ver = "1"
 
 ;Global $TESTING = False
@@ -13,7 +13,7 @@ Global $ini_ver = "1"
 #include "R:\!Autoit\Blank\_prf_startup.au3"
 
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
-#AutoIt3Wrapper_Res_Fileversion=0.0.3.6
+#AutoIt3Wrapper_Res_Fileversion=0.0.3.7
 #AutoIt3Wrapper_Icon=R:\!Autoit\Ico\prf.ico
 #AutoIt3Wrapper_Res_Description=Another snake game
 #AutoIt3Wrapper_Res_LegalCopyright=© Phillip Forrestal 2019
@@ -86,8 +86,7 @@ Global $ini_ver = "1"
 	Need head for snake. need 4 picture for each directiion.
 	Health
 
-	Better clean /  Please wait while cleaning.
-
+	0.37 28 Jun 2019  Better Create vs Clean board
 	0.36 27 Jun 2019  Please wait boxes
 	0.35 27 Jun 2019 Testing Check add Bounce Wall
 	0.34 27 Jun 2019 add 2 more status - add ms used
@@ -306,10 +305,11 @@ Func Game()
 	Local Static $L_idLeft
 	Local Static $L_idUp
 	Local Static $L_idEsc
-
+	Local $NotFirstPass
 	Local $a, $b
 
 	$g_turnBonus = $g_turnBonusStr + 1 ; The way it start with 1 turn on start. To fix start with +1
+	$NotFirstPass = True
 
 	If $g_ctrlBoard = -1 Then
 
@@ -329,10 +329,18 @@ Func Game()
 
 		For $y = 0 To $g_by - 1
 			For $x = 0 To $g_bx - 1
-				$a = $cEDGE
+				Select
+					Case $x = 0 Or $x = $g_bx - 1 Or $y = 0 Or $y = $g_by - 1
+						$Map[$what][$x][$y] = $WALL ;outside edge
+						$a = $cEDGE
+					Case Else
+						$Map[$what][$x][$y] = $EMPTY ; empty
+						$a = $cEMPTY
+				EndSelect
 				$Map[$ctrl][$x][$y] = GUICtrlCreatePic($a, $x * $g_Size, $y * $g_Size + $b + $g_StatusOff, $g_Size, $g_Size)
 			Next
 		Next
+		$NotFirstPass = False
 
 		$a = ($g_bx * $g_Size) / 2 ;Half way
 		$b = $a - $g_Size ; len  = half - $g_size (half of it at both ends)
@@ -367,7 +375,11 @@ Func Game()
 	Status(0, "", 0)
 	Status(2, "", 0)
 	Status(3, "", 0)
-	ClearBoard()
+
+	If $NotFirstPass Then
+		ClearBoard() ; Change how create is done not need on fist pass
+	EndIf
+
 	StartSnake()
 	AddFood(True)
 
@@ -482,7 +494,7 @@ Func Game()
 
 EndFunc   ;==>Game
 #CS INFO
-	275843 V28 6/27/2019 5:39:48 PM V27 6/27/2019 1:22:34 AM V26 6/24/2019 11:22:57 PM V25 6/24/2019 9:33:41 AM
+	299631 V29 6/28/2019 8:21:20 AM V28 6/27/2019 5:39:48 PM V27 6/27/2019 1:22:34 AM V26 6/24/2019 11:22:57 PM
 #CE
 
 Func Tick() ;
@@ -1240,28 +1252,32 @@ EndFunc   ;==>AddFood
 #CE
 
 Func ClearBoard()
-	Local $var
+	Local $var, $NotEmpty
+
 	SayClearBoard(True, False)
 
 	For $y = 0 To $g_by - 1
 		For $x = 0 To $g_bx - 1
 			Select
 				Case $x = 0 Or $x = $g_bx - 1 Or $y = 0 Or $y = $g_by - 1
-					$Map[$what][$x][$y] = $WALL ;outside edge
-
-					$var = $cEDGE
+					$Map[$what][$x][$y] = $WALL ;outside edge  does need to change picture
+					;$var = $cEDGE
 				Case Else
+					$NotEmpty = $Map[$what][$x][$y] <> $EMPTY
 					$Map[$what][$x][$y] = $EMPTY ; empty
 					$var = $cEMPTY
+					If $NotEmpty Then
+						GUICtrlSetImage($Map[$ctrl][$x][$y], $var)
+					EndIf
 			EndSelect
-			GUICtrlSetImage($Map[$ctrl][$x][$y], $var)
+
 		Next
 	Next
 	SayClearBoard()
 
 EndFunc   ;==>ClearBoard
 #CS INFO
-	28013 V10 6/27/2019 5:39:48 PM V9 6/20/2019 9:30:52 PM V8 6/12/2019 12:36:42 PM V7 6/3/2019 1:09:45 AM
+	36469 V11 6/28/2019 8:21:20 AM V10 6/27/2019 5:39:48 PM V9 6/20/2019 9:30:52 PM V8 6/12/2019 12:36:42 PM
 #CE
 
 Func NormalExtra()
@@ -1535,4 +1551,4 @@ Main()
 
 Exit
 
-;~T ScriptFunc.exe V0.54a 15 May 2019 - 6/27/2019 5:39:48 PM
+;~T ScriptFunc.exe V0.54a 15 May 2019 - 6/28/2019 8:21:20 AM

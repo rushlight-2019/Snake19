@@ -1,7 +1,8 @@
 #include-once
 #include "R:\!Autoit\Blank\_Debug.au3"
 
-;Ver 24 Jun 2019
+;Ver 27 Jun 2019 $Log problem
+;24 Jun 2019
 ; 23 Jun 2019 Removed Static in $TESTING
 
 If Not IsDeclared("TESTING") Then
@@ -14,11 +15,10 @@ EndIf
 
 If Not IsDeclared("useLOG") Then
 	Global $useLOG = $TESTING
-	Global $LOG = ""
 EndIf
 
 If $useLOG Then
-	$LOG = @WorkingDir & "\Log.txt"
+	Global $LOG = @WorkingDir & "\Log.txt"
 	Local $hLOG = FileOpen($LOG, 2)
 
 	FileWriteLine($hLOG, "") ;Clear Log
