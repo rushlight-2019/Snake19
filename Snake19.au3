@@ -5,7 +5,7 @@ AutoItSetOption("MustDeclareVars", 1)
 ;Global Static $MESSAGE =  False   ;Pause will still work in script  No Dataout
 
 ; Must be Declared before _Prf_startup
-Global $ver = "0.37 28 Jun 2019 Better Create vs Clean board"
+Global $ver = "0.39 28 Jun 2019 Fixed top 5 high score, Normal Food "
 Global $ini_ver = "1"
 
 ;Global $TESTING = False
@@ -13,7 +13,7 @@ Global $ini_ver = "1"
 #include "R:\!Autoit\Blank\_prf_startup.au3"
 
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
-#AutoIt3Wrapper_Res_Fileversion=0.0.3.7
+#AutoIt3Wrapper_Res_Fileversion=0.0.3.9
 #AutoIt3Wrapper_Icon=R:\!Autoit\Ico\prf.ico
 #AutoIt3Wrapper_Res_Description=Another snake game
 #AutoIt3Wrapper_Res_LegalCopyright=© Phillip Forrestal 2019
@@ -86,6 +86,11 @@ Global $ini_ver = "1"
 	Need head for snake. need 4 picture for each directiion.
 	Health
 
+	Version
+	Change dead snake to brown
+	0.40 Hunger is not doing what I think it doing.
+	0.39 28 Jun 2019 Fixed top 5 high score, Normal Food
+	0.38 28 Jun 2019 Update the failed.  Reverted to 0.37
 	0.37 28 Jun 2019  Better Create vs Clean board
 	0.36 27 Jun 2019  Please wait boxes
 	0.35 27 Jun 2019 Testing Check add Bounce Wall
@@ -234,9 +239,11 @@ DataOut($g_Focus)
 Global $g_endgame = False
 Global $g_gChange, $g_gChangeHalf
 Static $s_gChange = 3
+
 Global $g_gHunger
 Global $g_gHungerCnt
 Static $g_gHungerStr = 50
+
 Global $g_turnBonus
 Static $g_turnBonusStr = 6
 Global $g_turnNo
@@ -285,6 +292,8 @@ Func Main()
 		IniWrite($s_ini, "Score", "Version", $ini_ver)
 	EndIf
 
+	IniHighFive()
+
 	Do
 		If StartForm() Then
 			Return
@@ -294,7 +303,7 @@ Func Main()
 
 EndFunc   ;==>Main
 #CS INFO
-	64020 V14 6/27/2019 5:39:48 PM V13 6/27/2019 1:22:34 AM V12 6/24/2019 11:22:57 PM V11 6/20/2019 9:30:52 PM
+	65167 V15 6/28/2019 7:37:37 PM V14 6/27/2019 5:39:48 PM V13 6/27/2019 1:22:34 AM V12 6/24/2019 11:22:57 PM
 #CE
 
 Func Game()
@@ -509,6 +518,7 @@ Func Tick() ;
 			$fdiff += $timing[$x]
 		Next
 		Status(2, String($fdiff / 100), 4)
+		Dataout("Tick", $fdiff / 100)
 	EndIf
 
 	While 1
@@ -533,7 +543,7 @@ Func Tick() ;
 	$g_hTick = TimerInit()
 EndFunc   ;==>Tick
 #CS INFO
-	44313 V7 6/27/2019 5:39:48 PM V6 6/27/2019 1:22:34 AM V5 6/22/2019 3:41:30 AM V4 6/20/2019 9:30:52 PM
+	46362 V8 6/28/2019 7:37:37 PM V7 6/27/2019 5:39:48 PM V6 6/27/2019 1:22:34 AM V5 6/22/2019 3:41:30 AM
 #CE
 
 ; $g_iscore is extra + length
@@ -670,8 +680,8 @@ Func Extra()
 				$g_Status0Off = 30
 
 				$g_gHunger = $g_gHungerStr - $g_gHungerCnt
-				If $g_gHunger < 30 Then
-					$g_gHunger = 30
+				If $g_gHunger < 10 Then
+					$g_gHunger = 10
 				EndIf
 				Dataout($g_gHunger, "$g_gHunger")
 
@@ -734,7 +744,7 @@ Func Extra()
 
 EndFunc   ;==>Extra
 #CS INFO
-	309526 V5 6/27/2019 5:39:48 PM V4 6/27/2019 1:22:34 AM V3 6/24/2019 11:22:57 PM V2 6/24/2019 9:33:41 AM
+	309522 V6 6/28/2019 7:37:37 PM V5 6/27/2019 5:39:48 PM V4 6/27/2019 1:22:34 AM V3 6/24/2019 11:22:57 PM
 #CE
 
 Func Normal()
@@ -1238,17 +1248,51 @@ Func AddFood($start = False)
 		EndIf
 
 	EndIf
-	Do
-		$x = Int(Random(1, $g_sx))
-		$y = Int(Random(1, $g_sy))
-	Until $Map[$what][$x][$y] = $EMPTY
+	If $g_GameWhich = 0 Then ; 0 Normal, 1 Mine
+
+		Local $area = 10
+		Local $len, $x1, $y1, $mid, $len2
+
+		$len = ($Map[$num][$x_new][$y_new] - $Map[$num][$x_end][$y_end])
+		If $len < $area Then
+			$len = $area
+		EndIf
+		$len2 = $len / 2
+		If $len > $g_sx - 2 Then
+			$x = $g_sx - 1
+			$x1 = 2
+		Else
+			$mid = Int($g_sx / 2)
+			$x = $mid + $len2
+			$x1 = $mid - $len2
+		EndIf
+
+		If $len > $g_sy - 2 Then
+			$y = $g_sy - 1
+			$y1 = 2
+		Else
+			$mid = Int($g_sy / 2)
+			$y = $mid + $len2
+			$y1 = $mid - $len2
+		EndIf
+
+		Do
+			$x = Int(Random($x1, $x))
+			$y = Int(Random($y1, $y))
+		Until $Map[$what][$x][$y] = $EMPTY
+	Else
+		Do
+			$x = Int(Random(1, $g_sx))
+			$y = Int(Random(1, $g_sy))
+		Until $Map[$what][$x][$y] = $EMPTY
+	EndIf
 
 	$Map[$what][$x][$y] = $FOOD
 	GUICtrlSetImage($Map[$ctrl][$x][$y], $cFOOD)
 
 EndFunc   ;==>AddFood
 #CS INFO
-	38491 V9 6/24/2019 11:22:57 PM V8 6/22/2019 7:09:09 PM V7 6/3/2019 1:09:45 AM V6 6/2/2019 7:12:26 PM
+	74737 V10 6/28/2019 7:37:37 PM V9 6/24/2019 11:22:57 PM V8 6/22/2019 7:09:09 PM V7 6/3/2019 1:09:45 AM
 #CE
 
 Func ClearBoard()
@@ -1332,14 +1376,14 @@ Func UpDateHiScore()
 
 		_ArraySort($g_aHiScore, 1, 1, 9)
 		SaveHiScore()
-		Sleep(4000)
+		Sleep(5000)
 		GUIDelete($Form1)
 	Else
 		Sleep(5000)
 	EndIf
 EndFunc   ;==>UpDateHiScore
 #CS INFO
-	59024 V8 6/27/2019 5:39:48 PM V7 6/24/2019 9:33:41 AM V6 6/22/2019 7:09:09 PM V5 6/10/2019 8:01:23 PM
+	59025 V9 6/28/2019 7:37:37 PM V8 6/27/2019 5:39:48 PM V7 6/24/2019 9:33:41 AM V6 6/22/2019 7:09:09 PM
 #CE
 
 Func SaveHiScore()
@@ -1350,7 +1394,6 @@ Func SaveHiScore()
 		$a[$x][1] = $g_aHiScore[$x][0] & "|" & $g_aHiScore[$x][1] & "|" & $g_aHiScore[$x][2] & "|" & $g_aHiScore[$x][3] & "|" & $g_aHiScore[$x][4] & "|" & $g_aHiScore[$x][5]
 	Next
 	$a[0][0] = 8
-
 	If $g_GameWhich = 0 Then ; 0 Normal, 1 Mine
 		$x = IniWriteSection($s_ini, "HighScoreNormal", $a)
 	Else
@@ -1360,6 +1403,46 @@ Func SaveHiScore()
 EndFunc   ;==>SaveHiScore
 #CS INFO
 	32233 V4 6/16/2019 10:16:04 AM V3 6/5/2019 11:59:45 PM V2 6/5/2019 2:01:25 AM V1 6/4/2019 8:01:23 PM
+#CE
+
+Func IniHighFive()
+	Local $a, $c, $Z
+
+	For $x = 0 To 1
+		$g_GameWhich = $x
+		If $g_GameWhich = 0 Then ; 0 Normal, 1 Mine
+			$a = IniReadSection($s_ini, "HighScoreNormal")
+		Else
+			$a = IniReadSection($s_ini, "HighScoreExtra")
+		EndIf
+		If @error = 0 Then
+
+			For $i = 1 To 8
+				If $i > 5 Then
+					$g_aHiScore[$i][0] = 0 ;
+					$g_aHiScore[$i][1] = "" ;date
+					$g_aHiScore[$i][2] = "" ;len
+					$g_aHiScore[$i][3] = "" ;food
+					$g_aHiScore[$i][4] = "" ;turns
+					$g_aHiScore[$i][5] = "" ;Max
+				Else
+					$c = StringSplit($a[$i][1], "|")
+					$g_aHiScore[$i][0] = Int($c[1])
+					$g_aHiScore[$i][1] = $c[2]
+					$g_aHiScore[$i][2] = $c[3]
+					$g_aHiScore[$i][3] = $c[4]
+					$g_aHiScore[$i][4] = $c[5]
+					$g_aHiScore[$i][5] = $c[6]
+				EndIf
+			Next
+
+			SaveHiScore()
+
+		EndIf
+	Next
+EndFunc   ;==>IniHighFive
+#CS INFO
+	51681 V1 6/28/2019 7:37:37 PM
 #CE
 
 Func ReadHiScore()
@@ -1551,4 +1634,4 @@ Main()
 
 Exit
 
-;~T ScriptFunc.exe V0.54a 15 May 2019 - 6/28/2019 8:21:20 AM
+;~T ScriptFunc.exe V0.54a 15 May 2019 - 6/28/2019 7:37:37 PM

@@ -1,0 +1,39 @@
+	0.39 28 Jun 2019 Fixed top 5 high score, Normal Food
+	0.38 28 Jun 2019 Update the failed.  Reverted to 0.37
+	0.37 28 Jun 2019  Better Create vs Clean board
+	0.36 27 Jun 2019  Please wait boxes
+	0.35 27 Jun 2019 Testing Check add Bounce Wall
+	0.34 27 Jun 2019 add 2 more status - add ms used
+	0.33 24 Jun 2019 Final score wrong
+	0.32 22 Jun 2019 Internal changes
+	0.31 20 Jun 2019 Lost Focus Stop Game
+	0.30 20 Jun 2019 If PIC file missing  add warning and exit
+	0.29 19 Jun 2019 just do 2nd blood old tail
+	0.28 19 Jun 2019 just do first blood
+	0.27 17 Jun 2019 Start Eat snake across bloody
+
+	0.26 15 Jun 2019 Keep top 5 scores on boot.
+	0.25 12 Jun 2019 DEBUG - Harder to die box  Upper Left
+	0.24 10 Jun 2019 High Box without OK
+	0.23 10 Jun 2019 Make 2 games loops Normal / Extra
+	0.22 10 Jun 2019 Status score only when change flicker 99% gone
+	0.21 9 Jun 2019 Mouse cursor
+	0.20 7 Jun 2019 Eat me Double back on self
+	0.19 6 Jun 2019  Hungery
+	0.18 6 Jun 2019 Turns
+	0.17 5 Jun 2019 Make Normal functional
+	0.16 5 Jun 2019 High Score for Extra
+	0.15 3 Jun 2019 High Score on main screen
+	0.14 3 Jun 2019 Status, length score
+	0.12 3 Jun 2019 Move snake
+	0.11 2 Jun 2019 Add Snake - add previous and next. Snake cell number
+	0.10 2 Jun 2019 Major change to map array
+	0.09 1 Jun 2019 Minor fixes.
+	0.08 31 May 2019 Eat wall & Status
+	0.07 31 May 2019 New Layout Snake/Food
+	0.06 30 May 2019  Redo Layout like The Game
+	Too much flicker
+	0.04 30 May 2019 Eat Food
+	0.03 29 May 2019 Move snake
+	0.02 29 May 2019 Layout game.
+	0.01 28 May 2019  Start form
