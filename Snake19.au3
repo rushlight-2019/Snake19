@@ -5,7 +5,7 @@ AutoItSetOption("MustDeclareVars", 1)
 ;Global Static $MESSAGE =  False   ;Pause will still work in script  No Dataout
 
 ; Must be Declared before _Prf_startup
-Global $ver = "0.39 28 Jun 2019 Fixed top 5 high score, Normal Food "
+Global $ver = "0.40 30 Jun 2019 Changed hunger (done)"
 Global $ini_ver = "1"
 
 ;Global $TESTING = False
@@ -13,7 +13,7 @@ Global $ini_ver = "1"
 #include "R:\!Autoit\Blank\_prf_startup.au3"
 
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
-#AutoIt3Wrapper_Res_Fileversion=0.0.3.9
+#AutoIt3Wrapper_Res_Fileversion=0.0.4.0
 #AutoIt3Wrapper_Icon=R:\!Autoit\Ico\prf.ico
 #AutoIt3Wrapper_Res_Description=Another snake game
 #AutoIt3Wrapper_Res_LegalCopyright=© Phillip Forrestal 2019
@@ -63,32 +63,24 @@ Global $ini_ver = "1"
 	6 = snake cell number (to computer size)
 
 	to do
-	poop
-	Health of snake
 
-	current
-	Add max lenght in Extra
-	Message eat unheath meat
-	died meat
-	OUCH
+	Change dead snake to brown kill the blood.
+	Head on snake
+	Remove things I won't do but left in code
+	Redo first screen.
+	Don't hid game screen just put it the back on most computers take time to reshow.
+	Head on snake.
+	3 games.  Old sorta, my Normal , Bounce off walls.
+	Top 5 high score,  Setting: clear all but top, clear all.
+	Setting: Size, Speed.
 
-	Need Poop chain  after 20 po0p turn to 25% of time food what does creat new food.
-	What happen it snake eat Poop  10% health
-	Snake Poop
+	End of game - Score displayed.
 
-	As eat snake 50% sick  Sick snake uses 50% new off too get healty
-
-	Mouse as arrow keys????
-	Pick different arrow keys.
-
-	Change dead snake to brown
-
-	Need head for snake. need 4 picture for each directiion.
-	Health
-
+	No more just clean up game.
 	Version
-	Change dead snake to brown
-	0.40 Hunger is not doing what I think it doing.
+
+	0.40 30 Jun 2019 Changed hunger (done)
+
 	0.39 28 Jun 2019 Fixed top 5 high score, Normal Food
 	0.38 28 Jun 2019 Update the failed.  Reverted to 0.37
 	0.37 28 Jun 2019  Better Create vs Clean board
@@ -99,10 +91,10 @@ Global $ini_ver = "1"
 	0.32 22 Jun 2019 Internal changes
 	0.31 20 Jun 2019 Lost Focus Stop Game
 	0.30 20 Jun 2019 If PIC file missing  add warning and exit
+
 	0.29 19 Jun 2019 just do 2nd blood old tail
 	0.28 19 Jun 2019 just do first blood
 	0.27 17 Jun 2019 Start Eat snake across bloody
-
 	0.26 15 Jun 2019 Keep top 5 scores on boot.
 	0.25 12 Jun 2019 DEBUG - Harder to die box  Upper Left
 	0.24 10 Jun 2019 High Box without OK
@@ -110,6 +102,7 @@ Global $ini_ver = "1"
 	0.22 10 Jun 2019 Status score only when change flicker 99% gone
 	0.21 9 Jun 2019 Mouse cursor
 	0.20 7 Jun 2019 Eat me Double back on self
+
 	0.19 6 Jun 2019  Hungery
 	0.18 6 Jun 2019 Turns
 	0.17 5 Jun 2019 Make Normal functional
@@ -119,15 +112,47 @@ Global $ini_ver = "1"
 	0.12 3 Jun 2019 Move snake
 	0.11 2 Jun 2019 Add Snake - add previous and next. Snake cell number
 	0.10 2 Jun 2019 Major change to map array
+
 	0.09 1 Jun 2019 Minor fixes.
 	0.08 31 May 2019 Eat wall & Status
 	0.07 31 May 2019 New Layout Snake/Food
-	0.06 30 May 2019  Redo Layout like The Game
+	0.06 30 May 2019 Redo Layout like The Game
 	Too much flicker
 	0.04 30 May 2019 Eat Food
 	0.03 29 May 2019 Move snake
 	0.02 29 May 2019 Layout game.
-	0.01 28 May 2019  Start form
+	0.01 28 May 2019 Start form
+
+	Start of Game
+	$HungerStr  =30
+	Goes down 1 of each 100 snake length created.
+	$HungerSnake =0
+	Lowest is 20
+
+	Start
+	$HungerStr  =30
+	$HungerSnake=0
+	$HungerCycle=$HungerStr
+	$HungerCnt = 0
+
+	Each Food
+	$HungerCycle=$HungerStr
+	$HungerCnt = 0
+
+	Add Snake
+	Each Hunger Time off goes up 1  Max value is 10
+	$HungerCycle  -1
+	$HungerCycle=$HungerStr - $HungerCnt
+	$HungerSnake +1
+	$HungerSnake  = 100 then
+	$HungerStr  -1
+	Lowest vaule is 20
+	$HungerSnake = 0
+
+	$HungerStr  =30
+	$HungerSnake =0
+	$HungerCycle=$HungerStr
+	$HungerCnt
 
 #ce ----------------------------------------------------------------------------
 
@@ -219,8 +244,8 @@ Static $s_bdX = 1
 Static $s_bdY = 2
 Static $s_size = 3
 Static $M1 = -1
-Static $s_delay = 10
-Static $s_rand = 5
+Static $s_delay = 200
+Static $s_rand = 50
 
 Global $g_bdPrev[$s_size] ;Cycle , X, Y Pre 2,3
 Global $g_bdNext[$s_size] ;Cycle , X, Y Nx 4,5
@@ -240,9 +265,9 @@ Global $g_endgame = False
 Global $g_gChange, $g_gChangeHalf
 Static $s_gChange = 3
 
-Global $g_gHunger
-Global $g_gHungerCnt
-Static $g_gHungerStr = 50
+;Global $g_gHunger
+;Global $g_gHungerCnt
+;Static $g_gHungerStr = 30
 
 Global $g_turnBonus
 Static $g_turnBonusStr = 6
@@ -263,6 +288,12 @@ Global $timingCnt = -0
 
 ;0.35
 Global $BounceWall = False
+
+;0.40
+Global $HungerStr = ($g_sx + $g_sy) / 2
+Global $HungerSnake = 0
+Global $HungerCycle = $HungerStr
+Global $HungerCnt = 0
 
 ; Main is call at end
 Func Main()
@@ -404,8 +435,11 @@ Func Game()
 	$g_foodCnt = 1
 	$g_PoopCnt = 0
 
-	$g_gHungerCnt = 0
-	$g_gHunger = 1000
+	;0.40
+	$HungerStr = ($g_sx + $g_sy) / 2
+	$HungerSnake = 0
+	$HungerCycle = $HungerStr
+	$HungerCnt = 0
 
 	; Size can be zero at the begin so once size is > 0 then hunger is active.
 	$g_RemoveBegining = False
@@ -503,7 +537,7 @@ Func Game()
 
 EndFunc   ;==>Game
 #CS INFO
-	299631 V29 6/28/2019 8:21:20 AM V28 6/27/2019 5:39:48 PM V27 6/27/2019 1:22:34 AM V26 6/24/2019 11:22:57 PM
+	303998 V30 6/30/2019 3:33:26 PM V29 6/28/2019 8:21:20 AM V28 6/27/2019 5:39:48 PM V27 6/27/2019 1:22:34 AM
 #CE
 
 Func Tick() ;
@@ -517,7 +551,7 @@ Func Tick() ;
 		For $x = 0 To 99
 			$fdiff += $timing[$x]
 		Next
-		Status(2, String($fdiff / 100), 4)
+		Status(2, String(Int(($fdiff / 100))), 4)
 		Dataout("Tick", $fdiff / 100)
 	EndIf
 
@@ -543,7 +577,7 @@ Func Tick() ;
 	$g_hTick = TimerInit()
 EndFunc   ;==>Tick
 #CS INFO
-	46362 V8 6/28/2019 7:37:37 PM V7 6/27/2019 5:39:48 PM V6 6/27/2019 1:22:34 AM V5 6/22/2019 3:41:30 AM
+	46823 V9 6/30/2019 3:33:26 PM V8 6/28/2019 7:37:37 PM V7 6/27/2019 5:39:48 PM V6 6/27/2019 1:22:34 AM
 #CE
 
 ; $g_iscore is extra + length
@@ -626,14 +660,12 @@ Func Extra()
 		Case $FOOD
 			$g_ScoreFood += 1
 
-			; .36 $g_gHunger = ($g_gHungerStr * 2) - $g_ScoreFood
+			$HungerCycle = $HungerStr
+			$HungerCnt = 0
 
-			$g_gHunger = ($g_gHungerStr) - $g_ScoreFood
-			If $g_gHunger < 20 Then
-				$g_gHunger = 20
-			EndIf
-			$g_gHungerCnt = 0
-			dataout("$g_gHunger at food", $g_gHunger)
+			dataout("Hunger Cycle at food", $HungerCycle)
+
+			Status(3, "Hungery = " & $HungerStr, 2)
 
 			Switch $g_turnBonus
 				Case 6, 5, 4
@@ -674,23 +706,34 @@ Func Extra()
 			EndIf
 			$g_Status0Off -= 1
 
-			If $g_gHunger = 0 Then
-				$g_gHungerCnt += 1
-				Status(0, "Hungery - " & $g_gHungerCnt & " Snake shorter", 3)
+			;	Each Hunger Time off goes up 1 Max value is 10
+			$HungerSnake += 1
+			If $HungerSnake = 100 Then
+				$HungerStr -= 1
+				$HungerSnake = 0
+				If $HungerStr = 20 Then
+					$HungerStr = 20
+				EndIf
+			EndIf
+
+			$HungerCycle -= 1
+			If $HungerCycle = 0 Then
+				$HungerCnt += 1
+				If $HungerCnt = 10 Then
+					$HungerCnt = 10
+				EndIf
+				$HungerCycle = $HungerStr - $HungerCnt
+
+				Status(0, "Hungery - " & $HungerCnt & " Snake shorter", 3)
 				$g_Status0Off = 30
 
-				$g_gHunger = $g_gHungerStr - $g_gHungerCnt
-				If $g_gHunger < 10 Then
-					$g_gHunger = 10
-				EndIf
-				Dataout($g_gHunger, "$g_gHunger")
+				dataout($HungerCnt, "HungerCnt")
+				dataout($HungerCycle, "HungerCycle")
+				Status(3, "Hungery = " & $HungerStr, 3)
 
-				$g_iScore -= $g_gHungerCnt
-				$g_gChange -= $g_gHungerCnt
-				dataout($g_gHungerCnt, "$g_gHungerCnt")
+				$g_iScore -= $HungerCnt
+				$g_gChange -= $HungerCnt
 
-			Else
-				$g_gHunger -= 1
 			EndIf
 
 			PrevNext($x_new + $g_dirX, $y_new + $g_dirY) ;New value
@@ -744,7 +787,7 @@ Func Extra()
 
 EndFunc   ;==>Extra
 #CS INFO
-	309522 V6 6/28/2019 7:37:37 PM V5 6/27/2019 5:39:48 PM V4 6/27/2019 1:22:34 AM V3 6/24/2019 11:22:57 PM
+	317769 V7 6/30/2019 3:33:26 PM V6 6/28/2019 7:37:37 PM V5 6/27/2019 5:39:48 PM V4 6/27/2019 1:22:34 AM
 #CE
 
 Func Normal()
@@ -1161,6 +1204,7 @@ Func PrevNext($x, $y) ;New value
 
 	$Map[$what][$x_new][$y_new] = $SNAKE
 	GUICtrlSetImage($Map[$ctrl][$x_new][$y_new], $cSNAKE)
+
 EndFunc   ;==>PrevNext
 #CS INFO
 	34980 V4 6/22/2019 7:09:09 PM V3 6/3/2019 8:05:25 PM V2 6/3/2019 10:34:22 AM V1 6/3/2019 1:09:45 AM
@@ -1634,4 +1678,4 @@ Main()
 
 Exit
 
-;~T ScriptFunc.exe V0.54a 15 May 2019 - 6/28/2019 7:37:37 PM
+;~T ScriptFunc.exe V0.54a 15 May 2019 - 6/30/2019 3:33:26 PM
