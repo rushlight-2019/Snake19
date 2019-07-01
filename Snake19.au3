@@ -5,7 +5,7 @@ AutoItSetOption("MustDeclareVars", 1)
 ;Global Static $MESSAGE =  False   ;Pause will still work in script  No Dataout
 
 ; Must be Declared before _Prf_startup
-Global $ver = "0.40 30 Jun 2019 Changed hunger (done)"
+Global $ver = "0.42 1 Jul 2019 Hunger removing to many"
 Global $ini_ver = "1"
 
 ;Global $TESTING = False
@@ -13,7 +13,7 @@ Global $ini_ver = "1"
 #include "R:\!Autoit\Blank\_prf_startup.au3"
 
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
-#AutoIt3Wrapper_Res_Fileversion=0.0.4.0
+#AutoIt3Wrapper_Res_Fileversion=0.0.4.2
 #AutoIt3Wrapper_Icon=R:\!Autoit\Ico\prf.ico
 #AutoIt3Wrapper_Res_Description=Another snake game
 #AutoIt3Wrapper_Res_LegalCopyright=© Phillip Forrestal 2019
@@ -78,8 +78,12 @@ Global $ini_ver = "1"
 
 	No more just clean up game.
 	Version
+	Hungery has problem with too many removed should stop at 10.  it goes on.   Cell stop at 10  Show  snake to be added / remove count
 
-	0.40 30 Jun 2019 Changed hunger (done)
+	Change dead snake to brown
+	0.42 1 Jul 2019 Hunger removing to many
+	0.41 1 Jul 2019 End game Score
+	0.40 30 Jun 2019 Changed hunger (done)(not 0.42)
 
 	0.39 28 Jun 2019 Fixed top 5 high score, Normal Food
 	0.38 28 Jun 2019 Update the failed.  Reverted to 0.37
@@ -533,11 +537,11 @@ Func Game()
 
 	GUISetAccelerators(1, $g_ctrlBoard) ; Turn off Accelerator
 	UpDateHiScore()
-	GUISetState(@SW_HIDE, $g_ctrlBoard)
+	;GUISetState(@SW_HIDE, $g_ctrlBoard)
 
 EndFunc   ;==>Game
 #CS INFO
-	303998 V30 6/30/2019 3:33:26 PM V29 6/28/2019 8:21:20 AM V28 6/27/2019 5:39:48 PM V27 6/27/2019 1:22:34 AM
+	304057 V31 7/1/2019 10:36:50 AM V30 6/30/2019 3:33:26 PM V29 6/28/2019 8:21:20 AM V28 6/27/2019 5:39:48 PM
 #CE
 
 Func Tick() ;
@@ -665,8 +669,6 @@ Func Extra()
 
 			dataout("Hunger Cycle at food", $HungerCycle)
 
-			Status(3, "Hungery = " & $HungerStr, 2)
-
 			Switch $g_turnBonus
 				Case 6, 5, 4
 					$g_gChange += 3
@@ -711,7 +713,7 @@ Func Extra()
 			If $HungerSnake = 100 Then
 				$HungerStr -= 1
 				$HungerSnake = 0
-				If $HungerStr = 20 Then
+				If $HungerStr < 20 Then
 					$HungerStr = 20
 				EndIf
 			EndIf
@@ -719,8 +721,8 @@ Func Extra()
 			$HungerCycle -= 1
 			If $HungerCycle = 0 Then
 				$HungerCnt += 1
-				If $HungerCnt = 10 Then
-					$HungerCnt = 10
+				If $HungerCnt > 5 Then
+					$HungerCnt = 5
 				EndIf
 				$HungerCycle = $HungerStr - $HungerCnt
 
@@ -729,7 +731,6 @@ Func Extra()
 
 				dataout($HungerCnt, "HungerCnt")
 				dataout($HungerCycle, "HungerCycle")
-				Status(3, "Hungery = " & $HungerStr, 3)
 
 				$g_iScore -= $HungerCnt
 				$g_gChange -= $HungerCnt
@@ -779,6 +780,7 @@ Func Extra()
 		$LS_ScoreLast = $g_iScore + $a
 		If $TESTING Then
 			Status(1, "Snake length: " & $a & " Score: " & $g_iScore & " (" & $g_iScore + $a & ")", 2)
+			Status(3, "Hungery = " & $HungerCnt & " Snake Change " & $g_gChange & " - " & $HungerCycle & " - " & $HungerStr, 4)
 		Else
 			Status(1, "Snake length: " & $a & " Score: " & $g_iScore + $a, 2)
 		EndIf
@@ -787,7 +789,7 @@ Func Extra()
 
 EndFunc   ;==>Extra
 #CS INFO
-	317769 V7 6/30/2019 3:33:26 PM V6 6/28/2019 7:37:37 PM V5 6/27/2019 5:39:48 PM V4 6/27/2019 1:22:34 AM
+	319513 V8 7/1/2019 1:18:21 PM V7 6/30/2019 3:33:26 PM V6 6/28/2019 7:37:37 PM V5 6/27/2019 5:39:48 PM
 #CE
 
 Func Normal()
@@ -1422,12 +1424,18 @@ Func UpDateHiScore()
 		SaveHiScore()
 		Sleep(5000)
 		GUIDelete($Form1)
-	Else
+
+	ElseIf $g_GameScore > 0 Then
+		$Form1 = GUICreate("", 250, 100, -1, -1, $WS_DLGFRAME, BitOR($WS_EX_TOPMOST, $WS_EX_STATICEDGE))
+		GUICtrlCreateLabel("Score: " & $g_GameScore, 25, 30, 200, 25)
+		GUICtrlSetFont(-1, 12, 400, 0, "Arial")
+		GUISetState(@SW_SHOW)
 		Sleep(5000)
+		GUIDelete($Form1)
 	EndIf
 EndFunc   ;==>UpDateHiScore
 #CS INFO
-	59025 V9 6/28/2019 7:37:37 PM V8 6/27/2019 5:39:48 PM V7 6/24/2019 9:33:41 AM V6 6/22/2019 7:09:09 PM
+	76879 V10 7/1/2019 10:36:50 AM V9 6/28/2019 7:37:37 PM V8 6/27/2019 5:39:48 PM V7 6/24/2019 9:33:41 AM
 #CE
 
 Func SaveHiScore()
@@ -1678,4 +1686,4 @@ Main()
 
 Exit
 
-;~T ScriptFunc.exe V0.54a 15 May 2019 - 6/30/2019 3:33:26 PM
+;~T ScriptFunc.exe V0.54a 15 May 2019 - 7/1/2019 1:18:21 PM
