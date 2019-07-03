@@ -5,7 +5,7 @@ AutoItSetOption("MustDeclareVars", 1)
 ;Global Static $MESSAGE =  False   ;Pause will still work in script  No Dataout
 
 ; Must be Declared before _Prf_startup
-Global $ver = "0.42 1 Jul 2019 Hunger removing to many"
+Global $ver = "0.44 3 Jul 2019 Hit dead snake - bad taste"
 Global $ini_ver = "1"
 
 ;Global $TESTING = False
@@ -13,7 +13,7 @@ Global $ini_ver = "1"
 #include "R:\!Autoit\Blank\_prf_startup.au3"
 
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
-#AutoIt3Wrapper_Res_Fileversion=0.0.4.2
+#AutoIt3Wrapper_Res_Fileversion=0.0.4.4
 #AutoIt3Wrapper_Icon=R:\!Autoit\Ico\prf.ico
 #AutoIt3Wrapper_Res_Description=Another snake game
 #AutoIt3Wrapper_Res_LegalCopyright=© Phillip Forrestal 2019
@@ -80,7 +80,8 @@ Global $ini_ver = "1"
 	Version
 	Hungery has problem with too many removed should stop at 10.  it goes on.   Cell stop at 10  Show  snake to be added / remove count
 
-	Change dead snake to brown
+	0.44 3 Jul 2019 Hit dead snake - bad taste
+	0.43 2 Jul 2019 Change dead snake to brown
 	0.42 1 Jul 2019 Hunger removing to many
 	0.41 1 Jul 2019 End game Score
 	0.40 30 Jun 2019 Changed hunger (done)(not 0.42)
@@ -182,10 +183,8 @@ Static $SNAKE = 1
 Static $cSNAKE = $s_pic & "gold.jpg"
 Static $FOOD = 10
 Static $cFOOD = $s_pic & "brightgreen.jpg"
-Static $BLOOD = 20
-Static $cBLOOD = $s_pic & "red.jpg"
-Static $cPOOP = $s_pic & "earth.jpg"
-Static $POOP = -30
+Static $DEAD = 20
+Static $cDEAD = $s_pic & "brown.jpg"
 
 ;Global
 Global $g_first = True
@@ -284,7 +283,6 @@ Global $g_dirY
 Global $g_GameScore = 0
 
 ;0.34
-Global $g_PoopCnt = 0
 Global $g_Health = 100
 
 Global $timing[100]
@@ -427,6 +425,8 @@ Func Game()
 	StartSnake()
 	AddFood(True)
 
+	$BounceWall = True
+
 	;Default before start
 	DataOut("New Game")
 	$g_turnLast = 0
@@ -437,7 +437,6 @@ Func Game()
 	$g_gChange = 0
 	$g_gChangeHalf = 0
 	$g_foodCnt = 1
-	$g_PoopCnt = 0
 
 	;0.40
 	$HungerStr = ($g_sx + $g_sy) / 2
@@ -467,8 +466,8 @@ Func Game()
 	Do ;game Loop
 		Tick()
 
-		;Blood Loop ~~
-		DoBlood()
+		;Dead Loop ~~
+		DoDead()
 
 		$nMsg = GUIGetMsg()
 		If $nMsg = $GUI_EVENT_MINIMIZE Or $nMsg = $GUI_EVENT_CLOSE Then
@@ -541,7 +540,7 @@ Func Game()
 
 EndFunc   ;==>Game
 #CS INFO
-	304057 V31 7/1/2019 10:36:50 AM V30 6/30/2019 3:33:26 PM V29 6/28/2019 8:21:20 AM V28 6/27/2019 5:39:48 PM
+	304264 V33 7/3/2019 6:50:03 PM V32 7/3/2019 6:22:02 AM V31 7/1/2019 10:36:50 AM V30 6/30/2019 3:33:26 PM
 #CE
 
 Func Tick() ;
@@ -555,7 +554,7 @@ Func Tick() ;
 		For $x = 0 To 99
 			$fdiff += $timing[$x]
 		Next
-		Status(2, String(Int(($fdiff / 100))), 4)
+		Status(3, String(Int(($fdiff / 100))), 4)
 		Dataout("Tick", $fdiff / 100)
 	EndIf
 
@@ -581,7 +580,7 @@ Func Tick() ;
 	$g_hTick = TimerInit()
 EndFunc   ;==>Tick
 #CS INFO
-	46823 V9 6/30/2019 3:33:26 PM V8 6/28/2019 7:37:37 PM V7 6/27/2019 5:39:48 PM V6 6/27/2019 1:22:34 AM
+	46824 V10 7/3/2019 6:50:03 PM V9 6/30/2019 3:33:26 PM V8 6/28/2019 7:37:37 PM V7 6/27/2019 5:39:48 PM
 #CE
 
 ; $g_iscore is extra + length
@@ -592,6 +591,14 @@ Func Extra()
 
 	;EXTRA
 	Switch $Map[$what][$x_new + $g_dirX][$y_new + $g_dirY]
+		Case $DEAD
+			Status(0, "Ate DEAD snake UG!", 1)
+			Status(2, "Lost 10 Snake cells. Lost 100 points.", 1)
+			$g_gChange -= 10
+			$g_iScore -= 100
+			$Map[$what][$x_new + $g_dirX][$y_new + $g_dirY] = $EMPTY
+
+;~~
 		Case $WALL
 			;	Extra Wall removed 0.32 = return 0.35
 			If $BounceWall Then
@@ -633,7 +640,7 @@ Func Extra()
 				$flag = DoubleBack($g_dirX, $g_dirY)
 				If $flag Then
 					Status(0, "Double back", 3)
-					$g_gChange -= 5
+					$g_gChange -= 10
 					$g_iScore -= 100
 				Else
 					Status(0, "Ate self", 1)
@@ -645,7 +652,7 @@ Func Extra()
 				;dataout($x_new, $y_new)
 				;dataout($x_new + $g_dirX, $y_new + $g_dirY)
 
-				If StartBlood($x_new + $g_dirX, $y_new + $g_dirY) = False Then
+				If StartDead($x_new + $g_dirX, $y_new + $g_dirY) = False Then
 					Status(0, "Ate self to many times", 1)
 					$g_endgame = True
 					Return
@@ -699,7 +706,6 @@ Func Extra()
 			;RemoveFood()  NOT needed because  snake will over write with out looking
 			AddFood()
 			PrevNext($x_new + $g_dirX, $y_new + $g_dirY) ;New value
-			$g_PoopCnt = Random(5, 10, 1)
 
 		Case $EMPTY
 
@@ -761,7 +767,7 @@ Func Extra()
 							$g_endgame = True
 							Return ;no snake
 						EndIf
-						If RemoveSnakeExtra() Then
+						If RemoveSnakeExtra(True) Then
 							$g_endgame = True
 							Return ;no snake
 						EndIf
@@ -780,7 +786,6 @@ Func Extra()
 		$LS_ScoreLast = $g_iScore + $a
 		If $TESTING Then
 			Status(1, "Snake length: " & $a & " Score: " & $g_iScore & " (" & $g_iScore + $a & ")", 2)
-			Status(3, "Hungery = " & $HungerCnt & " Snake Change " & $g_gChange & " - " & $HungerCycle & " - " & $HungerStr, 4)
 		Else
 			Status(1, "Snake length: " & $a & " Score: " & $g_iScore + $a, 2)
 		EndIf
@@ -789,7 +794,7 @@ Func Extra()
 
 EndFunc   ;==>Extra
 #CS INFO
-	319513 V8 7/1/2019 1:18:21 PM V7 6/30/2019 3:33:26 PM V6 6/28/2019 7:37:37 PM V5 6/27/2019 5:39:48 PM
+	324149 V10 7/3/2019 6:50:03 PM V9 7/3/2019 6:22:02 AM V8 7/1/2019 1:18:21 PM V7 6/30/2019 3:33:26 PM
 #CE
 
 Func Normal()
@@ -838,9 +843,9 @@ EndFunc   ;==>Normal
 	65639 V3 6/24/2019 11:22:57 PM V2 6/24/2019 9:33:41 AM V1 6/22/2019 7:09:09 PM
 #CE
 
-Func DoBlood()
+Func DoDead()
 	Local $x, $y, $x1, $y1
-
+;~~
 	If $g_bdPrev[$s_bdCycle] > $M1 Then ;  active cycle count down
 		$g_bdPrev[$s_bdCycle] -= 1
 		If $g_bdPrev[$s_bdCycle] = 0 Then ; do move
@@ -870,8 +875,8 @@ Func DoBlood()
 				DataOut("DO PREV is not Snake", $Map[$what][$x1][$y1])
 				$g_bdPrev[$s_bdCycle] = $M1 ; -1 no active if active cycle count down
 			Else
-				$Map[$what][$x1][$y1] = $BLOOD
-				GUICtrlSetImage($Map[$ctrl][$x1][$y1], $cBLOOD)
+				$Map[$what][$x1][$y1] = $DEAD
+				GUICtrlSetImage($Map[$ctrl][$x1][$y1], $cDEAD)
 			EndIf
 		EndIf
 
@@ -911,8 +916,8 @@ Func DoBlood()
 				DataOut("DO Next is not Snake", $Map[$what][$x1][$y1])
 				$g_bdNext[$s_bdCycle] = $M1 ; -1 no active if active cycle count down
 			Else
-				$Map[$what][$x1][$y1] = $BLOOD
-				GUICtrlSetImage($Map[$ctrl][$x1][$y1], $cBLOOD)
+				$Map[$what][$x1][$y1] = $DEAD
+				GUICtrlSetImage($Map[$ctrl][$x1][$y1], $cDEAD)
 			EndIf
 			;ShowRow($x, $y)
 
@@ -922,12 +927,12 @@ Func DoBlood()
 
 	EndIf
 
-EndFunc   ;==>DoBlood
+EndFunc   ;==>DoDead
 #CS INFO
-	150810 V3 6/20/2019 9:30:52 PM V2 6/19/2019 11:41:56 AM V1 6/19/2019 2:58:37 AM
+	150469 V4 7/3/2019 6:22:02 AM V3 6/20/2019 9:30:52 PM V2 6/19/2019 11:41:56 AM V1 6/19/2019 2:58:37 AM
 #CE
 
-Func StartBlood($inX, $inY) ;  .28, .29
+Func StartDead($inX, $inY) ;  .~~
 	Local $x, $y
 
 	;Global $g_bdPrev[4] ;Cycle, CycleStr , X, Y Pre 2,3
@@ -954,10 +959,13 @@ Func StartBlood($inX, $inY) ;  .28, .29
 	$Map[$nxX][$x][$y] = 0
 	$Map[$nxY][$x][$y] = 0
 
-	$Map[$what][$x][$y] = $BLOOD
-	GUICtrlSetImage($Map[$ctrl][$x][$y], $cBLOOD)
-	;-----------------------------end prev
+	ConvDead($x, $y)
 
+	;	$Map[$what][$x][$y] = $DEAD
+	;	GUICtrlSetImage($Map[$ctrl][$x][$y], $cDEAD)
+
+	;-----------------------------end prev
+;~~
 	;-------------------------start old tail
 	;This one will be the new end.  The old end will be bdStart2
 
@@ -975,8 +983,8 @@ Func StartBlood($inX, $inY) ;  .28, .29
 	$Map[$prY][$x][$y] = 0
 
 	;Add blood to old tail
-	$Map[$what][$x][$y] = $BLOOD
-	GUICtrlSetImage($Map[$ctrl][$x][$y], $cBLOOD)
+	$Map[$what][$x][$y] = $DEAD
+	GUICtrlSetImage($Map[$ctrl][$x][$y], $cDEAD)
 
 	;--------------------end old tail
 
@@ -998,17 +1006,39 @@ Func StartBlood($inX, $inY) ;  .28, .29
 	$Map[$prX][$x][$y] = 0
 	$Map[$prY][$x][$y] = 0
 
-	$Map[$what][$x][$y] = $BLOOD
-	GUICtrlSetImage($Map[$ctrl][$x][$y], $cBLOOD)
+	$Map[$what][$x][$y] = $DEAD
+	GUICtrlSetImage($Map[$ctrl][$x][$y], $cDEAD)
 
 	;ShowRow($x, $y)
 	$x_end = $x
 	$y_end = $y
 
 	Return True
-EndFunc   ;==>StartBlood
+EndFunc   ;==>StartDead
 #CS INFO
-	134924 V4 6/27/2019 1:22:34 AM V3 6/24/2019 11:22:57 PM V2 6/19/2019 11:41:56 AM V1 6/19/2019 2:58:37 AM
+	135664 V6 7/3/2019 6:50:03 PM V5 7/3/2019 6:22:02 AM V4 6/27/2019 1:22:34 AM V3 6/24/2019 11:22:57 PM
+#CE
+
+Func ConvDead($x, $y) ; start map location
+	;----------------- convert Snake to Dead until end
+
+	Local $tx, $ty
+
+	;ShowRow($x, $y)
+	While $Map[$what][$x][$y] <> $EMPTY
+
+		$Map[$what][$x][$y] = $DEAD
+		GUICtrlSetImage($Map[$ctrl][$x][$y], $cDEAD)
+
+		$tx = $x
+		$ty = $y
+
+		$x = $Map[$prX][$tx][$ty]
+		$y = $Map[$prY][$tx][$ty]
+	WEnd
+EndFunc   ;==>ConvDead
+#CS INFO
+	24619 V2 7/3/2019 6:50:03 PM V1 7/3/2019 6:22:02 AM
 #CE
 
 Func ShowRow($x, $y)
@@ -1212,8 +1242,9 @@ EndFunc   ;==>PrevNext
 	34980 V4 6/22/2019 7:09:09 PM V3 6/3/2019 8:05:25 PM V2 6/3/2019 10:34:22 AM V1 6/3/2019 1:09:45 AM
 #CE
 
-Func RemoveSnakeExtra() ; at end
-	Local $x, $y
+Func RemoveSnakeExtra($Poop = False) ; at end
+	Local $x, $y, $flag
+	Local Static $poopCnt = 25
 	; Size can be zero at the begin so once size is > 0 then hunger is active.
 	;Global $g_RemoveBegining = False
 
@@ -1221,12 +1252,18 @@ Func RemoveSnakeExtra() ; at end
 	$y = $y_end
 
 	;MsgBox(0, "Remove snake", "x " & $x & " y " & $y & " Num: " & $Map[$num][$x][$y], 10)
+	$flag = False
+	If $Poop Then
+		$poopCnt -= 1
+		If $poopCnt = 0 Then
+			$poopCnt = Random(20, 40, 1)
+			$flag = True
+		EndIf
+	EndIf
 
-	$g_PoopCnt -= 1
-	$g_PoopCnt = 1
-	If $g_PoopCnt = 0 Then
-		$Map[$what][$x][$y] = $POOP
-		GUICtrlSetImage($Map[$ctrl][$x][$y], $cPOOP)
+	If $flag Then
+		$Map[$what][$x][$y] = $DEAD
+		GUICtrlSetImage($Map[$ctrl][$x][$y], $cDEAD)
 	Else
 		$Map[$what][$x][$y] = $EMPTY
 		GUICtrlSetImage($Map[$ctrl][$x][$y], $cEMPTY)
@@ -1258,7 +1295,7 @@ Func RemoveSnakeExtra() ; at end
 
 EndFunc   ;==>RemoveSnakeExtra
 #CS INFO
-	86293 V9 6/24/2019 11:22:57 PM V8 6/22/2019 7:09:09 PM V7 6/6/2019 11:09:42 PM V6 6/3/2019 10:34:22 AM
+	95086 V11 7/3/2019 6:50:03 PM V10 7/3/2019 6:22:02 AM V9 6/24/2019 11:22:57 PM V8 6/22/2019 7:09:09 PM
 #CE
 
 Func RemoveSnakeNormal() ; at end
@@ -1670,7 +1707,8 @@ Func StartForm()
 				NormalExtra()
 
 			Case $Checkbox1 ;debug
-				$BounceWall = BitAND(GUICtrlRead($Checkbox1), $GUI_CHECKED) = $GUI_CHECKED
+
+				$TESTING = BitAND(GUICtrlRead($Checkbox1), $GUI_CHECKED) = $GUI_CHECKED
 				Dataout($TESTING)
 
 		EndSwitch
@@ -1678,7 +1716,7 @@ Func StartForm()
 
 EndFunc   ;==>StartForm
 #CS INFO
-	220689 V18 6/27/2019 5:39:48 PM V17 6/24/2019 11:22:57 PM V16 6/24/2019 9:33:41 AM V15 6/22/2019 7:09:09 PM
+	220227 V19 7/3/2019 6:50:03 PM V18 6/27/2019 5:39:48 PM V17 6/24/2019 11:22:57 PM V16 6/24/2019 9:33:41 AM
 #CE
 
 ;Main
@@ -1686,4 +1724,4 @@ Main()
 
 Exit
 
-;~T ScriptFunc.exe V0.54a 15 May 2019 - 7/1/2019 1:18:21 PM
+;~T ScriptFunc.exe V0.54a 15 May 2019 - 7/3/2019 6:50:03 PM
