@@ -5,7 +5,7 @@ AutoItSetOption("MustDeclareVars", 1)
 ;Global Static $MESSAGE =  False   ;Pause will still work in script  No Dataout
 
 ; Must be Declared before _Prf_startup
-Global $ver = "0.46a 4 Jul 2019 Opps fixed."
+Global $ver = "0.47 4 Jul 2019 Fix Hit wall"
 Global $ini_ver = "1"
 
 ;Global $TESTING = False
@@ -13,7 +13,7 @@ Global $ini_ver = "1"
 #include "R:\!Autoit\Blank\_prf_startup.au3"
 
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
-#AutoIt3Wrapper_Res_Fileversion=0.0.4.6
+#AutoIt3Wrapper_Res_Fileversion=0.0.4.7
 #AutoIt3Wrapper_Icon=R:\!Autoit\Ico\prf.ico
 #AutoIt3Wrapper_Res_Description=Another snake game
 #AutoIt3Wrapper_Res_LegalCopyright=© Phillip Forrestal 2019
@@ -75,9 +75,11 @@ Global $ini_ver = "1"
 	Setting: Size, Speed.
 
 	No more just clean up game.
-	Version
 
-0.46a 4 Jul 2019 Opps fixed.
+	Problem current location gets set to 0,0 which is outside the map and get stuck.  Wall?
+
+	Version
+	0.47 4 Jul 2019 Fix Hit wall
 	0.46 3 Jul 2019 Poop normal, Missing files better.
 	0.45 3 Jul 2019 Break or done = OK
 	0.44 3 Jul 2019 Hit dead snake - bad taste
@@ -331,6 +333,20 @@ Func Main()
 		Return
 	EndIf
 
+	Local $FormXX = GUICreate("Form1", 615, 438, 192, 124)
+	GUICtrlCreateEdit("", 96, 32, 305, 185)
+	GUICtrlSetData(-1, "Game has a random problem. " & @CRLF & " It will looked like it locked up. It still running but stuck. " & @CRLF & " There will a brown cell in the upper left corner.  " & @CRLF & " Just stop the program in the tray and start again." & @CRLF & @CRLF & " It might be fixed.")
+	GUISetState(@SW_SHOW)
+	#EndRegion ### END Koda GUI section ###
+
+	While 1
+		Local $nMsg = GUIGetMsg()
+		Switch $nMsg
+			Case $GUI_EVENT_CLOSE
+				ExitLoop
+		EndSwitch
+	WEnd
+	GUIDelete($FormXX)
 
 	;Check Version of INI if wrong version delete Hi Scores
 	;because wrong highscore layout crashed the game.
@@ -356,7 +372,7 @@ Func Main()
 
 EndFunc   ;==>Main
 #CS INFO
-	113733 V16 7/3/2019 8:35:19 PM V15 6/28/2019 7:37:37 PM V14 6/27/2019 5:39:48 PM V13 6/27/2019 1:22:34 AM
+	141701 V18 7/4/2019 11:42:05 AM V17 7/4/2019 7:27:32 AM V16 7/3/2019 8:35:19 PM V15 6/28/2019 7:37:37 PM
 #CE
 
 Func Game()
@@ -610,58 +626,54 @@ Func Extra()
 	Local $flag
 
 	;EXTRA
+	If $TESTING Then
+		If $x_new <= 0 Or $y_new <= 0 Then
+			DataOut($x_new, $y_new)
+			Pause("X or Y = Zero")
+			Exit
+		EndIf
+	EndIf
 	Switch $Map[$what][$x_new + $g_dirX][$y_new + $g_dirY]
 		Case $DEAD
 			Status(0, "Ate DEAD snake UG!", 1)
 			;Status(2, "Lost 10 Snake cells. Lost 100 points.", 1)
 			$g_gChange -= 10
-			$g_iScore -= 100
+			;$g_iScore -= 100
 			$Map[$what][$x_new + $g_dirX][$y_new + $g_dirY] = $EMPTY
 
 ;~~
 		Case $WALL
-			;	Extra Wall removed 0.32 = return 0.35
-			If $BounceWall Then
+			dataout("WALL")
 
-				dataout("WALL")
+			; Check  prev to be the same  last location
+			DataOut("Eat wall Double back on self")
+			;			DataOut($x_new, $y_new)
+			;			DataOut($Map[$prX][$x_new][$y_new], $Map[$prY][$x_new][$y_new])
 
-				;Nice I ideal but too much
-				;dataout($CantDie)
-
-				; Check  prev to be the same  last location
-				DataOut("Eat wall Double back on self")
-				;	DataOut($x_new, $y_new)
-				;	DataOut($Map[$prX][$x_new][$y_new], $Map[$prY][$x_new][$y_new])
-
-				If $Map[$prX][$x_new][$y_new] = $x_new And $Map[$prY][$x_new][$y_new] = $y_new Then ; Double back
-					DataOut("Eat wall Double back on self")
-
-					$flag = DoubleBackWall()
-					If $flag Then
-						Status(0, "Double back", 3)
-						$g_gChange -= 2
-						$g_iScore -= 100
-					Else
-						Status(0, "Ate Wallf", 1)
-						$g_endgame = True
-						Return
-					EndIf
-				EndIf
-			Else ;.35
-				Status(0, "Ate wall", 1)
+			$flag = DoubleBackWall()
+			;			Dataout("FLAG",$flag)
+			If $flag Then
+				Status(0, "Double back", 3)
+				$g_gChange -= 2
+				;$g_iScore -= 100
+			Else
+				Status(0, "Ate Wallf", 1)
 				$g_endgame = True
 				Return
 			EndIf
+			;				EndIf
+
 		Case $SNAKE
 
 			; Check  prev to be the same  last location
 			If $Map[$prX][$x_new][$y_new] = $x_new + $g_dirX And $Map[$prY][$x_new][$y_new] = $y_new + $g_dirY Then ; Double back
 				DataOut("Eat me Double back on self")
 				$flag = DoubleBack($g_dirX, $g_dirY)
+				DataOut("Flag", $flag)
 				If $flag Then
 					Status(0, "Double back", 3)
 					$g_gChange -= 10
-					$g_iScore -= 100
+					;$g_iScore -= 100
 				Else
 					Status(0, "Ate self", 1)
 					$g_endgame = True
@@ -694,7 +706,7 @@ Func Extra()
 			$HungerCycle = $HungerStr
 			$HungerCnt = 0
 
-			dataout("Hunger Cycle at food", $HungerCycle)
+			;dataout("Hunger Cycle at food", $HungerCycle)
 
 			Switch $g_turnBonus
 				Case 6, 5, 4
@@ -755,10 +767,10 @@ Func Extra()
 				Status(0, "Hungery - " & $HungerCnt & " Snake shorter", 3)
 				$g_Status0Off = 30
 
-				dataout($HungerCnt, "HungerCnt")
-				dataout($HungerCycle, "HungerCycle")
+				;dataout($HungerCnt, "HungerCnt")
+				;				dataout($HungerCycle, "HungerCycle")
 
-				$g_iScore -= $HungerCnt
+				;$g_iScore -= $HungerCnt
 				$g_gChange -= $HungerCnt
 
 			EndIf
@@ -814,7 +826,7 @@ Func Extra()
 
 EndFunc   ;==>Extra
 #CS INFO
-	324208 V11 7/3/2019 7:21:08 PM V10 7/3/2019 6:50:03 PM V9 7/3/2019 6:22:02 AM V8 7/1/2019 1:18:21 PM
+	312160 V12 7/4/2019 11:42:05 AM V11 7/3/2019 7:21:08 PM V10 7/3/2019 6:50:03 PM V9 7/3/2019 6:22:02 AM
 #CE
 
 Func Normal()
@@ -876,7 +888,7 @@ Func DoDead()
 			;: Clear current location
 			$Map[$what][$x][$y] = $EMPTY
 			GUICtrlSetImage($Map[$ctrl][$x][$y], $cEMPTY)
-			$g_iScore -= 10
+			;$g_iScore -= 10
 
 			;next location current prev
 			$x1 = $Map[$prX][$x][$y]
@@ -895,6 +907,7 @@ Func DoDead()
 				DataOut("DO PREV is not Snake", $Map[$what][$x1][$y1])
 				$g_bdPrev[$s_bdCycle] = $M1 ; -1 no active if active cycle count down
 			Else
+				;Status(2,"1",3)
 				$Map[$what][$x1][$y1] = $DEAD
 				GUICtrlSetImage($Map[$ctrl][$x1][$y1], $cDEAD)
 			EndIf
@@ -917,7 +930,7 @@ Func DoDead()
 			; Clear current location
 			$Map[$what][$x][$y] = $EMPTY
 			GUICtrlSetImage($Map[$ctrl][$x][$y], $cEMPTY)
-			$g_iScore -= 10
+			;$g_iScore -= 10
 
 			;next location current Next
 			$x1 = $Map[$nxX][$x][$y]
@@ -936,6 +949,7 @@ Func DoDead()
 				DataOut("DO Next is not Snake", $Map[$what][$x1][$y1])
 				$g_bdNext[$s_bdCycle] = $M1 ; -1 no active if active cycle count down
 			Else
+				;Status(2,"2",3)
 				$Map[$what][$x1][$y1] = $DEAD
 				GUICtrlSetImage($Map[$ctrl][$x1][$y1], $cDEAD)
 			EndIf
@@ -949,7 +963,7 @@ Func DoDead()
 
 EndFunc   ;==>DoDead
 #CS INFO
-	150469 V4 7/3/2019 6:22:02 AM V3 6/20/2019 9:30:52 PM V2 6/19/2019 11:41:56 AM V1 6/19/2019 2:58:37 AM
+	152768 V5 7/4/2019 11:42:05 AM V4 7/3/2019 6:22:02 AM V3 6/20/2019 9:30:52 PM V2 6/19/2019 11:41:56 AM
 #CE
 
 Func StartDead($inX, $inY) ;  .~~
@@ -1003,8 +1017,10 @@ Func StartDead($inX, $inY) ;  .~~
 	$Map[$prY][$x][$y] = 0
 
 	;Add blood to old tail
-	$Map[$what][$x][$y] = $DEAD
-	GUICtrlSetImage($Map[$ctrl][$x][$y], $cDEAD)
+	Status(2, "3  X= " & $x & " Y= " & $y, 4)
+
+	;	$Map[$what][$x][$y] = $DEAD
+	;	GUICtrlSetImage($Map[$ctrl][$x][$y], $cDEAD)
 
 	;--------------------end old tail
 
@@ -1036,7 +1052,7 @@ Func StartDead($inX, $inY) ;  .~~
 	Return True
 EndFunc   ;==>StartDead
 #CS INFO
-	135959 V7 7/3/2019 7:21:08 PM V6 7/3/2019 6:50:03 PM V5 7/3/2019 6:22:02 AM V4 6/27/2019 1:22:34 AM
+	137905 V8 7/4/2019 11:42:05 AM V7 7/3/2019 7:21:08 PM V6 7/3/2019 6:50:03 PM V5 7/3/2019 6:22:02 AM
 #CE
 
 Func ConvDead($x, $y) ; start map location
@@ -1133,6 +1149,7 @@ EndFunc   ;==>StartSnake
 	33453 V5 6/22/2019 7:09:09 PM V4 6/6/2019 11:09:42 PM V3 6/3/2019 8:05:25 PM V2 6/3/2019 10:34:22 AM
 #CE
 
+;~~
 ; Dirx& Diry moving to wall not like Double Back which has reserves direction
 ; So they will change, I can't make them Global because I used this name as Local in a number of Function.
 Func DoubleBackWall() ;(ByRef $dirx, ByRef $diry) ;
@@ -1140,12 +1157,15 @@ Func DoubleBackWall() ;(ByRef $dirx, ByRef $diry) ;
 	Local $a, $flag
 
 	;Reverse $dirx and $g_diry here and after that they must not change.
+	;DataOut("~~Rev")
+	;DataOut($g_dirX, $g_diry)
 	$g_dirX *= -1 ;1 to -1: 0 to 0: -1 to 1
 	$g_dirY *= -1
 
+	;DataOut($g_dirX, $g_diry)
 	;new+dir  is one back.
 	; Find which X or Y which is the same, then random _+ one on there
-	;DataOut($g_dirX, $g_diry)
+
 	If $g_dirX = 0 Then
 		$a = Random(0, 1, 1)
 		If $a = 0 Then
@@ -1186,7 +1206,7 @@ Func DoubleBackWall() ;(ByRef $dirx, ByRef $diry) ;
 
 EndFunc   ;==>DoubleBackWall
 #CS INFO
-	67432 V4 6/27/2019 5:39:48 PM V3 6/27/2019 1:22:34 AM V2 6/20/2019 9:30:52 PM V1 6/12/2019 12:36:42 PM
+	71072 V5 7/4/2019 11:42:05 AM V4 6/27/2019 5:39:48 PM V3 6/27/2019 1:22:34 AM V2 6/20/2019 9:30:52 PM
 #CE
 
 Func DoubleBack($dirx, $diry)
@@ -1282,10 +1302,12 @@ Func RemoveSnakeExtra($Poop = False) ; at end
 	EndIf
 
 	If $flag Then
+		;Status(2,"4",3)
 		$Map[$what][$x][$y] = $DEAD
 		GUICtrlSetImage($Map[$ctrl][$x][$y], $cDEAD)
 	Else
 		If NormalPoop() Then
+			;Status(2,"5",3)
 			$Map[$what][$x][$y] = $DEAD
 			GUICtrlSetImage($Map[$ctrl][$x][$y], $cDEAD)
 		Else
@@ -1320,7 +1342,7 @@ Func RemoveSnakeExtra($Poop = False) ; at end
 
 EndFunc   ;==>RemoveSnakeExtra
 #CS INFO
-	103252 V12 7/3/2019 8:35:19 PM V11 7/3/2019 6:50:03 PM V10 7/3/2019 6:22:02 AM V9 6/24/2019 11:22:57 PM
+	105439 V13 7/4/2019 11:42:05 AM V12 7/3/2019 8:35:19 PM V11 7/3/2019 6:50:03 PM V10 7/3/2019 6:22:02 AM
 #CE
 
 Func RemoveSnakeNormal() ; at end
@@ -1468,13 +1490,14 @@ Func DisplayHiScore()
 	Else
 		GUICtrlSetData($g_HiScoreWho, "High Score - Extra")
 		For $i = 0 To 7
-			GUICtrlSetData($g_HiScore[$i], $i + 1 & " - " & $g_aHiScore[$i + 1][0] & " - " & $g_aHiScore[$i + 1][1] & " Length: " & $g_aHiScore[$i + 1][2] & " Food: " & $g_aHiScore[$i + 1][3] & " Turn: " & $g_aHiScore[$i + 1][4])
+			;GUICtrlSetData($g_HiScore[$i], $i + 1 & " - " & $g_aHiScore[$i + 1][0] & " - " & $g_aHiScore[$i + 1][1] & " Length: " & $g_aHiScore[$i + 1][2] & " Food: " & $g_aHiScore[$i + 1][3] & " Turn: " & $g_aHiScore[$i + 1][4])
+			GUICtrlSetData($g_HiScore[$i], $i + 1 & " - " & $g_aHiScore[$i + 1][0] & " - " & $g_aHiScore[$i + 1][1] & " Food: " & $g_aHiScore[$i + 1][3] & " Turn: " & $g_aHiScore[$i + 1][4])
 		Next
 	EndIf
 
 EndFunc   ;==>DisplayHiScore
 #CS INFO
-	46183 V2 6/16/2019 10:16:04 AM V1 6/5/2019 11:59:45 PM
+	57423 V3 7/4/2019 11:42:05 AM V2 6/16/2019 10:16:04 AM V1 6/5/2019 11:59:45 PM
 #CE
 
 Func UpDateHiScore()
@@ -1763,4 +1786,4 @@ Main()
 
 Exit
 
-;~T ScriptFunc.exe V0.54a 15 May 2019 - 7/3/2019 8:35:19 PM
+;~T ScriptFunc.exe V0.54a 15 May 2019 - 7/4/2019 11:42:05 AM

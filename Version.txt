@@ -1,4 +1,5 @@
 	
+	0.47 4 Jul 2019 Fix Hit wall
 	0.46 3 Jul 2019 Poop normal, Missing files better.
 	0.45 3 Jul 2019 Break or done = OK
 	0.44 3 Jul 2019 Hit dead snake - bad taste
