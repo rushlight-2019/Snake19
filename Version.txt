@@ -1,4 +1,11 @@
-	0.40 30 Jun 2019 Changed hunger (done)
+	
+	0.46 3 Jul 2019 Poop normal, Missing files better.
+	0.45 3 Jul 2019 Break or done = OK
+	0.44 3 Jul 2019 Hit dead snake - bad taste
+	0.43 2 Jul 2019 Change dead snake to brown
+	0.42 1 Jul 2019 Hunger removing to many
+	0.41 1 Jul 2019 End game Score
+	0.40 30 Jun 2019 Changed hunger (done)(not 0.42)
 	
 	0.39 28 Jun 2019 Fixed top 5 high score, Normal Food
 	0.38 28 Jun 2019 Update the failed.  Reverted to 0.37

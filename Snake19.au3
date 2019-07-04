@@ -5,7 +5,7 @@ AutoItSetOption("MustDeclareVars", 1)
 ;Global Static $MESSAGE =  False   ;Pause will still work in script  No Dataout
 
 ; Must be Declared before _Prf_startup
-Global $ver = "0.44 3 Jul 2019 Hit dead snake - bad taste"
+Global $ver = "0.46 3 Jul 2019 Poop normal, Missing files better."
 Global $ini_ver = "1"
 
 ;Global $TESTING = False
@@ -13,7 +13,7 @@ Global $ini_ver = "1"
 #include "R:\!Autoit\Blank\_prf_startup.au3"
 
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
-#AutoIt3Wrapper_Res_Fileversion=0.0.4.4
+#AutoIt3Wrapper_Res_Fileversion=0.0.4.6
 #AutoIt3Wrapper_Icon=R:\!Autoit\Ico\prf.ico
 #AutoIt3Wrapper_Res_Description=Another snake game
 #AutoIt3Wrapper_Res_LegalCopyright=© Phillip Forrestal 2019
@@ -64,22 +64,21 @@ Global $ini_ver = "1"
 
 	to do
 
-	Change dead snake to brown kill the blood.
 	Head on snake
-	Remove things I won't do but left in code
-	Redo first screen.
-	Don't hid game screen just put it the back on most computers take time to reshow.
-	Head on snake.
-	3 games.  Old sorta, my Normal , Bounce off walls.
-	Top 5 high score,  Setting: clear all but top, clear all.
-	Setting: Size, Speed.
 
-	End of game - Score displayed.
+	Remove things I won't do but left in code
+
+	Redo first screen.
+
+	3 games.  Old sorta, something between, Normal
+
+	Setting: Size, Speed.
 
 	No more just clean up game.
 	Version
-	Hungery has problem with too many removed should stop at 10.  it goes on.   Cell stop at 10  Show  snake to be added / remove count
 
+	0.46 3 Jul 2019 Poop normal, Missing files better.
+	0.45 3 Jul 2019 Break or done = OK
 	0.44 3 Jul 2019 Hit dead snake - bad taste
 	0.43 2 Jul 2019 Change dead snake to brown
 	0.42 1 Jul 2019 Hunger removing to many
@@ -302,7 +301,32 @@ Func Main()
 	Local $a
 
 	If Not FileExists($cSNAKE) Then
-		MsgBox(0, "Problem Pictures", $s_pic & " Folder missing. Should 7 color JPG in it")
+		MsgBox(0, "Problem Pictures", $s_pic & "Folder missing.")
+		Return
+	EndIf
+
+	If Not FileExists($cEDGE) Then
+		MsgBox(0, "Problem Pictures", $cEDGE & " Missing Color File")
+		Return
+	EndIf
+	If Not FileExists($cEMPTY) Then
+		MsgBox(0, "Problem Pictures", $cEMPTY & " Missing Color File")
+		Return
+	EndIf
+	If Not FileExists($s_pic & "black.jpg") Then
+		MsgBox(0, "Problem Pictures", "Black.jpg Missing Color File")
+		Return
+	EndIf
+	If Not FileExists($cSNAKE) Then
+		MsgBox(0, "Problem Pictures", $cSNAKE & " Missing Color File")
+		Return
+	EndIf
+	If Not FileExists($cFOOD) Then
+		MsgBox(0, "Problem Pictures", $cFOOD & " Missing Color File")
+		Return
+	EndIf
+	If Not FileExists($cDEAD) Then
+		MsgBox(0, "Problem Pictures", $cDEAD & " Missing Color File")
 		Return
 	EndIf
 
@@ -336,7 +360,7 @@ Func Main()
 
 EndFunc   ;==>Main
 #CS INFO
-	65167 V15 6/28/2019 7:37:37 PM V14 6/27/2019 5:39:48 PM V13 6/27/2019 1:22:34 AM V12 6/24/2019 11:22:57 PM
+	113733 V16 7/3/2019 8:35:19 PM V15 6/28/2019 7:37:37 PM V14 6/27/2019 5:39:48 PM V13 6/27/2019 1:22:34 AM
 #CE
 
 Func Game()
@@ -593,7 +617,7 @@ Func Extra()
 	Switch $Map[$what][$x_new + $g_dirX][$y_new + $g_dirY]
 		Case $DEAD
 			Status(0, "Ate DEAD snake UG!", 1)
-			Status(2, "Lost 10 Snake cells. Lost 100 points.", 1)
+			;Status(2, "Lost 10 Snake cells. Lost 100 points.", 1)
 			$g_gChange -= 10
 			$g_iScore -= 100
 			$Map[$what][$x_new + $g_dirX][$y_new + $g_dirY] = $EMPTY
@@ -794,7 +818,7 @@ Func Extra()
 
 EndFunc   ;==>Extra
 #CS INFO
-	324149 V10 7/3/2019 6:50:03 PM V9 7/3/2019 6:22:02 AM V8 7/1/2019 1:18:21 PM V7 6/30/2019 3:33:26 PM
+	324208 V11 7/3/2019 7:21:08 PM V10 7/3/2019 6:50:03 PM V9 7/3/2019 6:22:02 AM V8 7/1/2019 1:18:21 PM
 #CE
 
 Func Normal()
@@ -942,9 +966,9 @@ Func StartDead($inX, $inY) ;  .~~
 	;.0.28 Do First
 	; Here to old tail
 	;Check to see if active, if Active snake dies because it ate itself twice.  Return False
-	If $g_bdPrev[$s_bdCycle] <> -1 Then
-		Return False
-	EndIf
+	;If $g_bdPrev[$s_bdCycle] <> -1 Then
+	;	Return False
+	;EndIf
 
 	;Blood start with previous cross location so Zero out next location  And this location RED
 	$x = $Map[$prX][$inX][$inY]
@@ -1006,8 +1030,8 @@ Func StartDead($inX, $inY) ;  .~~
 	$Map[$prX][$x][$y] = 0
 	$Map[$prY][$x][$y] = 0
 
-	$Map[$what][$x][$y] = $DEAD
-	GUICtrlSetImage($Map[$ctrl][$x][$y], $cDEAD)
+	;$Map[$what][$x][$y] = $DEAD
+	;GUICtrlSetImage($Map[$ctrl][$x][$y], $cDEAD)
 
 	;ShowRow($x, $y)
 	$x_end = $x
@@ -1016,7 +1040,7 @@ Func StartDead($inX, $inY) ;  .~~
 	Return True
 EndFunc   ;==>StartDead
 #CS INFO
-	135664 V6 7/3/2019 6:50:03 PM V5 7/3/2019 6:22:02 AM V4 6/27/2019 1:22:34 AM V3 6/24/2019 11:22:57 PM
+	135959 V7 7/3/2019 7:21:08 PM V6 7/3/2019 6:50:03 PM V5 7/3/2019 6:22:02 AM V4 6/27/2019 1:22:34 AM
 #CE
 
 Func ConvDead($x, $y) ; start map location
@@ -1265,8 +1289,13 @@ Func RemoveSnakeExtra($Poop = False) ; at end
 		$Map[$what][$x][$y] = $DEAD
 		GUICtrlSetImage($Map[$ctrl][$x][$y], $cDEAD)
 	Else
-		$Map[$what][$x][$y] = $EMPTY
-		GUICtrlSetImage($Map[$ctrl][$x][$y], $cEMPTY)
+		If NormalPoop() Then
+			$Map[$what][$x][$y] = $DEAD
+			GUICtrlSetImage($Map[$ctrl][$x][$y], $cDEAD)
+		Else
+			$Map[$what][$x][$y] = $EMPTY
+			GUICtrlSetImage($Map[$ctrl][$x][$y], $cEMPTY)
+		EndIf
 	EndIf
 
 	$x_end = $Map[$nxX][$x][$y]
@@ -1295,7 +1324,7 @@ Func RemoveSnakeExtra($Poop = False) ; at end
 
 EndFunc   ;==>RemoveSnakeExtra
 #CS INFO
-	95086 V11 7/3/2019 6:50:03 PM V10 7/3/2019 6:22:02 AM V9 6/24/2019 11:22:57 PM V8 6/22/2019 7:09:09 PM
+	103252 V12 7/3/2019 8:35:19 PM V11 7/3/2019 6:50:03 PM V10 7/3/2019 6:22:02 AM V9 6/24/2019 11:22:57 PM
 #CE
 
 Func RemoveSnakeNormal() ; at end
@@ -1405,6 +1434,20 @@ Func ClearBoard()
 EndFunc   ;==>ClearBoard
 #CS INFO
 	36469 V11 6/28/2019 8:21:20 AM V10 6/27/2019 5:39:48 PM V9 6/20/2019 9:30:52 PM V8 6/12/2019 12:36:42 PM
+#CE
+
+Func NormalPoop()
+	Local Static $poopCnt = 100
+
+	$poopCnt -= 1
+	If $poopCnt = 0 Then
+		$poopCnt = Random(99, 149, 1)
+		Return True
+	EndIf
+	Return False
+EndFunc   ;==>NormalPoop
+#CS INFO
+	12509 V1 7/3/2019 8:35:19 PM
 #CE
 
 Func NormalExtra()
@@ -1724,4 +1767,4 @@ Main()
 
 Exit
 
-;~T ScriptFunc.exe V0.54a 15 May 2019 - 7/3/2019 6:50:03 PM
+;~T ScriptFunc.exe V0.54a 15 May 2019 - 7/3/2019 8:35:19 PM
