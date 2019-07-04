@@ -5,7 +5,7 @@ AutoItSetOption("MustDeclareVars", 1)
 ;Global Static $MESSAGE =  False   ;Pause will still work in script  No Dataout
 
 ; Must be Declared before _Prf_startup
-Global $ver = "0.46 3 Jul 2019 Poop normal, Missing files better."
+Global $ver = "0.46a 4 Jul 2019 Opps fixed."
 Global $ini_ver = "1"
 
 ;Global $TESTING = False
@@ -77,6 +77,7 @@ Global $ini_ver = "1"
 	No more just clean up game.
 	Version
 
+0.46a 4 Jul 2019 Opps fixed.
 	0.46 3 Jul 2019 Poop normal, Missing files better.
 	0.45 3 Jul 2019 Break or done = OK
 	0.44 3 Jul 2019 Hit dead snake - bad taste
@@ -330,11 +331,6 @@ Func Main()
 		Return
 	EndIf
 
-	$a = _FileListToArray($s_pic, "*.jpg", $FLTA_FILES)
-	If $a[0] <> 8 Then
-		MsgBox(0, "ERROR", "Not enough jpg files in " & $s_pic & @CRLF & "Found " & $a[0] & ". Should have 8.")
-		Return
-	EndIf
 
 	;Check Version of INI if wrong version delete Hi Scores
 	;because wrong highscore layout crashed the game.
