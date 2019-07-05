@@ -5,7 +5,7 @@ AutoItSetOption("MustDeclareVars", 1)
 ;Global Static $MESSAGE =  False   ;Pause will still work in script  No Dataout
 
 ; Must be Declared before _Prf_startup
-Global $ver = "0.48 5 Jul 2019 Max lenght new score. Score + Max + Food"
+Global $ver = "0.49 5 Jul 2019 Found progam endless cycle"
 Global $ini_ver = "2" ;5 Jul 2019 removed Len and add Max in extra
 
 ;Global $TESTING = False
@@ -13,7 +13,7 @@ Global $ini_ver = "2" ;5 Jul 2019 removed Len and add Max in extra
 #include "R:\!Autoit\Blank\_prf_startup.au3"
 
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
-#AutoIt3Wrapper_Res_Fileversion=0.0.4.8
+#AutoIt3Wrapper_Res_Fileversion=0.0.4.9
 #AutoIt3Wrapper_Icon=R:\!Autoit\Ico\prf.ico
 #AutoIt3Wrapper_Res_Description=Another snake game
 #AutoIt3Wrapper_Res_LegalCopyright=© Phillip Forrestal 2019
@@ -76,11 +76,12 @@ Global $ini_ver = "2" ;5 Jul 2019 removed Len and add Max in extra
 
 	No more just clean up game.
 
-	Problem current location gets set to 0,0 which is outside the map and get stuck.  Wall?
+	Convert to dead also to end to start.  (problem was in here)
 
 	Version
+	0.49 5 Jul 2019  Found progam endless cycle in Convert to dead
 	0.48 5 Jul 2019 Max lenght new score. Score + Max + Food
-	0.47 4 Jul 2019 Fix Hit wall
+	0.47 4 Jul 2019 *Fix Hit wall  - got endless cycle - can't find
 	0.46 3 Jul 2019 Poop normal, Missing files better.
 	0.45 3 Jul 2019 Break or done = OK
 	0.44 3 Jul 2019 Hit dead snake - bad taste
@@ -335,19 +336,19 @@ Func Main()
 		Return
 	EndIf
 
-	Local $FormXX = GUICreate("Form1", 615, 438, 192, 124)
-	GUICtrlCreateEdit("", 96, 32, 305, 185)
-	GUICtrlSetData(-1, "Game has a random problem. " & @CRLF & " It will looked like it locked up. It still running but stuck. " & @CRLF & @CRLF & " Just stop the program in the tray and start again." & @CRLF & @CRLF & " It might be fixed.")
-	GUISetState(@SW_SHOW)
+	;Local $FormXX = GUICreate("Form1", 615, 438, 192, 124)
+	;	GUICtrlCreateEdit("", 96, 32, 305, 185)
+	;	GUICtrlSetData(-1, "Game has a random problem. " & @CRLF & " It will looked like it locked up. It still running but stuck. " & @CRLF & @CRLF & " Just stop the program in the tray and start again." & @CRLF & @CRLF & " It might be fixed.")
+	;	GUISetState(@SW_SHOW)
 
-	While 1
-		Local $nMsg = GUIGetMsg()
-		Switch $nMsg
-			Case $GUI_EVENT_CLOSE
-				ExitLoop
-		EndSwitch
-	WEnd
-	GUIDelete($FormXX)
+	;	While 1
+	;		Local $nMsg = GUIGetMsg()
+	;		Switch $nMsg
+	;			Case $GUI_EVENT_CLOSE
+	;				ExitLoop
+	;		EndSwitch
+	;	WEnd
+	;	GUIDelete($FormXX)
 
 	;Check Version of INI if wrong version delete Hi Scores
 	;because wrong highscore layout crashed the game.
@@ -373,7 +374,7 @@ Func Main()
 
 EndFunc   ;==>Main
 #CS INFO
-	134652 V19 7/5/2019 8:47:35 AM V18 7/4/2019 11:42:05 AM V17 7/4/2019 7:27:32 AM V16 7/3/2019 8:35:19 PM
+	135360 V20 7/5/2019 4:03:49 PM V19 7/5/2019 8:47:35 AM V18 7/4/2019 11:42:05 AM V17 7/4/2019 7:27:32 AM
 #CE
 
 Func Game()
@@ -624,13 +625,6 @@ Func Extra()
 	Local $flag
 
 	;EXTRA
-	If $TESTING Then
-		If $x_new <= 0 Or $y_new <= 0 Then
-			DataOut($x_new, $y_new)
-			Pause("X or Y = Zero")
-			Exit
-		EndIf
-	EndIf
 	Switch $Map[$what][$x_new + $g_dirX][$y_new + $g_dirY]
 		Case $DEAD
 			Status(0, "Ate DEAD snake UG!", 1)
@@ -645,17 +639,15 @@ Func Extra()
 
 			; Check  prev to be the same  last location
 			DataOut("Eat wall Double back on self")
-			;			DataOut($x_new, $y_new)
-			;			DataOut($Map[$prX][$x_new][$y_new], $Map[$prY][$x_new][$y_new])
 
 			$flag = DoubleBackWall()
-			;			Dataout("FLAG",$flag)
 			If $flag Then
+				dataout("Double back")
 				Status(0, "Double back", 3)
 				$g_gChange -= 2
 				;$g_iScore -= 100
 			Else
-				Status(0, "Ate Wallf", 1)
+				Status(0, "Ate Wall", 1)
 				$g_endgame = True
 				Return
 			EndIf
@@ -667,7 +659,6 @@ Func Extra()
 			If $Map[$prX][$x_new][$y_new] = $x_new + $g_dirX And $Map[$prY][$x_new][$y_new] = $y_new + $g_dirY Then ; Double back
 				DataOut("Eat me Double back on self")
 				$flag = DoubleBack($g_dirX, $g_dirY)
-				DataOut("Flag", $flag)
 				If $flag Then
 					Status(0, "Double back", 3)
 					$g_gChange -= 10
@@ -678,9 +669,6 @@ Func Extra()
 					Return
 				EndIf
 			Else
-
-				;dataout($x_new, $y_new)
-				;dataout($x_new + $g_dirX, $y_new + $g_dirY)
 
 				If StartDead($x_new + $g_dirX, $y_new + $g_dirY) = False Then
 					Status(0, "Ate self to many times", 1)
@@ -703,8 +691,6 @@ Func Extra()
 
 			$HungerCycle = $HungerStr
 			$HungerCnt = 0
-
-			;dataout("Hunger Cycle at food", $HungerCycle)
 
 			Switch $g_turnBonus
 				Case 6, 5, 4
@@ -764,9 +750,6 @@ Func Extra()
 
 				Status(0, "Hungery - " & $HungerCnt & " Snake shorter", 3)
 				$g_Status0Off = 30
-
-				;dataout($HungerCnt, "HungerCnt")
-				;				dataout($HungerCycle, "HungerCycle")
 
 				;$g_iScore -= $HungerCnt
 				$g_gChange -= $HungerCnt
@@ -829,7 +812,7 @@ Func Extra()
 
 EndFunc   ;==>Extra
 #CS INFO
-	323579 V13 7/5/2019 8:47:35 AM V12 7/4/2019 11:42:05 AM V11 7/3/2019 7:21:08 PM V10 7/3/2019 6:50:03 PM
+	290429 V14 7/5/2019 4:03:49 PM V13 7/5/2019 8:47:35 AM V12 7/4/2019 11:42:05 AM V11 7/3/2019 7:21:08 PM
 #CE
 
 Func Normal()
@@ -1064,7 +1047,7 @@ Func ConvDead($x, $y) ; start map location
 	Local $tx, $ty
 
 	;ShowRow($x, $y)
-	While $Map[$what][$x][$y] <> $EMPTY
+	While $Map[$what][$x][$y] = $SNAKE
 
 		$Map[$what][$x][$y] = $DEAD
 		GUICtrlSetImage($Map[$ctrl][$x][$y], $cDEAD)
@@ -1075,9 +1058,10 @@ Func ConvDead($x, $y) ; start map location
 		$x = $Map[$prX][$tx][$ty]
 		$y = $Map[$prY][$tx][$ty]
 	WEnd
+
 EndFunc   ;==>ConvDead
 #CS INFO
-	24619 V2 7/3/2019 6:50:03 PM V1 7/3/2019 6:22:02 AM
+	24529 V3 7/5/2019 4:03:49 PM V2 7/3/2019 6:50:03 PM V1 7/3/2019 6:22:02 AM
 #CE
 
 Func ShowRow($x, $y)
@@ -1160,12 +1144,9 @@ Func DoubleBackWall() ;(ByRef $dirx, ByRef $diry) ;
 	Local $a, $flag
 
 	;Reverse $dirx and $g_diry here and after that they must not change.
-	;DataOut("~~Rev")
-	;DataOut($g_dirX, $g_diry)
 	$g_dirX *= -1 ;1 to -1: 0 to 0: -1 to 1
 	$g_dirY *= -1
 
-	;DataOut($g_dirX, $g_diry)
 	;new+dir  is one back.
 	; Find which X or Y which is the same, then random _+ one on there
 
@@ -1209,7 +1190,7 @@ Func DoubleBackWall() ;(ByRef $dirx, ByRef $diry) ;
 
 EndFunc   ;==>DoubleBackWall
 #CS INFO
-	71072 V5 7/4/2019 11:42:05 AM V4 6/27/2019 5:39:48 PM V3 6/27/2019 1:22:34 AM V2 6/20/2019 9:30:52 PM
+	65243 V6 7/5/2019 4:03:49 PM V5 7/4/2019 11:42:05 AM V4 6/27/2019 5:39:48 PM V3 6/27/2019 1:22:34 AM
 #CE
 
 Func DoubleBack($dirx, $diry)
@@ -1232,7 +1213,6 @@ Func DoubleBack($dirx, $diry)
 			EndIf
 		EndIf
 		If $flag Then
-
 			PrevNext($x_new + $a, $y_new + $diry)
 		EndIf
 	Else ;$diry =0
@@ -1328,8 +1308,6 @@ Func RemoveSnakeExtra($Poop = False) ; at end
 	;$Map[$nxX][$x_end][$y_end] = 0
 	;$Map[$nxY][$x_end][$y_end] = 0
 
-	;dataout("remove", $Map[$num][$x_new][$y_new] - $Map[$num][$x_end][$y_end])
-	;dataout($g_RemoveBegining)
 	; Size can be zero at the begin so once size is > 0 then hunger is active.
 	;Global $g_RemoveBegining = False
 
@@ -1345,7 +1323,7 @@ Func RemoveSnakeExtra($Poop = False) ; at end
 
 EndFunc   ;==>RemoveSnakeExtra
 #CS INFO
-	105439 V13 7/4/2019 11:42:05 AM V12 7/3/2019 8:35:19 PM V11 7/3/2019 6:50:03 PM V10 7/3/2019 6:22:02 AM
+	96401 V14 7/5/2019 4:03:49 PM V13 7/4/2019 11:42:05 AM V12 7/3/2019 8:35:19 PM V11 7/3/2019 6:50:03 PM
 #CE
 
 Func RemoveSnakeNormal() ; at end
@@ -1443,7 +1421,9 @@ Func ClearBoard()
 					$NotEmpty = $Map[$what][$x][$y] <> $EMPTY
 					$Map[$what][$x][$y] = $EMPTY ; empty
 					$var = $cEMPTY
+
 					If $NotEmpty Then
+						Sleep(1)
 						GUICtrlSetImage($Map[$ctrl][$x][$y], $var)
 					EndIf
 			EndSelect
@@ -1454,7 +1434,7 @@ Func ClearBoard()
 
 EndFunc   ;==>ClearBoard
 #CS INFO
-	36469 V11 6/28/2019 8:21:20 AM V10 6/27/2019 5:39:48 PM V9 6/20/2019 9:30:52 PM V8 6/12/2019 12:36:42 PM
+	37104 V12 7/5/2019 4:03:49 PM V11 6/28/2019 8:21:20 AM V10 6/27/2019 5:39:48 PM V9 6/20/2019 9:30:52 PM
 #CE
 
 Func NormalPoop()
@@ -1797,4 +1777,4 @@ Main()
 
 Exit
 
-;~T ScriptFunc.exe V0.54a 15 May 2019 - 7/5/2019 8:47:35 AM
+;~T ScriptFunc.exe V0.54a 15 May 2019 - 7/5/2019 4:03:49 PM
