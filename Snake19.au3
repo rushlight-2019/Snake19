@@ -5,15 +5,15 @@ AutoItSetOption("MustDeclareVars", 1)
 ;Global Static $MESSAGE =  False   ;Pause will still work in script  No Dataout
 
 ; Must be Declared before _Prf_startup
-Global $ver = "0.47 4 Jul 2019 Fix Hit wall"
-Global $ini_ver = "1"
+Global $ver = "0.48 5 Jul 2019 Max lenght new score. Score + Max + Food"
+Global $ini_ver = "2" ;5 Jul 2019 removed Len and add Max in extra
 
 ;Global $TESTING = False
 
 #include "R:\!Autoit\Blank\_prf_startup.au3"
 
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
-#AutoIt3Wrapper_Res_Fileversion=0.0.4.7
+#AutoIt3Wrapper_Res_Fileversion=0.0.4.8
 #AutoIt3Wrapper_Icon=R:\!Autoit\Ico\prf.ico
 #AutoIt3Wrapper_Res_Description=Another snake game
 #AutoIt3Wrapper_Res_LegalCopyright=© Phillip Forrestal 2019
@@ -79,6 +79,7 @@ Global $ini_ver = "1"
 	Problem current location gets set to 0,0 which is outside the map and get stuck.  Wall?
 
 	Version
+	0.48 5 Jul 2019 Max lenght new score. Score + Max + Food
 	0.47 4 Jul 2019 Fix Hit wall
 	0.46 3 Jul 2019 Poop normal, Missing files better.
 	0.45 3 Jul 2019 Break or done = OK
@@ -237,6 +238,7 @@ Global $Radio1, $Radio2
 Global $g_ScoreLen ; Normal Traveled, Extra Length of snake
 Global $g_ScoreTurn
 Global $g_ScoreFood
+Global $g_ScoreMax
 
 Global $g_Status0Off = 1000
 ; Size can be zero at the begin so once size is > 0 then hunger is active.
@@ -335,9 +337,8 @@ Func Main()
 
 	Local $FormXX = GUICreate("Form1", 615, 438, 192, 124)
 	GUICtrlCreateEdit("", 96, 32, 305, 185)
-	GUICtrlSetData(-1, "Game has a random problem. " & @CRLF & " It will looked like it locked up. It still running but stuck. " & @CRLF & " There will a brown cell in the upper left corner.  " & @CRLF & " Just stop the program in the tray and start again." & @CRLF & @CRLF & " It might be fixed.")
+	GUICtrlSetData(-1, "Game has a random problem. " & @CRLF & " It will looked like it locked up. It still running but stuck. " & @CRLF & @CRLF & " Just stop the program in the tray and start again." & @CRLF & @CRLF & " It might be fixed.")
 	GUISetState(@SW_SHOW)
-	#EndRegion ### END Koda GUI section ###
 
 	While 1
 		Local $nMsg = GUIGetMsg()
@@ -372,7 +373,7 @@ Func Main()
 
 EndFunc   ;==>Main
 #CS INFO
-	141701 V18 7/4/2019 11:42:05 AM V17 7/4/2019 7:27:32 AM V16 7/3/2019 8:35:19 PM V15 6/28/2019 7:37:37 PM
+	134652 V19 7/5/2019 8:47:35 AM V18 7/4/2019 11:42:05 AM V17 7/4/2019 7:27:32 AM V16 7/3/2019 8:35:19 PM
 #CE
 
 Func Game()
@@ -468,11 +469,13 @@ Func Game()
 	$g_turnLast = 0
 	$g_ScoreTurn = 0
 	$g_ScoreFood = 0
+	$g_ScoreMax = 0
 	$g_SnakeCount = 1
 	$g_iScore = 0
 	$g_gChange = 0
 	$g_gChangeHalf = 0
-	$g_foodCnt = 1
+	$g_foodCnt = 1 ; How many on Board
+	$g_gChange = 50
 
 	;0.40
 	$HungerStr = ($g_sx + $g_sy) / 2
@@ -490,11 +493,6 @@ Func Game()
 	Local $aAccelKey2[][] = [["{RIGHT}", $L_idRight], ["{LEFT}", $L_idLeft], ["{DOWN}", $L_idDown], ["{UP}", $L_idUp], ["{ESC}", $L_idEsc]]
 	GUISetAccelerators($aAccelKey2, $g_ctrlBoard)
 	MouseMove(0, 0, 0)
-
-	;	If $TESTING Then
-	;	$g_ScoreFood = 40
-	$g_gChange = 50
-	;	EndIf
 
 	$g_endgame = False
 
@@ -576,7 +574,7 @@ Func Game()
 
 EndFunc   ;==>Game
 #CS INFO
-	304264 V33 7/3/2019 6:50:03 PM V32 7/3/2019 6:22:02 AM V31 7/1/2019 10:36:50 AM V30 6/30/2019 3:33:26 PM
+	303838 V34 7/5/2019 8:47:35 AM V33 7/3/2019 6:50:03 PM V32 7/3/2019 6:22:02 AM V31 7/1/2019 10:36:50 AM
 #CE
 
 Func Tick() ;
@@ -814,19 +812,24 @@ Func Extra()
 	;Score
 
 	$a = $Map[$num][$x_new][$y_new] - $Map[$num][$x_end][$y_end] + 1
-	If $LS_ScoreLast <> $g_iScore + $a Then
-		$LS_ScoreLast = $g_iScore + $a
+	If $a > $g_ScoreMax Then
+		$g_ScoreMax = $a
+	EndIf
+
+	If $LS_ScoreLast <> $a Then
+		$LS_ScoreLast = $a
+
 		If $TESTING Then
-			Status(1, "Snake length: " & $a & " Score: " & $g_iScore & " (" & $g_iScore + $a & ")", 2)
+			Status(1, "Snake length: " & $a & " Score: [" & $g_iScore & "] Food (" & $g_ScoreFood & ") Max {" & $g_ScoreMax & "} " & $g_iScore + $g_ScoreFood + $g_ScoreMax, 2)
 		Else
-			Status(1, "Snake length: " & $a & " Score: " & $g_iScore + $a, 2)
+			Status(1, "Snake length: " & $a & " Score: " & $g_iScore + $g_ScoreFood + $g_ScoreMax, 2)
 		EndIf
-		$g_GameScore = $g_iScore + $a
+		$g_GameScore = $g_iScore + $g_ScoreFood + $g_ScoreMax
 	EndIf
 
 EndFunc   ;==>Extra
 #CS INFO
-	312160 V12 7/4/2019 11:42:05 AM V11 7/3/2019 7:21:08 PM V10 7/3/2019 6:50:03 PM V9 7/3/2019 6:22:02 AM
+	323579 V13 7/5/2019 8:47:35 AM V12 7/4/2019 11:42:05 AM V11 7/3/2019 7:21:08 PM V10 7/3/2019 6:50:03 PM
 #CE
 
 Func Normal()
@@ -1485,19 +1488,27 @@ Func DisplayHiScore()
 	If $g_GameWhich = 0 Then ; 0 Normal, 1 Mine
 		GUICtrlSetData($g_HiScoreWho, "High Score - Normal")
 		For $i = 0 To 7
-			GUICtrlSetData($g_HiScore[$i], $i + 1 & " - " & $g_aHiScore[$i + 1][0] & " - " & $g_aHiScore[$i + 1][1] & " Travel: " & $g_aHiScore[$i + 1][2] & " Turn: " & $g_aHiScore[$i + 1][4] & " Max: " & $g_aHiScore[$i + 1][5])
+			If $g_aHiScore[$i + 1][0] = 0 Then
+				GUICtrlSetData($g_HiScore[$i], "")
+			Else
+				GUICtrlSetData($g_HiScore[$i], $i + 1 & " - " & $g_aHiScore[$i + 1][0] & " - " & $g_aHiScore[$i + 1][1] & " Travel: " & $g_aHiScore[$i + 1][2] & " Turn: " & $g_aHiScore[$i + 1][4] & " Max: " & $g_aHiScore[$i + 1][5])
+			EndIf
 		Next
 	Else
 		GUICtrlSetData($g_HiScoreWho, "High Score - Extra")
 		For $i = 0 To 7
 			;GUICtrlSetData($g_HiScore[$i], $i + 1 & " - " & $g_aHiScore[$i + 1][0] & " - " & $g_aHiScore[$i + 1][1] & " Length: " & $g_aHiScore[$i + 1][2] & " Food: " & $g_aHiScore[$i + 1][3] & " Turn: " & $g_aHiScore[$i + 1][4])
-			GUICtrlSetData($g_HiScore[$i], $i + 1 & " - " & $g_aHiScore[$i + 1][0] & " - " & $g_aHiScore[$i + 1][1] & " Food: " & $g_aHiScore[$i + 1][3] & " Turn: " & $g_aHiScore[$i + 1][4])
+			If $g_aHiScore[$i + 1][0] = 0 Then
+				GUICtrlSetData($g_HiScore[$i], "")
+			Else
+				GUICtrlSetData($g_HiScore[$i], $i + 1 & " - " & $g_aHiScore[$i + 1][0] & " - " & $g_aHiScore[$i + 1][1] & " Max: " & $g_aHiScore[$i + 1][2] & " Food: " & $g_aHiScore[$i + 1][3] & " Turn: " & $g_aHiScore[$i + 1][4])
+			EndIf
 		Next
 	EndIf
 
 EndFunc   ;==>DisplayHiScore
 #CS INFO
-	57423 V3 7/4/2019 11:42:05 AM V2 6/16/2019 10:16:04 AM V1 6/5/2019 11:59:45 PM
+	71474 V4 7/5/2019 8:47:35 AM V3 7/4/2019 11:42:05 AM V2 6/16/2019 10:16:04 AM V1 6/5/2019 11:59:45 PM
 #CE
 
 Func UpDateHiScore()
@@ -1514,7 +1525,7 @@ Func UpDateHiScore()
 		If $g_GameWhich = 0 Then ; 0 Normal, 1 Mine
 			$g_aHiScore[9][2] = $g_SnakeCount
 		Else
-			$g_aHiScore[9][2] = $Map[$num][$x_new][$y_new] - $Map[$num][$x_end][$y_end] + 1
+			$g_aHiScore[9][2] = $g_ScoreMax
 		EndIf
 		$g_aHiScore[9][3] = $g_ScoreFood
 		$g_aHiScore[9][4] = $g_ScoreTurn
@@ -1534,7 +1545,7 @@ Func UpDateHiScore()
 	EndIf
 EndFunc   ;==>UpDateHiScore
 #CS INFO
-	76879 V10 7/1/2019 10:36:50 AM V9 6/28/2019 7:37:37 PM V8 6/27/2019 5:39:48 PM V7 6/24/2019 9:33:41 AM
+	72998 V11 7/5/2019 8:47:35 AM V10 7/1/2019 10:36:50 AM V9 6/28/2019 7:37:37 PM V8 6/27/2019 5:39:48 PM
 #CE
 
 Func SaveHiScore()
@@ -1786,4 +1797,4 @@ Main()
 
 Exit
 
-;~T ScriptFunc.exe V0.54a 15 May 2019 - 7/4/2019 11:42:05 AM
+;~T ScriptFunc.exe V0.54a 15 May 2019 - 7/5/2019 8:47:35 AM
