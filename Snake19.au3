@@ -5,7 +5,7 @@ AutoItSetOption("MustDeclareVars", 1)
 ;Global Static $MESSAGE =  False   ;Pause will still work in script  No Dataout
 
 ; Must be Declared before _Prf_startup
-Global $ver = "0.50 6 Jul 2019 Twiking Death, Score"
+Global $ver = "0.51 8 Jul 2019 Food and dead snake"
 Global $ini_ver = "2" ;5 Jul 2019 removed Len and add Max in extra
 
 ;Global $TESTING = False
@@ -13,7 +13,7 @@ Global $ini_ver = "2" ;5 Jul 2019 removed Len and add Max in extra
 #include "R:\!Autoit\Blank\_prf_startup.au3"
 
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
-#AutoIt3Wrapper_Res_Fileversion=0.0.5.0
+#AutoIt3Wrapper_Res_Fileversion=0.0.5.1
 #AutoIt3Wrapper_Icon=R:\!Autoit\Ico\prf.ico
 #AutoIt3Wrapper_Res_Description=Another snake game
 #AutoIt3Wrapper_Res_LegalCopyright=© Phillip Forrestal 2019
@@ -79,6 +79,7 @@ Global $ini_ver = "2" ;5 Jul 2019 removed Len and add Max in extra
 	Convert to dead also to end to start.  (problem was in here)
 
 	Version
+	0.51 7 Jul 2019 Food and dead snake issues
 	0.50 6 Jul 2019 Twiking Death, Score
 	0.49 5 Jul 2019  Found progam endless cycle in Convert to dead
 	0.48 5 Jul 2019 Max lenght new score. Score + Max + Food
@@ -186,11 +187,11 @@ Static $EMPTY = 0
 Static $cEMPTY = $s_pic & "black.jpg"
 Static $SNAKE = 1
 Static $cSNAKE = $s_pic & "gold.jpg"
-Static $FOOD = 10
+Static $FOOD = 2
 Static $cFOOD = $s_pic & "brightgreen.jpg"
-Static $DEAD = 20
+Static $DEAD = 3
 Static $cDEAD = $s_pic & "brown.jpg"
-Static $Poop = 20
+Static $POOP = 5
 Static $cPOOP = $s_pic & "darkbrown.jpg"
 
 Static $MaxLost = 5 ; Start with 10
@@ -306,6 +307,9 @@ Global $HungerStr = ($g_sx + $g_sy) / 2
 Global $HungerSnake = 0
 Global $HungerCycle = $HungerStr
 Global $HungerCnt = 0
+
+;0.51
+Global $g_Ouch = 0 ;Ate Dead snake 2 or 1, 0 no   Set to 2 because b4 next check it goes -1  so at DEAD it will be 1, so it not 2 in a row then -1  next loop = 0
 
 ; Main is call at end
 Func Main()
@@ -511,9 +515,11 @@ Func Game()
 	Local $aAccelKey2[][] = [["{RIGHT}", $L_idRight], ["{LEFT}", $L_idLeft], ["{DOWN}", $L_idDown], ["{UP}", $L_idUp], ["{ESC}", $L_idEsc]]
 	GUISetAccelerators($aAccelKey2, $g_ctrlBoard)
 	MouseMove(0, 0, 0)
-
-	$g_gChange = 25 ;  50
-
+	If $TESTING Then
+		$g_gChange = 75
+	Else
+		$g_gChange = 25
+	EndIf
 	$g_endgame = False
 
 	$g_hTick = TimerInit()
@@ -594,7 +600,7 @@ Func Game()
 
 EndFunc   ;==>Game
 #CS INFO
-	310087 V35 7/6/2019 6:24:29 PM V34 7/5/2019 8:47:35 AM V33 7/3/2019 6:50:03 PM V32 7/3/2019 6:22:02 AM
+	313014 V36 7/8/2019 1:00:13 AM V35 7/6/2019 6:24:29 PM V34 7/5/2019 8:47:35 AM V33 7/3/2019 6:50:03 PM
 #CE
 
 Func Tick() ;
@@ -643,16 +649,45 @@ Func Extra()
 	Local Static $LS_ScoreLast
 	Local $flag
 
+	If $g_Ouch > 0 Then
+		DataOut("OUCH", $g_Ouch)
+		$g_Ouch -= 1
+	EndIf
+
 	;EXTRA
 	Switch $Map[$what][$x_new + $g_dirX][$y_new + $g_dirY]
 		Case $DEAD
+			DataOut("OUCH", $g_Ouch)
+			If $g_Ouch > 0 Then
+				$flag = DoubleBackWall()
+				If $flag Then
+					dataout("Double back DEAD")
+					Status(0, "Double back DEAD", 3)
+
+				Else
+					Status(0, "Ate too much dead snake or poop", 1)
+					$g_endgame = True
+					Return
+				EndIf
+
+			EndIf
+
 			Status(0, "Ate DEAD snake UG!", 1)
 			;Status(2, "Lost 10 Snake cells. Lost 100 points.", 1)
 			$g_gChange -= $MaxLost
 
 			$Map[$what][$x_new + $g_dirX][$y_new + $g_dirY] = $EMPTY
+			$g_Ouch = 2
+			PrevNext($x_new + $g_dirX, $y_new + $g_dirY) ;New value
 
-;~~
+		Case $POOP
+			Status(0, "Ate  snake POOP - UG!", 1)
+			;Status(2, "Lost 10 Snake cells. Lost 100 points.", 1)
+			$g_gChange -= $MaxLost
+
+			PrevNext($x_new + $g_dirX, $y_new + $g_dirY) ;New value
+			;			$Map[$what][$x_new + $g_dirX][$y_new + $g_dirY] = $EMPTY
+
 		Case $WALL
 			dataout("WALL")
 
@@ -710,29 +745,33 @@ Func Extra()
 			$HungerCycle = $HungerStr
 			$HungerCnt = 0
 
-			Switch $g_turnBonus
-				Case 6, 5, 4
-					$g_gChange += 3
-					$g_iScore += 100
-					Status(0, "Turn bonus 100 Snake 3", 4)
-				Case 3
-					$g_gChange += 2
-					$g_iScore += 80
-					Status(0, "Turn bonus 80 Snake 2", 4)
-				Case 2
-					$g_gChange += 2
-					$g_iScore += 60
-					Status(0, "Turn bonus 60 Snake 2", 4)
-				Case 1
-					$g_gChange += 1
-					$g_iScore += 30
-					Status(0, "Turn bonus 30 Snake 1", 4)
-				Case 0
-					$g_iScore += 10
-					Status(0, "Turn bonus 10", 4)
-				Case Else
-					Status(0, "", 0)
-			EndSwitch
+			If $g_gChange < -5 Then
+				$g_gChange = -5
+			Else
+				Switch $g_turnBonus
+					Case 6, 5, 4
+						$g_gChange += 3
+						$g_iScore += 100
+						Status(0, "Turn bonus 100 Snake 3", 4)
+					Case 3
+						$g_gChange += 2
+						$g_iScore += 80
+						Status(0, "Turn bonus 80 Snake 2", 4)
+					Case 2
+						$g_gChange += 2
+						$g_iScore += 60
+						Status(0, "Turn bonus 60 Snake 2", 4)
+					Case 1
+						$g_gChange += 1
+						$g_iScore += 30
+						Status(0, "Turn bonus 30 Snake 1", 4)
+					Case 0
+						$g_iScore += 10
+						Status(0, "Turn bonus 10", 4)
+					Case Else
+						Status(0, "", 0)
+				EndSwitch
+			EndIf
 
 			$g_turnBonus = $g_turnBonusStr
 			$g_gChange += 1 ; doing this way because furture versions might not be one ***************************
@@ -829,7 +868,7 @@ Func Extra()
 
 EndFunc   ;==>Extra
 #CS INFO
-	288536 V15 7/6/2019 6:24:29 PM V14 7/5/2019 4:03:49 PM V13 7/5/2019 8:47:35 AM V12 7/4/2019 11:42:05 AM
+	336424 V16 7/8/2019 1:00:13 AM V15 7/6/2019 6:24:29 PM V14 7/5/2019 4:03:49 PM V13 7/5/2019 8:47:35 AM
 #CE
 
 Func Normal()
@@ -1289,9 +1328,9 @@ EndFunc   ;==>PrevNext
 	34980 V4 6/22/2019 7:09:09 PM V3 6/3/2019 8:05:25 PM V2 6/3/2019 10:34:22 AM V1 6/3/2019 1:09:45 AM
 #CE
 
-Func RemoveSnakeExtra($Poop = False) ; at end
+Func RemoveSnakeExtra($inputflag = False) ; at end
 	Local $x, $y, $flag
-	Local Static $poopCnt = 25
+	Local Static $PoopCnt = 25
 	; Size can be zero at the begin so once size is > 0 then hunger is active.
 	;Global $g_RemoveBegining = False
 
@@ -1300,22 +1339,20 @@ Func RemoveSnakeExtra($Poop = False) ; at end
 
 	;MsgBox(0, "Remove snake", "x " & $x & " y " & $y & " Num: " & $Map[$num][$x][$y], 10)
 	$flag = False
-	If $Poop Then
-		$poopCnt -= 1
-		If $poopCnt = 0 Then
-			$poopCnt = Random(20, 40, 1)
+	If $inputflag Then
+		$PoopCnt -= 1
+		If $PoopCnt = 0 Then
+			$PoopCnt = Random(20, 40, 1)
 			$flag = True
 		EndIf
 	EndIf
 
 	If $flag Then
-		;Status(2,"4",3)
-		$Map[$what][$x][$y] = $DEAD
+		$Map[$what][$x][$y] = $POOP
 		GUICtrlSetImage($Map[$ctrl][$x][$y], $cPOOP)
 	Else
 		If NormalPoop() Then
-			;Status(2,"5",3)
-			$Map[$what][$x][$y] = $DEAD
+			$Map[$what][$x][$y] = $POOP
 			GUICtrlSetImage($Map[$ctrl][$x][$y], $cPOOP)
 		Else
 			$Map[$what][$x][$y] = $EMPTY
@@ -1347,7 +1384,7 @@ Func RemoveSnakeExtra($Poop = False) ; at end
 
 EndFunc   ;==>RemoveSnakeExtra
 #CS INFO
-	96497 V15 7/6/2019 6:24:29 PM V14 7/5/2019 4:03:49 PM V13 7/4/2019 11:42:05 AM V12 7/3/2019 8:35:19 PM
+	95390 V16 7/8/2019 1:00:13 AM V15 7/6/2019 6:24:29 PM V14 7/5/2019 4:03:49 PM V13 7/4/2019 11:42:05 AM
 #CE
 
 Func RemoveSnakeNormal() ; at end
@@ -1437,7 +1474,7 @@ Func ClearBoard()
 
 	If $TESTING Then
 		If $Map[$what][0][0] <> $M1 Then
-			Pause("Null not edge")
+			Pause("Null not edge", $Map[$what][0][0])
 		EndIf
 	EndIf
 
@@ -1453,7 +1490,6 @@ Func ClearBoard()
 					$var = $cEMPTY
 
 					If $NotEmpty Then
-						Sleep(1)
 						GUICtrlSetImage($Map[$ctrl][$x][$y], $var)
 					EndIf
 			EndSelect
@@ -1464,21 +1500,21 @@ Func ClearBoard()
 
 EndFunc   ;==>ClearBoard
 #CS INFO
-	43276 V13 7/6/2019 6:24:29 PM V12 7/5/2019 4:03:49 PM V11 6/28/2019 8:21:20 AM V10 6/27/2019 5:39:48 PM
+	44127 V14 7/8/2019 1:00:13 AM V13 7/6/2019 6:24:29 PM V12 7/5/2019 4:03:49 PM V11 6/28/2019 8:21:20 AM
 #CE
 
 Func NormalPoop()
-	Local Static $poopCnt = 100
+	Local Static $PoopCnt = 100
 
-	$poopCnt -= 1
-	If $poopCnt = 0 Then
-		$poopCnt = Random(99, 149, 1)
+	$PoopCnt -= 1
+	If $PoopCnt = 0 Then
+		$PoopCnt = Random(99, 149, 1)
 		Return True
 	EndIf
 	Return False
 EndFunc   ;==>NormalPoop
 #CS INFO
-	12509 V1 7/3/2019 8:35:19 PM
+	12381 V2 7/8/2019 1:00:13 AM V1 7/3/2019 8:35:19 PM
 #CE
 
 Func NormalExtra()
@@ -1807,4 +1843,4 @@ Main()
 
 Exit
 
-;~T ScriptFunc.exe V0.54a 15 May 2019 - 7/6/2019 6:24:29 PM
+;~T ScriptFunc.exe V0.54a 15 May 2019 - 7/8/2019 1:00:13 AM
