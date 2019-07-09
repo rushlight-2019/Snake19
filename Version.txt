@@ -1,3 +1,7 @@
+Still have the NULL snake location problem. Upper Left of board turns black.
+Testing mode has some test to show when this happens. Rarely happens. Err
+
+	0.52 9 Jul 2010 Add snake head
 	0.51 7 Jul 2019 Food and dead snake issues	
 	0.50 6 Jul 2019 Twiking Death, Score	
 

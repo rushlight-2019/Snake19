@@ -2,10 +2,10 @@ AutoItSetOption("MustDeclareVars", 1)
 
 ;If not define then only in script
 ;Global Static $MESSAGE = True ;Define then DataOut will show in script or compiled
-;Global Static $MESSAGE =  False   ;Pause will still work in script  No Dataout
+;Global Static $MESSAGE =  False   ;Pause will still work in script  No DataOut
 
 ; Must be Declared before _Prf_startup
-Global $ver = "0.51 8 Jul 2019 Food and dead snake"
+Global $ver = "0.52 9 Jul 2019 Add snake head"
 Global $ini_ver = "2" ;5 Jul 2019 removed Len and add Max in extra
 
 ;Global $TESTING = False
@@ -13,7 +13,7 @@ Global $ini_ver = "2" ;5 Jul 2019 removed Len and add Max in extra
 #include "R:\!Autoit\Blank\_prf_startup.au3"
 
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
-#AutoIt3Wrapper_Res_Fileversion=0.0.5.1
+#AutoIt3Wrapper_Res_Fileversion=0.0.5.2
 #AutoIt3Wrapper_Icon=R:\!Autoit\Ico\prf.ico
 #AutoIt3Wrapper_Res_Description=Another snake game
 #AutoIt3Wrapper_Res_LegalCopyright=© Phillip Forrestal 2019
@@ -79,6 +79,7 @@ Global $ini_ver = "2" ;5 Jul 2019 removed Len and add Max in extra
 	Convert to dead also to end to start.  (problem was in here)
 
 	Version
+	0.52 9 Jul 2010 Add snake head
 	0.51 7 Jul 2019 Food and dead snake issues
 	0.50 6 Jul 2019 Twiking Death, Score
 	0.49 5 Jul 2019  Found progam endless cycle in Convert to dead
@@ -193,6 +194,8 @@ Static $DEAD = 3
 Static $cDEAD = $s_pic & "brown.jpg"
 Static $POOP = 5
 Static $cPOOP = $s_pic & "darkbrown.jpg"
+Static $HEAD = 1
+Static $cHEAD = $s_pic & "white.jpg" ; for now just add white.
 
 Static $MaxLost = 5 ; Start with 10
 
@@ -463,7 +466,7 @@ Func Game()
 	$g_dirX = 0
 	$g_dirY = 0
 
-	If $TESTING Then
+	If False Then  ;$TESTING Then
 		Status(1, "  1", 1)
 		Sleep(500)
 		Status(1, " 2", 2)
@@ -516,7 +519,7 @@ Func Game()
 	GUISetAccelerators($aAccelKey2, $g_ctrlBoard)
 	MouseMove(0, 0, 0)
 	If $TESTING Then
-		$g_gChange = 75
+		$g_gChange = 25 ;75
 	Else
 		$g_gChange = 25
 	EndIf
@@ -615,7 +618,13 @@ Func Tick() ;
 			$fdiff += $timing[$x]
 		Next
 		Status(3, String(Int(($fdiff / 100))), 4)
-		Dataout("Tick", $fdiff / 100)
+		DataOut("Tick", $fdiff / 100)
+	EndIf
+
+	If $TESTING Then
+		If $Map[$what][0][0] <> $M1 Then
+			Pause("Null not edge", $Map[$what][0][0])
+		EndIf
 	EndIf
 
 	While 1
@@ -640,7 +649,7 @@ Func Tick() ;
 	$g_hTick = TimerInit()
 EndFunc   ;==>Tick
 #CS INFO
-	46824 V10 7/3/2019 6:50:03 PM V9 6/30/2019 3:33:26 PM V8 6/28/2019 7:37:37 PM V7 6/27/2019 5:39:48 PM
+	54450 V11 7/9/2019 1:03:14 AM V10 7/3/2019 6:50:03 PM V9 6/30/2019 3:33:26 PM V8 6/28/2019 7:37:37 PM
 #CE
 
 ; $g_iscore is extra + length
@@ -661,7 +670,7 @@ Func Extra()
 			If $g_Ouch > 0 Then
 				$flag = DoubleBackWall()
 				If $flag Then
-					dataout("Double back DEAD")
+					DataOut("Double back DEAD")
 					Status(0, "Double back DEAD", 3)
 
 				Else
@@ -689,14 +698,14 @@ Func Extra()
 			;			$Map[$what][$x_new + $g_dirX][$y_new + $g_dirY] = $EMPTY
 
 		Case $WALL
-			dataout("WALL")
+			DataOut("WALL")
 
 			; Check  prev to be the same  last location
 			DataOut("Eat wall Double back on self")
 
 			$flag = DoubleBackWall()
 			If $flag Then
-				dataout("Double back WALL")
+				DataOut("Double back WALL")
 				Status(0, "Double back WALL", 3)
 				$g_gChange -= 2
 
@@ -868,7 +877,7 @@ Func Extra()
 
 EndFunc   ;==>Extra
 #CS INFO
-	336424 V16 7/8/2019 1:00:13 AM V15 7/6/2019 6:24:29 PM V14 7/5/2019 4:03:49 PM V13 7/5/2019 8:47:35 AM
+	336232 V17 7/9/2019 1:03:14 AM V16 7/8/2019 1:00:13 AM V15 7/6/2019 6:24:29 PM V14 7/5/2019 4:03:49 PM
 #CE
 
 Func Normal()
@@ -1112,7 +1121,7 @@ Func ConvDead($x, $y, $useNext = False) ; start map location
 
 		If $useNext Then
 			Status(2, "ConvDead from End", 3)
-			dataout("ConvDead from End")
+			DataOut("ConvDead from End")
 			$x = $Map[$nxX][$tx][$ty]
 			$y = $Map[$nxY][$tx][$ty]
 		Else
@@ -1124,7 +1133,7 @@ Func ConvDead($x, $y, $useNext = False) ; start map location
 
 EndFunc   ;==>ConvDead
 #CS INFO
-	36955 V4 7/6/2019 6:24:29 PM V3 7/5/2019 4:03:49 PM V2 7/3/2019 6:50:03 PM V1 7/3/2019 6:22:02 AM
+	36891 V5 7/9/2019 1:03:14 AM V4 7/6/2019 6:24:29 PM V3 7/5/2019 4:03:49 PM V2 7/3/2019 6:50:03 PM
 #CE
 
 Func ShowRow($x, $y)
@@ -1145,7 +1154,7 @@ EndFunc   ;==>ShowRow
 ;~~
 Func Status($status, $string, $color)
 	Local $c
-	;dataout($status, $string)
+	;DataOut($status, $string)
 
 	If $status = 0 Then
 		$g_Status0Off = 25
@@ -1169,7 +1178,7 @@ Func Status($status, $string, $color)
 	GUICtrlSetBkColor($g_StatusText[$status], $c)
 EndFunc   ;==>Status
 #CS INFO
-	33886 V5 6/9/2019 5:40:22 PM V4 6/9/2019 1:07:49 PM V3 6/6/2019 11:09:42 PM V2 6/3/2019 8:05:25 PM
+	33822 V6 7/9/2019 1:03:14 AM V5 6/9/2019 5:40:22 PM V4 6/9/2019 1:07:49 PM V3 6/6/2019 11:09:42 PM
 #CE
 
 Func StartSnake()
@@ -1316,16 +1325,18 @@ Func PrevNext($x, $y) ;New value
 
 	$Map[$nxX][$x_prv][$y_prv] = $x_new
 	$Map[$nxY][$x_prv][$y_prv] = $y_new
-
+	GUICtrlSetImage($Map[$ctrl][$x_prv][$y_prv], $cSNAKE)
+	DataOut($x_prv, $y_prv)
 	$g_SnakeCount += 1
 	$Map[$num][$x_new][$y_new] = $g_SnakeCount
 
 	$Map[$what][$x_new][$y_new] = $SNAKE
-	GUICtrlSetImage($Map[$ctrl][$x_new][$y_new], $cSNAKE)
+	GUICtrlSetImage($Map[$ctrl][$x_new][$y_new], $cHEAD)
+	DataOut($x_new, $y_new)
 
 EndFunc   ;==>PrevNext
 #CS INFO
-	34980 V4 6/22/2019 7:09:09 PM V3 6/3/2019 8:05:25 PM V2 6/3/2019 10:34:22 AM V1 6/3/2019 1:09:45 AM
+	43453 V5 7/9/2019 1:03:14 AM V4 6/22/2019 7:09:09 PM V3 6/3/2019 8:05:25 PM V2 6/3/2019 10:34:22 AM
 #CE
 
 Func RemoveSnakeExtra($inputflag = False) ; at end
@@ -1828,14 +1839,14 @@ Func StartForm()
 			Case $Checkbox1 ;debug
 
 				$TESTING = BitAND(GUICtrlRead($Checkbox1), $GUI_CHECKED) = $GUI_CHECKED
-				Dataout($TESTING)
+				DataOut($TESTING)
 
 		EndSwitch
 	WEnd
 
 EndFunc   ;==>StartForm
 #CS INFO
-	220227 V19 7/3/2019 6:50:03 PM V18 6/27/2019 5:39:48 PM V17 6/24/2019 11:22:57 PM V16 6/24/2019 9:33:41 AM
+	220195 V20 7/9/2019 1:03:14 AM V19 7/3/2019 6:50:03 PM V18 6/27/2019 5:39:48 PM V17 6/24/2019 11:22:57 PM
 #CE
 
 ;Main
@@ -1843,4 +1854,4 @@ Main()
 
 Exit
 
-;~T ScriptFunc.exe V0.54a 15 May 2019 - 7/8/2019 1:00:13 AM
+;~T ScriptFunc.exe V0.54a 15 May 2019 - 7/9/2019 1:03:14 AM
