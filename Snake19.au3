@@ -5,7 +5,7 @@ AutoItSetOption("MustDeclareVars", 1)
 ;Global Static $MESSAGE =  False   ;Pause will still work in script  No DataOut
 
 ; Must be Declared before _Prf_startup
-Global $ver = "0.52 9 Jul 2019 Add snake head"
+Global $ver = "0.53 13 Jul 2019 problem again"
 Global $ini_ver = "2" ;5 Jul 2019 removed Len and add Max in extra
 
 ;Global $TESTING = False
@@ -13,7 +13,7 @@ Global $ini_ver = "2" ;5 Jul 2019 removed Len and add Max in extra
 #include "R:\!Autoit\Blank\_prf_startup.au3"
 
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
-#AutoIt3Wrapper_Res_Fileversion=0.0.5.2
+#AutoIt3Wrapper_Res_Fileversion=0.0.5.3
 #AutoIt3Wrapper_Icon=R:\!Autoit\Ico\prf.ico
 #AutoIt3Wrapper_Res_Description=Another snake game
 #AutoIt3Wrapper_Res_LegalCopyright=© Phillip Forrestal 2019
@@ -79,7 +79,11 @@ Global $ini_ver = "2" ;5 Jul 2019 removed Len and add Max in extra
 	Convert to dead also to end to start.  (problem was in here)
 
 	Version
-	0.52 9 Jul 2010 Add snake head
+	;Create Color.jpg  put in @LocalAppDataDir\Snake19
+	;Split INI into 2 Snake.ini setting,  Score.ini Highscore for modes
+	put INI  Data.folder
+	0.53 13 Jul 2019  problem again - 4 test points.  Status changes
+	0.52 9 Jul 2019 Add snake head
 	0.51 7 Jul 2019 Food and dead snake issues
 	0.50 6 Jul 2019 Twiking Death, Score
 	0.49 5 Jul 2019  Found progam endless cycle in Convert to dead
@@ -251,6 +255,7 @@ Global $g_ScoreFood
 Global $g_ScoreMax
 
 Global $g_Status0Off = 1000
+Global $g_Status2Off = 1000
 ; Size can be zero at the begin so once size is > 0 then hunger is active.
 Global $g_RemoveBegining = False
 Global $g_Mouse = 0
@@ -317,6 +322,16 @@ Global $g_Ouch = 0 ;Ate Dead snake 2 or 1, 0 no   Set to 2 because b4 next check
 ; Main is call at end
 Func Main()
 	Local $a
+
+	If False Then
+		pause(@AppDataDir)
+		pause()
+		pause(@LocalAppDataDir)
+		pause(@ProgramsDir)
+		pause(@UserProfileDir)
+		pause(@StartMenuDir)
+		;pause(@DesktopCommonDir)
+	EndIf
 
 	If Not FileExists($cSNAKE) Then
 		MsgBox(0, "Problem Pictures", $s_pic & "Folder missing.")
@@ -389,7 +404,7 @@ Func Main()
 
 EndFunc   ;==>Main
 #CS INFO
-	143520 V21 7/6/2019 6:24:29 PM V20 7/5/2019 4:03:49 PM V19 7/5/2019 8:47:35 AM V18 7/4/2019 11:42:05 AM
+	157647 V22 7/13/2019 3:59:17 PM V21 7/6/2019 6:24:29 PM V20 7/5/2019 4:03:49 PM V19 7/5/2019 8:47:35 AM
 #CE
 
 Func Game()
@@ -466,7 +481,7 @@ Func Game()
 	$g_dirX = 0
 	$g_dirY = 0
 
-	If False Then  ;$TESTING Then
+	If False Then ;$TESTING Then
 		Status(1, "  1", 1)
 		Sleep(500)
 		Status(1, " 2", 2)
@@ -603,7 +618,7 @@ Func Game()
 
 EndFunc   ;==>Game
 #CS INFO
-	313014 V36 7/8/2019 1:00:13 AM V35 7/6/2019 6:24:29 PM V34 7/5/2019 8:47:35 AM V33 7/3/2019 6:50:03 PM
+	314125 V37 7/13/2019 3:59:17 PM V36 7/8/2019 1:00:13 AM V35 7/6/2019 6:24:29 PM V34 7/5/2019 8:47:35 AM
 #CE
 
 Func Tick() ;
@@ -624,8 +639,18 @@ Func Tick() ;
 	If $TESTING Then
 		If $Map[$what][0][0] <> $M1 Then
 			Pause("Null not edge", $Map[$what][0][0])
+			$Map[$what][0][0] = -1
 		EndIf
 	EndIf
+
+	If $g_Status0Off = 0 Then
+		Status(0, "", 0)
+	EndIf
+	$g_Status0Off -= 1
+	If $g_Status2Off = 0 Then
+		Status(2, "", 0)
+	EndIf
+	$g_Status2Off -= 1
 
 	While 1
 		$fdiff = TimerDiff($g_hTick)
@@ -649,7 +674,7 @@ Func Tick() ;
 	$g_hTick = TimerInit()
 EndFunc   ;==>Tick
 #CS INFO
-	54450 V11 7/9/2019 1:03:14 AM V10 7/3/2019 6:50:03 PM V9 6/30/2019 3:33:26 PM V8 6/28/2019 7:37:37 PM
+	65427 V12 7/13/2019 3:59:17 PM V11 7/9/2019 1:03:14 AM V10 7/3/2019 6:50:03 PM V9 6/30/2019 3:33:26 PM
 #CE
 
 ; $g_iscore is extra + length
@@ -671,7 +696,7 @@ Func Extra()
 				$flag = DoubleBackWall()
 				If $flag Then
 					DataOut("Double back DEAD")
-					Status(0, "Double back DEAD", 3)
+					Status(2, "Double back DEAD", 3)
 
 				Else
 					Status(0, "Ate too much dead snake or poop", 1)
@@ -706,7 +731,7 @@ Func Extra()
 			$flag = DoubleBackWall()
 			If $flag Then
 				DataOut("Double back WALL")
-				Status(0, "Double back WALL", 3)
+				Status(2, "Double back WALL", 3)
 				$g_gChange -= 2
 
 			Else
@@ -723,7 +748,7 @@ Func Extra()
 				DataOut("Eat me Double back on self")
 				$flag = DoubleBack($g_dirX, $g_dirY)
 				If $flag Then
-					Status(0, "Double back on sef", 3)
+					Status(2, "Double back on self", 3)
 					$g_gChange -= 2
 				Else
 					Status(0, "Ate self", 1)
@@ -791,11 +816,6 @@ Func Extra()
 
 		Case $EMPTY
 
-			If $g_Status0Off = 0 Then
-				Status(0, "", 0)
-			EndIf
-			$g_Status0Off -= 1
-
 			;	Each Hunger Time off goes up 1 Max value is 10
 			$HungerSnake += 1
 			If $HungerSnake = 100 Then
@@ -814,8 +834,8 @@ Func Extra()
 				EndIf
 				$HungerCycle = $HungerStr - $HungerCnt
 
-				Status(0, "Hungery - " & $HungerCnt & " Snake shorter", 3)
-				$g_Status0Off = 30
+				Status(2, "Hungery - " & $HungerCnt & " Snake shorter", 3)
+				;$g_Status0Off = 30
 
 				$g_gChange -= $HungerCnt
 
@@ -877,7 +897,7 @@ Func Extra()
 
 EndFunc   ;==>Extra
 #CS INFO
-	336232 V17 7/9/2019 1:03:14 AM V16 7/8/2019 1:00:13 AM V15 7/6/2019 6:24:29 PM V14 7/5/2019 4:03:49 PM
+	331720 V18 7/13/2019 3:59:17 PM V17 7/9/2019 1:03:14 AM V16 7/8/2019 1:00:13 AM V15 7/6/2019 6:24:29 PM
 #CE
 
 Func Normal()
@@ -903,11 +923,6 @@ Func Normal()
 
 		Case $EMPTY ;Normal
 
-			If $g_Status0Off = 0 Then
-				Status(0, "", 0)
-			EndIf
-			$g_Status0Off -= 1
-
 			PrevNext($x_new + $g_dirX, $y_new + $g_dirY) ;New value
 			RemoveSnakeNormal()
 
@@ -923,7 +938,7 @@ Func Normal()
 	; END NORMAL
 EndFunc   ;==>Normal
 #CS INFO
-	65639 V3 6/24/2019 11:22:57 PM V2 6/24/2019 9:33:41 AM V1 6/22/2019 7:09:09 PM
+	60952 V4 7/13/2019 3:59:17 PM V3 6/24/2019 11:22:57 PM V2 6/24/2019 9:33:41 AM V1 6/22/2019 7:09:09 PM
 #CE
 
 Func DoDead()
@@ -937,6 +952,15 @@ Func DoDead()
 			$y = $g_bdPrev[$s_bdY]
 
 			;: Clear current location
+
+			If $TESTING Then
+				If $x = 0 Or $y = 0 Then
+
+					Pause("Null X & Y 1:", $Map[$what][0][0])
+					Pause($x, $y)
+
+				EndIf
+			EndIf
 			$Map[$what][$x][$y] = $EMPTY
 			GUICtrlSetImage($Map[$ctrl][$x][$y], $cEMPTY)
 
@@ -978,6 +1002,15 @@ Func DoDead()
 			$y = $g_bdNext[$s_bdY]
 
 			; Clear current location
+			If $TESTING Then
+				If $x = 0 Or $y = 0 Then
+
+					Pause("Null X & Y 2:", $Map[$what][0][0])
+					Pause($x, $y)
+
+				EndIf
+			EndIf
+
 			$Map[$what][$x][$y] = $EMPTY
 			GUICtrlSetImage($Map[$ctrl][$x][$y], $cEMPTY)
 
@@ -1012,7 +1045,7 @@ Func DoDead()
 
 EndFunc   ;==>DoDead
 #CS INFO
-	150550 V6 7/6/2019 6:24:29 PM V5 7/4/2019 11:42:05 AM V4 7/3/2019 6:22:02 AM V3 6/20/2019 9:30:52 PM
+	164919 V7 7/13/2019 3:59:17 PM V6 7/6/2019 6:24:29 PM V5 7/4/2019 11:42:05 AM V4 7/3/2019 6:22:02 AM
 #CE
 
 Func StartDead($inX, $inY) ;  .~~
@@ -1159,6 +1192,9 @@ Func Status($status, $string, $color)
 	If $status = 0 Then
 		$g_Status0Off = 25
 	EndIf
+	If $status = 2 Then
+		$g_Status2Off = 25
+	EndIf
 
 	GUICtrlSetData($g_StatusText[$status], $string)
 	Switch $color
@@ -1178,7 +1214,7 @@ Func Status($status, $string, $color)
 	GUICtrlSetBkColor($g_StatusText[$status], $c)
 EndFunc   ;==>Status
 #CS INFO
-	33822 V6 7/9/2019 1:03:14 AM V5 6/9/2019 5:40:22 PM V4 6/9/2019 1:07:49 PM V3 6/6/2019 11:09:42 PM
+	37048 V7 7/13/2019 3:59:17 PM V6 7/9/2019 1:03:14 AM V5 6/9/2019 5:40:22 PM V4 6/9/2019 1:07:49 PM
 #CE
 
 Func StartSnake()
@@ -1326,17 +1362,17 @@ Func PrevNext($x, $y) ;New value
 	$Map[$nxX][$x_prv][$y_prv] = $x_new
 	$Map[$nxY][$x_prv][$y_prv] = $y_new
 	GUICtrlSetImage($Map[$ctrl][$x_prv][$y_prv], $cSNAKE)
-	DataOut($x_prv, $y_prv)
+	;	DataOut($x_prv, $y_prv)
 	$g_SnakeCount += 1
 	$Map[$num][$x_new][$y_new] = $g_SnakeCount
 
 	$Map[$what][$x_new][$y_new] = $SNAKE
 	GUICtrlSetImage($Map[$ctrl][$x_new][$y_new], $cHEAD)
-	DataOut($x_new, $y_new)
+	;DataOut($x_new, $y_new)
 
 EndFunc   ;==>PrevNext
 #CS INFO
-	43453 V5 7/9/2019 1:03:14 AM V4 6/22/2019 7:09:09 PM V3 6/3/2019 8:05:25 PM V2 6/3/2019 10:34:22 AM
+	43571 V6 7/13/2019 3:59:17 PM V5 7/9/2019 1:03:14 AM V4 6/22/2019 7:09:09 PM V3 6/3/2019 8:05:25 PM
 #CE
 
 Func RemoveSnakeExtra($inputflag = False) ; at end
@@ -1366,6 +1402,15 @@ Func RemoveSnakeExtra($inputflag = False) ; at end
 			$Map[$what][$x][$y] = $POOP
 			GUICtrlSetImage($Map[$ctrl][$x][$y], $cPOOP)
 		Else
+			If $TESTING Then
+				If $x = 0 Or $y = 0 Then
+
+					Pause("Null X & Y 3:", $Map[$what][0][0])
+					Pause($x, $y)
+
+				EndIf
+			EndIf
+
 			$Map[$what][$x][$y] = $EMPTY
 			GUICtrlSetImage($Map[$ctrl][$x][$y], $cEMPTY)
 		EndIf
@@ -1395,7 +1440,7 @@ Func RemoveSnakeExtra($inputflag = False) ; at end
 
 EndFunc   ;==>RemoveSnakeExtra
 #CS INFO
-	95390 V16 7/8/2019 1:00:13 AM V15 7/6/2019 6:24:29 PM V14 7/5/2019 4:03:49 PM V13 7/4/2019 11:42:05 AM
+	102576 V17 7/13/2019 3:59:17 PM V16 7/8/2019 1:00:13 AM V15 7/6/2019 6:24:29 PM V14 7/5/2019 4:03:49 PM
 #CE
 
 Func RemoveSnakeNormal() ; at end
@@ -1403,6 +1448,14 @@ Func RemoveSnakeNormal() ; at end
 
 	$x = $x_end
 	$y = $y_end
+	If $TESTING Then
+		If $x = 0 Or $y = 0 Then
+
+			Pause("Null X & Y 4:", $Map[$what][0][0])
+			Pause($x, $y)
+
+		EndIf
+	EndIf
 
 	$Map[$what][$x][$y] = $EMPTY
 	GUICtrlSetImage($Map[$ctrl][$x][$y], $cEMPTY)
@@ -1412,7 +1465,7 @@ Func RemoveSnakeNormal() ; at end
 
 EndFunc   ;==>RemoveSnakeNormal
 #CS INFO
-	18081 V9 6/24/2019 11:22:57 PM V8 6/22/2019 7:09:09 PM V7 6/6/2019 11:09:42 PM V6 6/3/2019 10:34:22 AM
+	25268 V10 7/13/2019 3:59:17 PM V9 6/24/2019 11:22:57 PM V8 6/22/2019 7:09:09 PM V7 6/6/2019 11:09:42 PM
 #CE
 
 Func AddFood($start = False)
@@ -1483,12 +1536,6 @@ Func ClearBoard()
 
 	SayClearBoard(True, False)
 
-	If $TESTING Then
-		If $Map[$what][0][0] <> $M1 Then
-			Pause("Null not edge", $Map[$what][0][0])
-		EndIf
-	EndIf
-
 	For $y = 0 To $g_by - 1
 		For $x = 0 To $g_bx - 1
 			Select
@@ -1511,7 +1558,7 @@ Func ClearBoard()
 
 EndFunc   ;==>ClearBoard
 #CS INFO
-	44127 V14 7/8/2019 1:00:13 AM V13 7/6/2019 6:24:29 PM V12 7/5/2019 4:03:49 PM V11 6/28/2019 8:21:20 AM
+	36469 V15 7/13/2019 3:59:17 PM V14 7/8/2019 1:00:13 AM V13 7/6/2019 6:24:29 PM V12 7/5/2019 4:03:49 PM
 #CE
 
 Func NormalPoop()
@@ -1854,4 +1901,4 @@ Main()
 
 Exit
 
-;~T ScriptFunc.exe V0.54a 15 May 2019 - 7/9/2019 1:03:14 AM
+;~T ScriptFunc.exe V0.54a 15 May 2019 - 7/13/2019 3:59:17 PM
