@@ -5,7 +5,7 @@ AutoItSetOption("MustDeclareVars", 1)
 ;Global Static $MESSAGE =  False   ;Pause will still work in script  No DataOut
 
 ; Must be Declared before _Prf_startup
-Global $ver = "0.53 13 Jul 2019 problem again"
+Global $ver = "0.54 13 Jul 2019 put INI Data.folder"
 Global $ini_ver = "2" ;5 Jul 2019 removed Len and add Max in extra
 
 ;Global $TESTING = False
@@ -13,7 +13,7 @@ Global $ini_ver = "2" ;5 Jul 2019 removed Len and add Max in extra
 #include "R:\!Autoit\Blank\_prf_startup.au3"
 
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
-#AutoIt3Wrapper_Res_Fileversion=0.0.5.3
+#AutoIt3Wrapper_Res_Fileversion=0.0.5.4
 #AutoIt3Wrapper_Icon=R:\!Autoit\Ico\prf.ico
 #AutoIt3Wrapper_Res_Description=Another snake game
 #AutoIt3Wrapper_Res_LegalCopyright=© Phillip Forrestal 2019
@@ -81,8 +81,8 @@ Global $ini_ver = "2" ;5 Jul 2019 removed Len and add Max in extra
 	Version
 	;Create Color.jpg  put in @LocalAppDataDir\Snake19
 	;Split INI into 2 Snake.ini setting,  Score.ini Highscore for modes
-	put INI  Data.folder
-	0.53 13 Jul 2019  problem again - 4 test points.  Status changes
+	0.54 13 Jul 2019 put INI  Data.folder
+	0.53 13 Jul 2019 problem again - 4 test points.  Status changes
 	0.52 9 Jul 2019 Add snake head
 	0.51 7 Jul 2019 Food and dead snake issues
 	0.50 6 Jul 2019 Twiking Death, Score
@@ -183,8 +183,11 @@ Global $ini_ver = "2" ;5 Jul 2019 removed Len and add Max in extra
 #include <File.au3>
 
 ;Static
-Static $s_pic = @ScriptDir & "\Pic\"
-Static $s_ini = @WorkingDir & "\snake.ini"
+Static $s_data = @ScriptDir & "\SNAKE19-Data"
+Static $s_pic = @ScriptDir & "\Pic\" ;to be removed after jpg switch to Snake19-Data
+Static $s_ini = $s_data & "\snake.ini"
+Static $s_scoreini = $s_data & "\score.ini"
+
 Static $WALL = -1
 Static $cEDGE = $s_pic & "Edge.jpg"
 Static $EMPTY = 0
@@ -201,7 +204,7 @@ Static $cPOOP = $s_pic & "darkbrown.jpg"
 Static $HEAD = 1
 Static $cHEAD = $s_pic & "white.jpg" ; for now just add white.
 
-Static $MaxLost = 5 ; Start with 10
+Static $MaxLost = 6 ;   5 to 10
 
 ;Global
 Global $g_first = True
@@ -233,7 +236,7 @@ Global $g_foodCnt = 1
 
 Global $g_hTick
 
-Global $g_Size = 15 ;10
+Global $g_Size = 16 ; max?20 ;min = 10
 Global $g_Font = 24
 
 Global $g_Status[4]
@@ -323,6 +326,17 @@ Global $g_Ouch = 0 ;Ate Dead snake 2 or 1, 0 no   Set to 2 because b4 next check
 Func Main()
 	Local $a
 
+	;Check to see if snake19.ini can be created or exists
+	If FileExists($s_ini) = 0 Then ;not exist
+		DirCreate($s_data)
+		IniWrite($s_ini, "Program", "Version", $ver)
+		If FileExists($s_ini) = 0 Then ;not exist
+			MsgBox(1, "ERROR", "Can not create data files at " & $s_data)
+			Exit
+		EndIf
+	EndIf
+	IniWrite($s_ini, "Program", "Version", $ver)
+
 	If False Then
 		pause(@AppDataDir)
 		pause()
@@ -381,16 +395,16 @@ Func Main()
 	;	GUIDelete($FormXX)
 
 	;Check Version of INI if wrong version delete Hi Scores
-	;because wrong highscore layout crashed the game.
-	$a = IniRead($s_ini, "Score", "Version", "x")
+	;because wrong highscore layout will crashed the game.
+	$a = IniRead($s_scoreini, "Score", "Version", "x")
 	If $a = "x" Then ; old layout or ini missing
-		FileDelete($s_ini)
+		FileDelete($s_scoreini)
 		Sleep(500)
-		IniWrite($s_ini, "Score", "Version", $ini_ver)
+		IniWrite($s_scoreini, "Score", "Version", $ini_ver)
 	ElseIf $a <> $ini_ver Then
-		IniDelete($s_ini, "HighScoreExtra")
-		IniDelete($s_ini, "HighScoreNormal")
-		IniWrite($s_ini, "Score", "Version", $ini_ver)
+		IniDelete($s_scoreini, "HighScoreExtra")
+		IniDelete($s_scoreini, "HighScoreNormal")
+		IniWrite($s_scoreini, "Score", "Version", $ini_ver)
 	EndIf
 
 	IniHighFive()
@@ -404,7 +418,7 @@ Func Main()
 
 EndFunc   ;==>Main
 #CS INFO
-	157647 V22 7/13/2019 3:59:17 PM V21 7/6/2019 6:24:29 PM V20 7/5/2019 4:03:49 PM V19 7/5/2019 8:47:35 AM
+	186856 V23 7/13/2019 7:20:00 PM V22 7/13/2019 3:59:17 PM V21 7/6/2019 6:24:29 PM V20 7/5/2019 4:03:49 PM
 #CE
 
 Func Game()
@@ -661,20 +675,21 @@ Func Tick() ;
 	WEnd
 
 	If $g_Focus <> WinGetTitle("[ACTIVE]") Then
-		Status(0, "Lost Focus - Pause", 1)
+		Status(3, "Lost Focus - Pause", 1)
 		While $g_Focus <> WinGetTitle("[ACTIVE]")
 			Sleep(1000)
 		WEnd
-		Status(0, "Found Focus - Wait 2 seconds", 4)
+
+		Status(3, "Found Focus - Wait 2 seconds", 4)
 		Sleep(2000)
 		MouseMove(0, 0, 0)
-		Status(0, "", 0)
+		Status(3, "", 0)
 	EndIf
 
 	$g_hTick = TimerInit()
 EndFunc   ;==>Tick
 #CS INFO
-	65427 V12 7/13/2019 3:59:17 PM V11 7/9/2019 1:03:14 AM V10 7/3/2019 6:50:03 PM V9 6/30/2019 3:33:26 PM
+	65436 V13 7/13/2019 7:20:00 PM V12 7/13/2019 3:59:17 PM V11 7/9/2019 1:03:14 AM V10 7/3/2019 6:50:03 PM
 #CE
 
 ; $g_iscore is extra + length
@@ -706,7 +721,7 @@ Func Extra()
 
 			EndIf
 
-			Status(0, "Ate DEAD snake UG!", 1)
+			Status(3, "Ate DEAD snake UG! Lost " & $MaxLost & " cells of snake", 1)
 			;Status(2, "Lost 10 Snake cells. Lost 100 points.", 1)
 			$g_gChange -= $MaxLost
 
@@ -715,7 +730,7 @@ Func Extra()
 			PrevNext($x_new + $g_dirX, $y_new + $g_dirY) ;New value
 
 		Case $POOP
-			Status(0, "Ate  snake POOP - UG!", 1)
+			Status(3, "Ate  snake POOP - UG! Lost " & $MaxLost & " cells of snake", 1)
 			;Status(2, "Lost 10 Snake cells. Lost 100 points.", 1)
 			$g_gChange -= $MaxLost
 
@@ -897,7 +912,7 @@ Func Extra()
 
 EndFunc   ;==>Extra
 #CS INFO
-	331720 V18 7/13/2019 3:59:17 PM V17 7/9/2019 1:03:14 AM V16 7/8/2019 1:00:13 AM V15 7/6/2019 6:24:29 PM
+	336894 V20 7/13/2019 7:36:11 PM V19 7/13/2019 7:20:00 PM V18 7/13/2019 3:59:17 PM V17 7/9/2019 1:03:14 AM
 #CE
 
 Func Normal()
@@ -938,7 +953,7 @@ Func Normal()
 	; END NORMAL
 EndFunc   ;==>Normal
 #CS INFO
-	60952 V4 7/13/2019 3:59:17 PM V3 6/24/2019 11:22:57 PM V2 6/24/2019 9:33:41 AM V1 6/22/2019 7:09:09 PM
+	60952 V6 7/13/2019 7:36:11 PM V5 7/13/2019 7:20:00 PM V4 7/13/2019 3:59:17 PM V3 6/24/2019 11:22:57 PM
 #CE
 
 Func DoDead()
@@ -1099,7 +1114,7 @@ Func StartDead($inX, $inY) ;  .~~
 	$Map[$prY][$x][$y] = 0
 
 	;Add blood to old tail
-	Status(0, "Ate Live snake OUCH OUCH", 1)
+	Status(3, "Ate Live snake OUCH OUCH", 1)
 	;ConvDead($x, $y, True)
 
 	;	$Map[$what][$x][$y] = $DEAD
@@ -1135,7 +1150,7 @@ Func StartDead($inX, $inY) ;  .~~
 	Return True
 EndFunc   ;==>StartDead
 #CS INFO
-	140602 V9 7/6/2019 6:24:29 PM V8 7/4/2019 11:42:05 AM V7 7/3/2019 7:21:08 PM V6 7/3/2019 6:50:03 PM
+	140605 V10 7/13/2019 7:20:00 PM V9 7/6/2019 6:24:29 PM V8 7/4/2019 11:42:05 AM V7 7/3/2019 7:21:08 PM
 #CE
 
 Func ConvDead($x, $y, $useNext = False) ; start map location
@@ -1430,7 +1445,7 @@ Func RemoveSnakeExtra($inputflag = False) ; at end
 
 	If $Map[$num][$x_new][$y_new] - $Map[$num][$x_end][$y_end] = 0 Then
 		If $g_RemoveBegining Then
-			Status(0, "Died of hunger:", 1)
+			Status(3, "Died of hunger:", 1)
 			Return True
 		EndIf
 		Return False
@@ -1440,7 +1455,7 @@ Func RemoveSnakeExtra($inputflag = False) ; at end
 
 EndFunc   ;==>RemoveSnakeExtra
 #CS INFO
-	102576 V17 7/13/2019 3:59:17 PM V16 7/8/2019 1:00:13 AM V15 7/6/2019 6:24:29 PM V14 7/5/2019 4:03:49 PM
+	102579 V18 7/13/2019 7:20:00 PM V17 7/13/2019 3:59:17 PM V16 7/8/2019 1:00:13 AM V15 7/6/2019 6:24:29 PM
 #CE
 
 Func RemoveSnakeNormal() ; at end
@@ -1617,6 +1632,7 @@ EndFunc   ;==>DisplayHiScore
 
 Func UpDateHiScore()
 	Local $Form1
+
 	If $g_aHiScore[8][0] < $g_GameScore Then
 		;		MsgBox($MB_TOPMOST, "High Score", "New High Score: " & $g_iScore, 5)
 		$Form1 = GUICreate("", 250, 100, -1, -1, $WS_DLGFRAME, BitOR($WS_EX_TOPMOST, $WS_EX_STATICEDGE))
@@ -1638,6 +1654,7 @@ Func UpDateHiScore()
 		SaveHiScore()
 		Sleep(5000)
 		GUIDelete($Form1)
+		$g_GameScore = 0
 
 	ElseIf $g_GameScore > 0 Then
 		$Form1 = GUICreate("", 250, 100, -1, -1, $WS_DLGFRAME, BitOR($WS_EX_TOPMOST, $WS_EX_STATICEDGE))
@@ -1649,7 +1666,7 @@ Func UpDateHiScore()
 	EndIf
 EndFunc   ;==>UpDateHiScore
 #CS INFO
-	72998 V11 7/5/2019 8:47:35 AM V10 7/1/2019 10:36:50 AM V9 6/28/2019 7:37:37 PM V8 6/27/2019 5:39:48 PM
+	74227 V12 7/13/2019 7:36:11 PM V11 7/5/2019 8:47:35 AM V10 7/1/2019 10:36:50 AM V9 6/28/2019 7:37:37 PM
 #CE
 
 Func SaveHiScore()
@@ -1661,14 +1678,14 @@ Func SaveHiScore()
 	Next
 	$a[0][0] = 8
 	If $g_GameWhich = 0 Then ; 0 Normal, 1 Mine
-		$x = IniWriteSection($s_ini, "HighScoreNormal", $a)
+		$x = IniWriteSection($s_scoreini, "HighScoreNormal", $a)
 	Else
-		$x = IniWriteSection($s_ini, "HighScoreExtra", $a)
+		$x = IniWriteSection($s_scoreini, "HighScoreExtra", $a)
 	EndIf
 
 EndFunc   ;==>SaveHiScore
 #CS INFO
-	32233 V4 6/16/2019 10:16:04 AM V3 6/5/2019 11:59:45 PM V2 6/5/2019 2:01:25 AM V1 6/4/2019 8:01:23 PM
+	33313 V5 7/13/2019 7:20:00 PM V4 6/16/2019 10:16:04 AM V3 6/5/2019 11:59:45 PM V2 6/5/2019 2:01:25 AM
 #CE
 
 Func IniHighFive()
@@ -1677,9 +1694,9 @@ Func IniHighFive()
 	For $x = 0 To 1
 		$g_GameWhich = $x
 		If $g_GameWhich = 0 Then ; 0 Normal, 1 Mine
-			$a = IniReadSection($s_ini, "HighScoreNormal")
+			$a = IniReadSection($s_scoreini, "HighScoreNormal")
 		Else
-			$a = IniReadSection($s_ini, "HighScoreExtra")
+			$a = IniReadSection($s_scoreini, "HighScoreExtra")
 		EndIf
 		If @error = 0 Then
 
@@ -1708,15 +1725,15 @@ Func IniHighFive()
 	Next
 EndFunc   ;==>IniHighFive
 #CS INFO
-	51681 V1 6/28/2019 7:37:37 PM
+	52761 V2 7/13/2019 7:20:00 PM V1 6/28/2019 7:37:37 PM
 #CE
 
 Func ReadHiScore()
 	Local $a, $c, $Z
 	If $g_GameWhich = 0 Then ; 0 Normal, 1 Mine
-		$a = IniReadSection($s_ini, "HighScoreNormal")
+		$a = IniReadSection($s_scoreini, "HighScoreNormal")
 	Else
-		$a = IniReadSection($s_ini, "HighScoreExtra")
+		$a = IniReadSection($s_scoreini, "HighScoreExtra")
 	EndIf
 	If @error = 0 Then
 
@@ -1753,7 +1770,7 @@ Func ReadHiScore()
 	EndIf
 EndFunc   ;==>ReadHiScore
 #CS INFO
-	69341 V4 6/16/2019 10:16:04 AM V3 6/5/2019 11:59:45 PM V2 6/5/2019 2:01:25 AM V1 6/4/2019 8:01:23 PM
+	70421 V5 7/13/2019 7:20:00 PM V4 6/16/2019 10:16:04 AM V3 6/5/2019 11:59:45 PM V2 6/5/2019 2:01:25 AM
 #CE
 
 ;Load Level from THE GAME ~~
@@ -1901,4 +1918,4 @@ Main()
 
 Exit
 
-;~T ScriptFunc.exe V0.54a 15 May 2019 - 7/13/2019 3:59:17 PM
+;~T ScriptFunc.exe V0.54a 15 May 2019 - 7/13/2019 7:36:11 PM
