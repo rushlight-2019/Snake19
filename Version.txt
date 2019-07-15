@@ -3,7 +3,7 @@ Still have the NULL snake location problem. Upper Left of board turns black.
 Testing mode has some test to show when this happens. Rarely happens. Err
 0.53 Testing mode: Added 4 test point X & Y #  #1 has occurred (once)
 
-
+	0.55 14 Jul 2019 Create Color.jpg  put in Data - Removed PIC folder
 	0.54 13 Jul 2019 put INI  Data.folder
 Splitting INI between program setting and score.
 	0.53 13 Jul 2019  problem again - 4 test points.  Status changes

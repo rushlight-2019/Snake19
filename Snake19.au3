@@ -5,7 +5,7 @@ AutoItSetOption("MustDeclareVars", 1)
 ;Global Static $MESSAGE =  False   ;Pause will still work in script  No DataOut
 
 ; Must be Declared before _Prf_startup
-Global $ver = "0.54 13 Jul 2019 put INI Data.folder"
+Global $ver = "0.55 14 Jul 2019 Create Color.jpg  put in Data "
 Global $ini_ver = "2" ;5 Jul 2019 removed Len and add Max in extra
 
 ;Global $TESTING = False
@@ -13,7 +13,7 @@ Global $ini_ver = "2" ;5 Jul 2019 removed Len and add Max in extra
 #include "R:\!Autoit\Blank\_prf_startup.au3"
 
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
-#AutoIt3Wrapper_Res_Fileversion=0.0.5.4
+#AutoIt3Wrapper_Res_Fileversion=0.0.5.5
 #AutoIt3Wrapper_Icon=R:\!Autoit\Ico\prf.ico
 #AutoIt3Wrapper_Res_Description=Another snake game
 #AutoIt3Wrapper_Res_LegalCopyright=© Phillip Forrestal 2019
@@ -76,11 +76,8 @@ Global $ini_ver = "2" ;5 Jul 2019 removed Len and add Max in extra
 
 	No more just clean up game.
 
-	Convert to dead also to end to start.  (problem was in here)
-
 	Version
-	;Create Color.jpg  put in @LocalAppDataDir\Snake19
-	;Split INI into 2 Snake.ini setting,  Score.ini Highscore for modes
+	0.55 14 Jul 2019 Create Color.jpg  put in Data - Removed PIC folder
 	0.54 13 Jul 2019 put INI  Data.folder
 	0.53 13 Jul 2019 problem again - 4 test points.  Status changes
 	0.52 9 Jul 2019 Add snake head
@@ -181,30 +178,30 @@ Global $ini_ver = "2" ;5 Jul 2019 removed Len and add Max in extra
 #include <ButtonConstants.au3>
 #include <Date.au3>
 #include <File.au3>
+#include <ScreenCapture.au3>
 
 ;Static
 Static $s_data = @ScriptDir & "\SNAKE19-Data"
-Static $s_pic = @ScriptDir & "\Pic\" ;to be removed after jpg switch to Snake19-Data
 Static $s_ini = $s_data & "\snake.ini"
 Static $s_scoreini = $s_data & "\score.ini"
 
 Static $WALL = -1
-Static $cEDGE = $s_pic & "Edge.jpg"
-Static $EMPTY = 0
-;Static $cEMPTY = $s_pic & "blue.jpg"
-Static $cEMPTY = $s_pic & "black.jpg"
+Static $cEDGE = $s_data & "\Edge.jpg"
 Static $SNAKE = 1
-Static $cSNAKE = $s_pic & "gold.jpg"
-Static $FOOD = 2
-Static $cFOOD = $s_pic & "brightgreen.jpg"
-Static $DEAD = 3
-Static $cDEAD = $s_pic & "brown.jpg"
-Static $POOP = 5
-Static $cPOOP = $s_pic & "darkbrown.jpg"
+Static $cSNAKE = $s_data & "\snake.jpg"
+Static $EMPTY = 0
+Static $cEMPTY = $s_data & "\empty.jpg"
 Static $HEAD = 1
-Static $cHEAD = $s_pic & "white.jpg" ; for now just add white.
+Static $cHEAD = $s_data & "\Head.jpg"
 
-Static $MaxLost = 6 ;   5 to 10
+Static $FOOD = 2
+Static $cFOOD = $s_data & "\Food.jpg"
+Static $DEAD = 3
+Static $cDEAD = $s_data & "\Dead.jpg"
+Static $POOP = 5
+Static $cPOOP = $s_data & "\Poop.jpg"
+
+Static $MaxLost = 8 ;   5 to 10
 
 ;Global
 Global $g_first = True
@@ -259,6 +256,7 @@ Global $g_ScoreMax
 
 Global $g_Status0Off = 1000
 Global $g_Status2Off = 1000
+Global $g_Status3Off = 1000
 ; Size can be zero at the begin so once size is > 0 then hunger is active.
 Global $g_RemoveBegining = False
 Global $g_Mouse = 0
@@ -322,6 +320,9 @@ Global $HungerCnt = 0
 ;0.51
 Global $g_Ouch = 0 ;Ate Dead snake 2 or 1, 0 no   Set to 2 because b4 next check it goes -1  so at DEAD it will be 1, so it not 2 in a row then -1  next loop = 0
 
+;0.55
+Global $g_tc ; move to score
+
 ; Main is call at end
 Func Main()
 	Local $a
@@ -347,52 +348,9 @@ Func Main()
 		;pause(@DesktopCommonDir)
 	EndIf
 
-	If Not FileExists($cSNAKE) Then
-		MsgBox(0, "Problem Pictures", $s_pic & "Folder missing.")
-		Return
-	EndIf
+;~~
 
-	If Not FileExists($cEDGE) Then
-		MsgBox(0, "Problem Pictures", $cEDGE & " Missing Color File")
-		Return
-	EndIf
-	If Not FileExists($cEMPTY) Then
-		MsgBox(0, "Problem Pictures", $cEMPTY & " Missing Color File")
-		Return
-	EndIf
-	If Not FileExists($s_pic & "black.jpg") Then
-		MsgBox(0, "Problem Pictures", "Black.jpg Missing Color File")
-		Return
-	EndIf
-	If Not FileExists($cSNAKE) Then
-		MsgBox(0, "Problem Pictures", $cSNAKE & " Missing Color File")
-		Return
-	EndIf
-	If Not FileExists($cFOOD) Then
-		MsgBox(0, "Problem Pictures", $cFOOD & " Missing Color File")
-		Return
-	EndIf
-	If Not FileExists($cDEAD) Then
-		MsgBox(0, "Problem Pictures", $cDEAD & " Missing Color File")
-		Return
-	EndIf
-	If Not FileExists($cPOOP) Then
-		MsgBox(0, "Problem Pictures", $cPOOP & " Missing Color File")
-		Return
-	EndIf
-	;Local $FormXX = GUICreate("Form1", 615, 438, 192, 124)
-	;	GUICtrlCreateEdit("", 96, 32, 305, 185)
-	;	GUICtrlSetData(-1, "Game has a random problem. " & @CRLF & " It will looked like it locked up. It still running but stuck. " & @CRLF & @CRLF & " Just stop the program in the tray and start again." & @CRLF & @CRLF & " It might be fixed.")
-	;	GUISetState(@SW_SHOW)
-
-	;	While 1
-	;		Local $nMsg = GUIGetMsg()
-	;		Switch $nMsg
-	;			Case $GUI_EVENT_CLOSE
-	;				ExitLoop
-	;		EndSwitch
-	;	WEnd
-	;	GUIDelete($FormXX)
+	CheckJpg()
 
 	;Check Version of INI if wrong version delete Hi Scores
 	;because wrong highscore layout will crashed the game.
@@ -418,7 +376,7 @@ Func Main()
 
 EndFunc   ;==>Main
 #CS INFO
-	186856 V23 7/13/2019 7:20:00 PM V22 7/13/2019 3:59:17 PM V21 7/6/2019 6:24:29 PM V20 7/5/2019 4:03:49 PM
+	86997 V25 7/14/2019 10:10:20 PM V24 7/14/2019 10:20:53 AM V23 7/13/2019 7:20:00 PM V22 7/13/2019 3:59:17 PM
 #CE
 
 Func Game()
@@ -477,7 +435,6 @@ Func Game()
 
 		$g_StatusText[0] = GUICtrlCreateLabel("", $g_Size / 2, $g_StatusOff, $a - $g_Size, $g_Font)
 		GUICtrlSetFont(-1, 10, 700, 0, "Arial")
-;~~
 
 		$g_StatusText[1] = GUICtrlCreateLabel("", $a + ($g_Size / 2), $g_StatusOff, $a - $g_Size, $g_Font)
 		GUICtrlSetFont(-1, 10, 700, 0, "Arial")
@@ -530,6 +487,7 @@ Func Game()
 	$g_gChange = 0
 	$g_gChangeHalf = 0
 	$g_foodCnt = 1 ; How many on Board
+	$g_tc = "??"
 
 	;0.40
 	$HungerStr = ($g_sx + $g_sy) / 2
@@ -558,7 +516,7 @@ Func Game()
 	Do ;game Loop
 		Tick()
 
-		;Dead Loop ~~
+		;Dead Loop
 		DoDead()
 
 		$nMsg = GUIGetMsg()
@@ -632,23 +590,11 @@ Func Game()
 
 EndFunc   ;==>Game
 #CS INFO
-	314125 V37 7/13/2019 3:59:17 PM V36 7/8/2019 1:00:13 AM V35 7/6/2019 6:24:29 PM V34 7/5/2019 8:47:35 AM
+	314266 V38 7/14/2019 10:20:53 AM V37 7/13/2019 3:59:17 PM V36 7/8/2019 1:00:13 AM V35 7/6/2019 6:24:29 PM
 #CE
 
 Func Tick() ;
 	Local $fdiff
-
-	$timing[$timingCnt] = TimerDiff($g_hTick)
-	$timingCnt += 1
-	If $timingCnt = 100 Then
-		$timingCnt = 0
-		$fdiff = 0
-		For $x = 0 To 99
-			$fdiff += $timing[$x]
-		Next
-		Status(3, String(Int(($fdiff / 100))), 4)
-		DataOut("Tick", $fdiff / 100)
-	EndIf
 
 	If $TESTING Then
 		If $Map[$what][0][0] <> $M1 Then
@@ -665,6 +611,23 @@ Func Tick() ;
 		Status(2, "", 0)
 	EndIf
 	$g_Status2Off -= 1
+	If $g_Status3Off = 0 Then
+		Status(3, "", 0)
+	EndIf
+	$g_Status3Off -= 1
+
+	$timing[$timingCnt] = TimerDiff($g_hTick)
+	$timingCnt += 1
+	If $timingCnt = 100 Then
+		$timingCnt = 0
+		$fdiff = 0
+		For $x = 0 To 99
+			$fdiff += $timing[$x]
+		Next
+
+		$g_tc = String(Int(($fdiff / 100)))
+		DataOut("Tick", $fdiff / 100)
+	EndIf
 
 	While 1
 		$fdiff = TimerDiff($g_hTick)
@@ -689,7 +652,7 @@ Func Tick() ;
 	$g_hTick = TimerInit()
 EndFunc   ;==>Tick
 #CS INFO
-	65436 V13 7/13/2019 7:20:00 PM V12 7/13/2019 3:59:17 PM V11 7/9/2019 1:03:14 AM V10 7/3/2019 6:50:03 PM
+	69726 V14 7/14/2019 10:20:53 AM V13 7/13/2019 7:20:00 PM V12 7/13/2019 3:59:17 PM V11 7/9/2019 1:03:14 AM
 #CE
 
 ; $g_iscore is extra + length
@@ -903,16 +866,16 @@ Func Extra()
 		$LS_ScoreLast = $a
 
 		If $TESTING Then ;~~
-			Status(1, "Snake length: " & $a & " Score: [" & $g_iScore & "] Food (" & $g_ScoreFood & ") Max {" & $g_ScoreMax & "} " & $g_iScore + $g_ScoreFood + $g_ScoreMax, 2)
+			Status(1, "Snake length: " & $a & " Score: [" & $g_iScore & "] Food (" & $g_ScoreFood & ") Max {" & $g_ScoreMax & "} " & $g_iScore + $g_ScoreFood + $g_ScoreMax & " tick:" & $g_tc, 2)
 		Else
-			Status(1, "Snake length: " & $a & " Max " & $g_ScoreMax & "   Score: " & $g_iScore + $g_ScoreFood + $g_ScoreMax, 2)
+			Status(1, "Snake length: " & $a & " Max " & $g_ScoreMax & "   Score: " & $g_iScore + $g_ScoreFood + $g_ScoreMax & "  tick:" & $g_tc, 2)
 		EndIf
 		$g_GameScore = $g_iScore + $g_ScoreFood + $g_ScoreMax
 	EndIf
 
 EndFunc   ;==>Extra
 #CS INFO
-	336894 V20 7/13/2019 7:36:11 PM V19 7/13/2019 7:20:00 PM V18 7/13/2019 3:59:17 PM V17 7/9/2019 1:03:14 AM
+	339050 V21 7/14/2019 10:20:53 AM V20 7/13/2019 7:36:11 PM V19 7/13/2019 7:20:00 PM V18 7/13/2019 3:59:17 PM
 #CE
 
 Func Normal()
@@ -958,7 +921,7 @@ EndFunc   ;==>Normal
 
 Func DoDead()
 	Local $x, $y, $x1, $y1
-;~~
+
 	If $g_bdPrev[$s_bdCycle] > $M1 Then ;  active cycle count down
 		$g_bdPrev[$s_bdCycle] -= 1
 		If $g_bdPrev[$s_bdCycle] = 0 Then ; do move
@@ -1060,10 +1023,10 @@ Func DoDead()
 
 EndFunc   ;==>DoDead
 #CS INFO
-	164919 V7 7/13/2019 3:59:17 PM V6 7/6/2019 6:24:29 PM V5 7/4/2019 11:42:05 AM V4 7/3/2019 6:22:02 AM
+	164608 V8 7/14/2019 10:20:53 AM V7 7/13/2019 3:59:17 PM V6 7/6/2019 6:24:29 PM V5 7/4/2019 11:42:05 AM
 #CE
 
-Func StartDead($inX, $inY) ;  .~~
+Func StartDead($inX, $inY)
 	Local $x, $y
 
 	;Global $g_bdPrev[4] ;Cycle, CycleStr , X, Y Pre 2,3
@@ -1150,7 +1113,7 @@ Func StartDead($inX, $inY) ;  .~~
 	Return True
 EndFunc   ;==>StartDead
 #CS INFO
-	140605 V10 7/13/2019 7:20:00 PM V9 7/6/2019 6:24:29 PM V8 7/4/2019 11:42:05 AM V7 7/3/2019 7:21:08 PM
+	140248 V11 7/14/2019 10:20:53 AM V10 7/13/2019 7:20:00 PM V9 7/6/2019 6:24:29 PM V8 7/4/2019 11:42:05 AM
 #CE
 
 Func ConvDead($x, $y, $useNext = False) ; start map location
@@ -1210,6 +1173,9 @@ Func Status($status, $string, $color)
 	If $status = 2 Then
 		$g_Status2Off = 25
 	EndIf
+	If $status = 3 Then
+		$g_Status3Off = 25
+	EndIf
 
 	GUICtrlSetData($g_StatusText[$status], $string)
 	Switch $color
@@ -1229,7 +1195,7 @@ Func Status($status, $string, $color)
 	GUICtrlSetBkColor($g_StatusText[$status], $c)
 EndFunc   ;==>Status
 #CS INFO
-	37048 V7 7/13/2019 3:59:17 PM V6 7/9/2019 1:03:14 AM V5 6/9/2019 5:40:22 PM V4 6/9/2019 1:07:49 PM
+	40276 V8 7/14/2019 10:20:53 AM V7 7/13/2019 3:59:17 PM V6 7/9/2019 1:03:14 AM V5 6/9/2019 5:40:22 PM
 #CE
 
 Func StartSnake()
@@ -1259,7 +1225,6 @@ EndFunc   ;==>StartSnake
 	33453 V5 6/22/2019 7:09:09 PM V4 6/6/2019 11:09:42 PM V3 6/3/2019 8:05:25 PM V2 6/3/2019 10:34:22 AM
 #CE
 
-;~~
 ; Dirx& Diry moving to wall not like Double Back which has reserves direction
 ; So they will change, I can't make them Global because I used this name as Local in a number of Function.
 Func DoubleBackWall() ;(ByRef $dirx, ByRef $diry) ;
@@ -1773,7 +1738,7 @@ EndFunc   ;==>ReadHiScore
 	70421 V5 7/13/2019 7:20:00 PM V4 6/16/2019 10:16:04 AM V3 6/5/2019 11:59:45 PM V2 6/5/2019 2:01:25 AM
 #CE
 
-;Load Level from THE GAME ~~
+;Load Level from THE GAME
 ; to remove Run again
 Func SayClearBoard($OnOff = False, $Mode = True) ; $OnOff = True/False
 
@@ -1808,6 +1773,105 @@ EndFunc   ;==>SayClearBoard
 #CS INFO
 	59050 V1 6/27/2019 5:39:48 PM
 #CE
+
+;~~
+Func CheckJpg()
+	Local $hGUI
+	$hGUI = GUICreate("", 100, 100)
+
+	CheckColorJpg("Snake", 0xfc8c04, $hGUI)
+	CheckColorJpg("Edge", 0x989898, $hGUI)
+	CheckColorJpg("Empty", 0x000000, $hGUI)
+	CheckColorJpg("Head", 0xFFFFFF, $hGUI)
+
+	CheckColorJpg("Dead", 0xA42C2C, $hGUI)
+	CheckColorJpg("Poop", 0x9C5404, $hGUI)
+	CheckColorJpg("Food", 0x20CC1C, $hGUI)
+
+	GUIDelete($hGUI)
+EndFunc   ;==>CheckJpg
+#CS INFO
+	26680 V2 7/14/2019 10:10:20 PM V1 7/14/2019 10:20:53 AM
+#CE
+
+Func CheckColorJpg($filename, $color, $hform) ; $color is only the default color if INI color then use it.
+	Local $sum
+
+	If FileExists($s_data & "\" & $filename & ".jpg") = 0 Then ;Not found
+		CreateColorJpg($filename, $color, $hform)
+		Return
+	EndIf
+
+	If IniRead($s_ini, "Color", $filename, "X") = "X" Then ;COLOR in INI does not exist use $color
+		CreateColorJpg($filename, $color, $hform)
+		Return
+	EndIf
+
+	$color = IniRead($s_ini, "Color", $filename, "X") ;use COLOR in INI if create pass here.
+	$sum = Int(IniRead($s_ini, "Sum", $filename, 0))
+
+	If $sum = Sum($filename) Then ;same exit
+		Return
+	EndIf
+	; Sum not equal recreate.
+	CreateColorJpg($filename, $color, $hform)
+
+EndFunc   ;==>CheckColorJpg
+#CS INFO
+	53308 V2 7/14/2019 10:10:20 PM V1 7/14/2019 10:20:53 AM
+#CE
+
+Func CreateColorJpg($filename, $color, $hform)
+	Local $sum, $a
+	Local $handle, $err
+	Local $tRECT
+	GUISetState(@SW_SHOW, $hform)
+
+	; create, sumchk, store in ini Color Filename
+	GUISetBkColor($color, $hform)
+	Sleep(250)
+	_ScreenCapture_CaptureWnd($s_data & "\" & $filename & ".jpg", $hform, 30, 30, 30 + 25, 30 + 25, False)
+	If @error <> 0 Then ;Failed
+		MsgBox(0, "ERROR", "Color Jpg could not be created " & $filename)
+		Exit
+	EndIf
+
+	$sum = Sum($filename)
+
+	IniWrite($s_ini, "Color", $filename, "0x" & Hex($color, 6))
+	IniWrite($s_ini, "Sum", $filename, $sum)
+
+EndFunc   ;==>CreateColorJpg
+#CS INFO
+	43159 V2 7/14/2019 10:10:20 PM V1 7/14/2019 10:20:53 AM
+#CE
+
+Func Sum($filename)
+	Local $handle, $sum, $a, $err
+
+	$handle = FileOpen($s_data & "\" & $filename & ".jpg", $FO_BINARY)
+	If $handle = -1 Then
+		MsgBox($MB_SYSTEMMODAL, "", "An error occurred when reading the file.")
+		Exit
+	EndIf
+	$sum = 0
+
+	$a = FileRead($handle, 1)
+	$err = @extended
+	While @extended = 1
+		$sum += Number($a, 1)
+		$a = FileRead($handle, 1)
+		$err = @extended
+
+	WEnd
+	FileClose($handle)
+	Return $sum
+EndFunc   ;==>Sum
+#CS INFO
+	30111 V1 7/14/2019 10:20:53 AM
+#CE
+
+;~~
 
 Func StartForm()
 	Local $Form1, $Group1
@@ -1918,4 +1982,4 @@ Main()
 
 Exit
 
-;~T ScriptFunc.exe V0.54a 15 May 2019 - 7/13/2019 7:36:11 PM
+;~T ScriptFunc.exe V0.54a 15 May 2019 - 7/14/2019 10:10:20 PM
