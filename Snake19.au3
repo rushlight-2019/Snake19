@@ -5,7 +5,7 @@ AutoItSetOption("MustDeclareVars", 1)
 ;Global Static $MESSAGE =  False   ;Pause will still work in script  No DataOut
 
 ; Must be Declared before _Prf_startup
-Global $ver = "0.55 14 Jul 2019 Create Color.jpg  put in Data "
+Global $ver = "0.56 15 Jul 2019 Normal less boring 5 to 1"
 Global $ini_ver = "2" ;5 Jul 2019 removed Len and add Max in extra
 
 ;Global $TESTING = False
@@ -13,7 +13,7 @@ Global $ini_ver = "2" ;5 Jul 2019 removed Len and add Max in extra
 #include "R:\!Autoit\Blank\_prf_startup.au3"
 
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
-#AutoIt3Wrapper_Res_Fileversion=0.0.5.5
+#AutoIt3Wrapper_Res_Fileversion=0.0.5.6
 #AutoIt3Wrapper_Icon=R:\!Autoit\Ico\prf.ico
 #AutoIt3Wrapper_Res_Description=Another snake game
 #AutoIt3Wrapper_Res_LegalCopyright=© Phillip Forrestal 2019
@@ -77,6 +77,7 @@ Global $ini_ver = "2" ;5 Jul 2019 removed Len and add Max in extra
 	No more just clean up game.
 
 	Version
+	0.56 15 Jul 2019 Normal less boring 5 to 1
 	0.55 14 Jul 2019 Create Color.jpg  put in Data - Removed PIC folder
 	0.54 13 Jul 2019 put INI  Data.folder
 	0.53 13 Jul 2019 problem again - 4 test points.  Status changes
@@ -285,15 +286,18 @@ DataOut($g_Focus)
 
 ;0.32  Taking types out of game loop put into function
 Global $g_endgame = False
-Global $g_gChange, $g_gChangeHalf
-Static $s_gChange = 3
+Global $g_gChange
+Global $g_gChangeHalf
+Static $s_gChangeBaseExtra = 3
+Static $s_gChangeBaseNormal = 20
 
 ;Global $g_gHunger
 ;Global $g_gHungerCnt
 ;Static $g_gHungerStr = 30
 
 Global $g_turnBonus
-Static $g_turnBonusStr = 6
+Static $g_turnExtraStr = 6
+Static $g_turnNormalStr = 3
 Global $g_turnNo
 Global $g_turnLast
 Global $g_dirX
@@ -390,7 +394,6 @@ Func Game()
 	Local $NotFirstPass
 	Local $a, $b
 
-	$g_turnBonus = $g_turnBonusStr + 1 ; The way it start with 1 turn on start. To fix start with +1
 	$NotFirstPass = True
 
 	If $g_ctrlBoard = -1 Then
@@ -484,7 +487,6 @@ Func Game()
 	$g_ScoreMax = 0
 	$g_SnakeCount = 1
 	$g_iScore = 0
-	$g_gChange = 0
 	$g_gChangeHalf = 0
 	$g_foodCnt = 1 ; How many on Board
 	$g_tc = "??"
@@ -505,11 +507,18 @@ Func Game()
 	Local $aAccelKey2[][] = [["{RIGHT}", $L_idRight], ["{LEFT}", $L_idLeft], ["{DOWN}", $L_idDown], ["{UP}", $L_idUp], ["{ESC}", $L_idEsc]]
 	GUISetAccelerators($aAccelKey2, $g_ctrlBoard)
 	MouseMove(0, 0, 0)
-	If $TESTING Then
-		$g_gChange = 25 ;75
-	Else
-		$g_gChange = 25
-	EndIf
+
+	Switch $g_GameWhich
+		Case 1 ;extra
+			$g_gChange = 25 ;75
+			$g_turnBonus = $g_turnExtraStr + 1 ; The way it start with 1 turn on start. To fix start with +1
+
+		Case 0 ;			Normal
+			$g_gChange = 0
+			$g_turnBonus = $g_turnNormalStr + 1 ; The way it start with 1 turn on start. To fix start with +1
+
+	EndSwitch
+
 	$g_endgame = False
 
 	$g_hTick = TimerInit()
@@ -590,7 +599,7 @@ Func Game()
 
 EndFunc   ;==>Game
 #CS INFO
-	314266 V38 7/14/2019 10:20:53 AM V37 7/13/2019 3:59:17 PM V36 7/8/2019 1:00:13 AM V35 7/6/2019 6:24:29 PM
+	323802 V39 7/15/2019 9:15:04 AM V38 7/14/2019 10:20:53 AM V37 7/13/2019 3:59:17 PM V36 7/8/2019 1:00:13 AM
 #CE
 
 Func Tick() ;
@@ -785,7 +794,7 @@ Func Extra()
 				EndSwitch
 			EndIf
 
-			$g_turnBonus = $g_turnBonusStr
+			$g_turnBonus = $g_turnExtraStr
 			$g_gChange += 1 ; doing this way because furture versions might not be one ***************************
 
 			;RemoveFood()  NOT needed because  snake will over write with out looking
@@ -828,7 +837,7 @@ Func Extra()
 				Switch $g_gChangeHalf
 					Case 0
 						$g_gChange -= 1
-						$g_gChangeHalf = $s_gChange
+						$g_gChangeHalf = $s_gChangeBaseExtra
 					Case Else
 						RemoveSnakeExtra() ;Same size
 						$g_gChangeHalf -= 1
@@ -838,7 +847,7 @@ Func Extra()
 				Switch $g_gChangeHalf
 					Case 0
 						$g_gChange += 1
-						$g_gChangeHalf = $s_gChange
+						$g_gChangeHalf = $s_gChangeBaseExtra
 						If RemoveSnakeExtra() Then ;one smaller
 							$g_endgame = True
 							Return ;no snake
@@ -875,7 +884,7 @@ Func Extra()
 
 EndFunc   ;==>Extra
 #CS INFO
-	339050 V21 7/14/2019 10:20:53 AM V20 7/13/2019 7:36:11 PM V19 7/13/2019 7:20:00 PM V18 7/13/2019 3:59:17 PM
+	340837 V22 7/15/2019 9:15:04 AM V21 7/14/2019 10:20:53 AM V20 7/13/2019 7:36:11 PM V19 7/13/2019 7:20:00 PM
 #CE
 
 Func Normal()
@@ -893,6 +902,26 @@ Func Normal()
 			Return
 
 		Case $FOOD ;Normal
+			Switch $g_turnBonus
+				Case 4
+					$g_gChange += 4
+					Status(0, "Turn bonus: Snake 4", 4)
+				Case 3
+					$g_gChange += 3
+					$g_iScore += 80
+					Status(0, "Turn bonus: Snake 3", 4)
+				Case 2
+					$g_gChange += 2
+					$g_iScore += 60
+					Status(0, "Turn bonus: Snake 2", 4)
+				Case 1
+					$g_gChange += 1
+					Status(0, "Turn bonus: Snake 1", 4)
+				Case Else
+					Status(0, "", 0)
+			EndSwitch
+			$g_turnBonus = $g_turnNormalStr
+			$g_gChangeHalf = $s_gChangeBaseNormal
 			$g_ScoreFood += 1
 
 			;RemoveFood()  NOT needed because  snake will over write with out looking
@@ -902,8 +931,19 @@ Func Normal()
 		Case $EMPTY ;Normal
 
 			PrevNext($x_new + $g_dirX, $y_new + $g_dirY) ;New value
-			RemoveSnakeNormal()
 
+			If $g_gChange = 0 Then
+				RemoveSnakeNormal()
+			ElseIf $g_gChange > 0 Then ; snake get longer don't remove end
+				Switch $g_gChangeHalf
+					Case 0
+						$g_gChange -= 1
+						$g_gChangeHalf = $s_gChangeBaseNormal
+					Case Else
+						RemoveSnakeNormal() ;Same size
+						$g_gChangeHalf -= 1
+				EndSwitch
+			EndIf
 	EndSwitch
 	;Score NORMAL
 	$g_iScore = $Map[$num][$x_new][$y_new] - $Map[$num][$x_end][$y_end] + 1
@@ -916,7 +956,7 @@ Func Normal()
 	; END NORMAL
 EndFunc   ;==>Normal
 #CS INFO
-	60952 V6 7/13/2019 7:36:11 PM V5 7/13/2019 7:20:00 PM V4 7/13/2019 3:59:17 PM V3 6/24/2019 11:22:57 PM
+	109601 V7 7/15/2019 9:15:04 AM V6 7/13/2019 7:36:11 PM V5 7/13/2019 7:20:00 PM V4 7/13/2019 3:59:17 PM
 #CE
 
 Func DoDead()
@@ -1575,7 +1615,7 @@ Func DisplayHiScore()
 			If $g_aHiScore[$i + 1][0] = 0 Then
 				GUICtrlSetData($g_HiScore[$i], "")
 			Else
-				GUICtrlSetData($g_HiScore[$i], $i + 1 & " - " & $g_aHiScore[$i + 1][0] & " - " & $g_aHiScore[$i + 1][1] & " Travel: " & $g_aHiScore[$i + 1][2] & " Turn: " & $g_aHiScore[$i + 1][4] & " Max: " & $g_aHiScore[$i + 1][5])
+				GUICtrlSetData($g_HiScore[$i], $i + 1 & " - " & $g_aHiScore[$i + 1][0] & " - " & $g_aHiScore[$i + 1][1] & " Travel: " & $g_aHiScore[$i + 1][2] & " Turn: " & $g_aHiScore[$i + 1][4])
 			EndIf
 		Next
 	Else
@@ -1592,7 +1632,7 @@ Func DisplayHiScore()
 
 EndFunc   ;==>DisplayHiScore
 #CS INFO
-	71474 V4 7/5/2019 8:47:35 AM V3 7/4/2019 11:42:05 AM V2 6/16/2019 10:16:04 AM V1 6/5/2019 11:59:45 PM
+	69308 V5 7/15/2019 9:15:04 AM V4 7/5/2019 8:47:35 AM V3 7/4/2019 11:42:05 AM V2 6/16/2019 10:16:04 AM
 #CE
 
 Func UpDateHiScore()
@@ -1982,4 +2022,4 @@ Main()
 
 Exit
 
-;~T ScriptFunc.exe V0.54a 15 May 2019 - 7/14/2019 10:10:20 PM
+;~T ScriptFunc.exe V0.54a 15 May 2019 - 7/15/2019 9:15:04 AM
