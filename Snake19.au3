@@ -5,7 +5,7 @@ AutoItSetOption("MustDeclareVars", 1)
 ;Global Static $MESSAGE =  False   ;Pause will still work in script  No DataOut
 
 ; Must be Declared before _Prf_startup
-Global $ver = "0.56 15 Jul 2019 Normal less boring 5 to 1"
+Global $ver = "0.57 15 Jul 2019 Adjustments"
 Global $ini_ver = "2" ;5 Jul 2019 removed Len and add Max in extra
 
 ;Global $TESTING = False
@@ -13,7 +13,7 @@ Global $ini_ver = "2" ;5 Jul 2019 removed Len and add Max in extra
 #include "R:\!Autoit\Blank\_prf_startup.au3"
 
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
-#AutoIt3Wrapper_Res_Fileversion=0.0.5.6
+#AutoIt3Wrapper_Res_Fileversion=0.0.5.7
 #AutoIt3Wrapper_Icon=R:\!Autoit\Ico\prf.ico
 #AutoIt3Wrapper_Res_Description=Another snake game
 #AutoIt3Wrapper_Res_LegalCopyright=© Phillip Forrestal 2019
@@ -77,13 +77,19 @@ Global $ini_ver = "2" ;5 Jul 2019 removed Len and add Max in extra
 	No more just clean up game.
 
 	Version
+	0.51 Still have the NULL snake location problem. Upper Left of board turns black.
+	Testing mode has some test to show when this happens. Rarely happens. Err
+	0.53 Testing mode: Added 4 test point X & Y #  #1 has occurred (once)
+
+	0.57 15 Jul 2019 Adjustments
 	0.56 15 Jul 2019 Normal less boring 5 to 1
 	0.55 14 Jul 2019 Create Color.jpg  put in Data - Removed PIC folder
-	0.54 13 Jul 2019 put INI  Data.folder
+	0.54 13 Jul 2019 put INI  Data.folder -Splitting INI between program setting and score.
 	0.53 13 Jul 2019 problem again - 4 test points.  Status changes
 	0.52 9 Jul 2019 Add snake head
 	0.51 7 Jul 2019 Food and dead snake issues
 	0.50 6 Jul 2019 Twiking Death, Score
+
 	0.49 5 Jul 2019  Found progam endless cycle in Convert to dead
 	0.48 5 Jul 2019 Max lenght new score. Score + Max + Food
 	0.47 4 Jul 2019 *Fix Hit wall  - got endless cycle - can't find
@@ -136,6 +142,7 @@ Global $ini_ver = "2" ;5 Jul 2019 removed Len and add Max in extra
 	0.03 29 May 2019 Move snake
 	0.02 29 May 2019 Layout game.
 	0.01 28 May 2019 Start form
+	Version end
 
 	Start of Game
 	$HungerStr  =30
@@ -169,7 +176,7 @@ Global $ini_ver = "2" ;5 Jul 2019 removed Len and add Max in extra
 	$HungerCnt
 
 #ce ----------------------------------------------------------------------------
-
+;StringFormat
 #include <GUIConstantsEx.au3>
 #include <StaticConstants.au3>
 #include <WindowsConstants.au3>
@@ -202,7 +209,7 @@ Static $cDEAD = $s_data & "\Dead.jpg"
 Static $POOP = 5
 Static $cPOOP = $s_data & "\Poop.jpg"
 
-Static $MaxLost = 8 ;   5 to 10
+Static $MaxLost = 10 ;   5 to 10
 
 ;Global
 Global $g_first = True
@@ -253,7 +260,7 @@ Global $Radio1, $Radio2
 Global $g_ScoreLen ; Normal Traveled, Extra Length of snake
 Global $g_ScoreTurn
 Global $g_ScoreFood
-Global $g_ScoreMax
+Global $g_SnakeMax
 
 Global $g_Status0Off = 1000
 Global $g_Status2Off = 1000
@@ -282,14 +289,13 @@ $g_bdEnd = $M1
 
 ;.31
 Global $g_Focus = "Snake19 - " & $ver
-DataOut($g_Focus)
 
 ;0.32  Taking types out of game loop put into function
 Global $g_endgame = False
 Global $g_gChange
 Global $g_gChangeHalf
-Static $s_gChangeBaseExtra = 3
-Static $s_gChangeBaseNormal = 20
+Static $s_gChangeBaseExtra = 5
+Static $s_gChangeBaseNormal = 10
 
 ;Global $g_gHunger
 ;Global $g_gHungerCnt
@@ -484,7 +490,7 @@ Func Game()
 	$g_turnLast = 0
 	$g_ScoreTurn = 0
 	$g_ScoreFood = 0
-	$g_ScoreMax = 0
+	$g_SnakeMax = 0
 	$g_SnakeCount = 1
 	$g_iScore = 0
 	$g_gChangeHalf = 0
@@ -510,7 +516,7 @@ Func Game()
 
 	Switch $g_GameWhich
 		Case 1 ;extra
-			$g_gChange = 25 ;75
+			$g_gChange = 5 ;Start with 5 so snake die at start
 			$g_turnBonus = $g_turnExtraStr + 1 ; The way it start with 1 turn on start. To fix start with +1
 
 		Case 0 ;			Normal
@@ -667,7 +673,7 @@ EndFunc   ;==>Tick
 ; $g_iscore is extra + length
 Func Extra()
 	Local $a
-	Local Static $LS_ScoreLast
+	Local Static $LS_SnakeLenLast
 	Local $flag
 
 	If $g_Ouch > 0 Then
@@ -766,33 +772,29 @@ Func Extra()
 			$HungerCycle = $HungerStr
 			$HungerCnt = 0
 
-			If $g_gChange < -5 Then
-				$g_gChange = -5
-			Else
-				Switch $g_turnBonus
-					Case 6, 5, 4
-						$g_gChange += 3
-						$g_iScore += 100
-						Status(0, "Turn bonus 100 Snake 3", 4)
-					Case 3
-						$g_gChange += 2
-						$g_iScore += 80
-						Status(0, "Turn bonus 80 Snake 2", 4)
-					Case 2
-						$g_gChange += 2
-						$g_iScore += 60
-						Status(0, "Turn bonus 60 Snake 2", 4)
-					Case 1
-						$g_gChange += 1
-						$g_iScore += 30
-						Status(0, "Turn bonus 30 Snake 1", 4)
-					Case 0
-						$g_iScore += 10
-						Status(0, "Turn bonus 10", 4)
-					Case Else
-						Status(0, "", 0)
-				EndSwitch
-			EndIf
+			Switch $g_turnBonus
+				Case 6, 5, 4
+					$g_gChange += 3
+					$g_iScore += 100
+					Status(0, "Turn bonus 100 Snake 3", 4)
+				Case 3
+					$g_gChange += 2
+					$g_iScore += 80
+					Status(0, "Turn bonus 80 Snake 2", 4)
+				Case 2
+					$g_gChange += 2
+					$g_iScore += 60
+					Status(0, "Turn bonus 60 Snake 2", 4)
+				Case 1
+					$g_gChange += 1
+					$g_iScore += 30
+					Status(0, "Turn bonus 30 Snake 1", 4)
+				Case 0
+					$g_iScore += 10
+					Status(0, "Turn bonus 10", 4)
+				Case Else
+					Status(0, "", 0)
+			EndSwitch
 
 			$g_turnBonus = $g_turnExtraStr
 			$g_gChange += 1 ; doing this way because furture versions might not be one ***************************
@@ -800,6 +802,7 @@ Func Extra()
 			;RemoveFood()  NOT needed because  snake will over write with out looking
 			AddFood()
 			PrevNext($x_new + $g_dirX, $y_new + $g_dirY) ;New value
+			RemoveSnakeExtra() ;onlhy empty cell change len
 
 		Case $EMPTY
 
@@ -867,19 +870,14 @@ Func Extra()
 	;Score
 
 	$a = $Map[$num][$x_new][$y_new] - $Map[$num][$x_end][$y_end] + 1
-	If $a > $g_ScoreMax Then
-		$g_ScoreMax = $a
+	If $a > $g_SnakeMax Then
+		$g_SnakeMax = $a
 	EndIf
 
-	If $LS_ScoreLast <> $a Then
-		$LS_ScoreLast = $a
-
-		If $TESTING Then ;~~
-			Status(1, "Snake length: " & $a & " Score: [" & $g_iScore & "] Food (" & $g_ScoreFood & ") Max {" & $g_ScoreMax & "} " & $g_iScore + $g_ScoreFood + $g_ScoreMax & " tick:" & $g_tc, 2)
-		Else
-			Status(1, "Snake length: " & $a & " Max " & $g_ScoreMax & "   Score: " & $g_iScore + $g_ScoreFood + $g_ScoreMax & "  tick:" & $g_tc, 2)
-		EndIf
-		$g_GameScore = $g_iScore + $g_ScoreFood + $g_ScoreMax
+	If $LS_SnakeLenLast <> $a Then
+		$LS_SnakeLenLast = $a
+		$g_GameScore = $g_iScore + $g_ScoreFood + $g_SnakeMax
+		Status(1, "Snake length: " & $a & " Max " & $g_SnakeMax & "   Score: " & $g_GameScore & "     tick:" & $g_tc, 2)
 	EndIf
 
 EndFunc   ;==>Extra
@@ -888,7 +886,7 @@ EndFunc   ;==>Extra
 #CE
 
 Func Normal()
-	Local Static $LS_ScoreLast = 0
+	Local Static $LS_SnakeLenLast = 0
 
 	Switch $Map[$what][$x_new + $g_dirX][$y_new + $g_dirY]
 		Case $WALL ;Normal Wall
@@ -947,8 +945,8 @@ Func Normal()
 	EndSwitch
 	;Score NORMAL
 	$g_iScore = $Map[$num][$x_new][$y_new] - $Map[$num][$x_end][$y_end] + 1
-	If $LS_ScoreLast <> $g_iScore Then
-		$LS_ScoreLast = $g_iScore
+	If $LS_SnakeLenLast <> $g_iScore Then
+		$LS_SnakeLenLast = $g_iScore
 		Status(1, "Snake length: " & $g_iScore, 2)
 	EndIf
 	$g_GameScore = $g_iScore
@@ -1650,7 +1648,7 @@ Func UpDateHiScore()
 		If $g_GameWhich = 0 Then ; 0 Normal, 1 Mine
 			$g_aHiScore[9][2] = $g_SnakeCount
 		Else
-			$g_aHiScore[9][2] = $g_ScoreMax
+			$g_aHiScore[9][2] = $g_SnakeMax
 		EndIf
 		$g_aHiScore[9][3] = $g_ScoreFood
 		$g_aHiScore[9][4] = $g_ScoreTurn
