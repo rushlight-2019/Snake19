@@ -5,15 +5,17 @@ AutoItSetOption("MustDeclareVars", 1)
 ;Global Static $MESSAGE =  False   ;Pause will still work in script  No DataOut
 
 ; Must be Declared before _Prf_startup
-Global $ver = "0.57 15 Jul 2019 Adjustments"
-Global $ini_ver = "2" ;5 Jul 2019 removed Len and add Max in extra
+Global $ver = "0.58 18 Jul 2019 Found below problem - something I tried but didn't like, no removed completely"
+Global $ini_ver = "3" ;15 Jul 2019 Timing changes
+;"2" ;5 Jul 2019 removed Len and add Max in extra
+; "1" start
 
 ;Global $TESTING = False
 
 #include "R:\!Autoit\Blank\_prf_startup.au3"
 
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
-#AutoIt3Wrapper_Res_Fileversion=0.0.5.7
+#AutoIt3Wrapper_Res_Fileversion=0.0.5.8
 #AutoIt3Wrapper_Icon=R:\!Autoit\Ico\prf.ico
 #AutoIt3Wrapper_Res_Description=Another snake game
 #AutoIt3Wrapper_Res_LegalCopyright=© Phillip Forrestal 2019
@@ -64,22 +66,21 @@ Global $ini_ver = "2" ;5 Jul 2019 removed Len and add Max in extra
 
 	to do
 
-	Head on snake
-
 	Remove things I won't do but left in code
 
 	Redo first screen.
-
-	3 games.  Old sorta, something between, Normal
 
 	Setting: Size, Speed.
 
 	No more just clean up game.
 
 	Version
-	0.51 Still have the NULL snake location problem. Upper Left of board turns black.
-	Testing mode has some test to show when this happens. Rarely happens. Err
-	0.53 Testing mode: Added 4 test point X & Y #  #1 has occurred (once)
+	Problem: 0.58 left some testing in just in case  X & Y 3 & 4
+
+	0.58 18 Jul 2019 Found below problem - something I tried but didn't like, no removed completely
+	Problem: 0.51 Still have the NULL snake location problem. Upper Left of board turns black.
+	Problem: Testing mode has some test to show when this happens. Rarely happens. Err
+	Problem: 0.53 Testing mode: Added 4 test point X & Y #  #1 has occurred (once)
 
 	0.57 15 Jul 2019 Adjustments
 	0.56 15 Jul 2019 Normal less boring 5 to 1
@@ -176,6 +177,7 @@ Global $ini_ver = "2" ;5 Jul 2019 removed Len and add Max in extra
 	$HungerCnt
 
 #ce ----------------------------------------------------------------------------
+
 ;StringFormat
 #include <GUIConstantsEx.au3>
 #include <StaticConstants.au3>
@@ -278,11 +280,8 @@ Static $M1 = -1
 Static $s_delay = 200
 Static $s_rand = 50
 
-Global $g_bdPrev[$s_size] ;Cycle , X, Y Pre 2,3
-Global $g_bdNext[$s_size] ;Cycle , X, Y Nx 4,5
-
-$g_bdPrev[$s_bdCycle] = $M1
-$g_bdNext[$s_bdCycle] = $M1
+;Global $g_bdPrev[$s_size] ;Cycle , X, Y Pre 2,3
+;Global $g_bdNext[$s_size] ;Cycle , X, Y Nx 4,5
 
 Global $g_bdEnd ;Cycle
 $g_bdEnd = $M1
@@ -506,10 +505,6 @@ Func Game()
 	; Size can be zero at the begin so once size is > 0 then hunger is active.
 	$g_RemoveBegining = False
 
-	;.29
-	$g_bdPrev[$s_bdCycle] = $M1
-	$g_bdNext[$s_bdCycle] = $M1
-
 	Local $aAccelKey2[][] = [["{RIGHT}", $L_idRight], ["{LEFT}", $L_idLeft], ["{DOWN}", $L_idDown], ["{UP}", $L_idUp], ["{ESC}", $L_idEsc]]
 	GUISetAccelerators($aAccelKey2, $g_ctrlBoard)
 	MouseMove(0, 0, 0)
@@ -532,7 +527,7 @@ Func Game()
 		Tick()
 
 		;Dead Loop
-		DoDead()
+		;DoDead()
 
 		$nMsg = GUIGetMsg()
 		If $nMsg = $GUI_EVENT_MINIMIZE Or $nMsg = $GUI_EVENT_CLOSE Then
@@ -605,7 +600,7 @@ Func Game()
 
 EndFunc   ;==>Game
 #CS INFO
-	323802 V39 7/15/2019 9:15:04 AM V38 7/14/2019 10:20:53 AM V37 7/13/2019 3:59:17 PM V36 7/8/2019 1:00:13 AM
+	321951 V40 7/18/2019 11:32:28 PM V39 7/15/2019 9:15:04 AM V38 7/14/2019 10:20:53 AM V37 7/13/2019 3:59:17 PM
 #CE
 
 Func Tick() ;
@@ -882,7 +877,7 @@ Func Extra()
 
 EndFunc   ;==>Extra
 #CS INFO
-	340837 V22 7/15/2019 9:15:04 AM V21 7/14/2019 10:20:53 AM V20 7/13/2019 7:36:11 PM V19 7/13/2019 7:20:00 PM
+	326109 V23 7/18/2019 11:32:28 PM V22 7/15/2019 9:15:04 AM V21 7/14/2019 10:20:53 AM V20 7/13/2019 7:36:11 PM
 #CE
 
 Func Normal()
@@ -954,114 +949,7 @@ Func Normal()
 	; END NORMAL
 EndFunc   ;==>Normal
 #CS INFO
-	109601 V7 7/15/2019 9:15:04 AM V6 7/13/2019 7:36:11 PM V5 7/13/2019 7:20:00 PM V4 7/13/2019 3:59:17 PM
-#CE
-
-Func DoDead()
-	Local $x, $y, $x1, $y1
-
-	If $g_bdPrev[$s_bdCycle] > $M1 Then ;  active cycle count down
-		$g_bdPrev[$s_bdCycle] -= 1
-		If $g_bdPrev[$s_bdCycle] = 0 Then ; do move
-
-			$x = $g_bdPrev[$s_bdX]
-			$y = $g_bdPrev[$s_bdY]
-
-			;: Clear current location
-
-			If $TESTING Then
-				If $x = 0 Or $y = 0 Then
-
-					Pause("Null X & Y 1:", $Map[$what][0][0])
-					Pause($x, $y)
-
-				EndIf
-			EndIf
-			$Map[$what][$x][$y] = $EMPTY
-			GUICtrlSetImage($Map[$ctrl][$x][$y], $cEMPTY)
-
-			;next location current prev
-			$x1 = $Map[$prX][$x][$y]
-			$y1 = $Map[$prY][$x][$y]
-
-			;Save in Prev  Active Cycle
-			$g_bdPrev[$s_bdX] = $x1
-			$g_bdPrev[$s_bdY] = $y1
-			$g_bdPrev[$s_bdCycle] = $s_delay + Random(-$s_rand, $s_rand, 1)
-
-			;clear nx
-			$Map[$nxX][$x1][$y1] = 0
-			$Map[$nxY][$x1][$y1] = 0
-
-			If $Map[$what][$x1][$y1] <> $SNAKE Then
-				DataOut("DO PREV is not Snake", $Map[$what][$x1][$y1])
-				$g_bdPrev[$s_bdCycle] = $M1 ; -1 no active if active cycle count down
-			Else
-				;Status(2,"1",3)
-				$Map[$what][$x1][$y1] = $DEAD
-				GUICtrlSetImage($Map[$ctrl][$x1][$y1], $cDEAD)
-			EndIf
-		EndIf
-
-	EndIf
-	;Save in Next  Active Cycle
-	;$g_bdNext[$s_bdX] = $x
-	;$g_bdNext[$s_bdY] = $y
-	;$g_bdNext[$s_bdCycle] = 6 ; -1 no active if active cycle count down  start slower
-	;.29
-	If $g_bdNext[$s_bdCycle] > $M1 Then ;  active cycle count down
-
-		$g_bdNext[$s_bdCycle] -= 1
-		If $g_bdNext[$s_bdCycle] = 0 Then ; do move
-
-			$x = $g_bdNext[$s_bdX]
-			$y = $g_bdNext[$s_bdY]
-
-			; Clear current location
-			If $TESTING Then
-				If $x = 0 Or $y = 0 Then
-
-					Pause("Null X & Y 2:", $Map[$what][0][0])
-					Pause($x, $y)
-
-				EndIf
-			EndIf
-
-			$Map[$what][$x][$y] = $EMPTY
-			GUICtrlSetImage($Map[$ctrl][$x][$y], $cEMPTY)
-
-			;next location current Next
-			$x1 = $Map[$nxX][$x][$y]
-			$y1 = $Map[$nxY][$x][$y]
-
-			;Save in Next  Active Cycle
-			$g_bdNext[$s_bdX] = $x1
-			$g_bdNext[$s_bdY] = $y1
-			$g_bdNext[$s_bdCycle] = $s_delay + Random(-$s_rand, $s_rand, 1)
-
-			;clear pv  not sure this is needed
-			$Map[$prX][$x1][$y1] = 0
-			$Map[$prY][$x1][$y1] = 0
-
-			If $Map[$what][$x1][$y1] <> $SNAKE Then
-				DataOut("DO Next is not Snake", $Map[$what][$x1][$y1])
-				$g_bdNext[$s_bdCycle] = $M1 ; -1 no active if active cycle count down
-			Else
-				;Status(2,"2",3)
-				$Map[$what][$x1][$y1] = $DEAD
-				GUICtrlSetImage($Map[$ctrl][$x1][$y1], $cDEAD)
-			EndIf
-			;ShowRow($x, $y)
-
-			;pause()
-
-		EndIf
-
-	EndIf
-
-EndFunc   ;==>DoDead
-#CS INFO
-	164608 V8 7/14/2019 10:20:53 AM V7 7/13/2019 3:59:17 PM V6 7/6/2019 6:24:29 PM V5 7/4/2019 11:42:05 AM
+	110432 V8 7/18/2019 11:32:28 PM V7 7/15/2019 9:15:04 AM V6 7/13/2019 7:36:11 PM V5 7/13/2019 7:20:00 PM
 #CE
 
 Func StartDead($inX, $inY)
@@ -1082,11 +970,6 @@ Func StartDead($inX, $inY)
 	$x = $Map[$prX][$inX][$inY]
 	$y = $Map[$prY][$inX][$inY]
 
-	;Save in Prev  Active Cycle
-	$g_bdPrev[$s_bdX] = $x
-	$g_bdPrev[$s_bdY] = $y
-	$g_bdPrev[$s_bdCycle] = $s_delay
-
 	;clear nx
 	$Map[$nxX][$x][$y] = 0
 	$Map[$nxY][$x][$y] = 0
@@ -1104,11 +987,6 @@ Func StartDead($inX, $inY)
 	$x = $x_end
 	$y = $y_end
 	;ShowRow($x, $y)
-
-	;Save in Next  Active Cycle
-	$g_bdNext[$s_bdX] = $x
-	$g_bdNext[$s_bdY] = $y
-	$g_bdNext[$s_bdCycle] = $s_delay + 1 ;offset
 
 	;Clear prv   Not sure I need to do this
 	$Map[$prX][$x][$y] = 0
@@ -1151,7 +1029,7 @@ Func StartDead($inX, $inY)
 	Return True
 EndFunc   ;==>StartDead
 #CS INFO
-	140248 V11 7/14/2019 10:20:53 AM V10 7/13/2019 7:20:00 PM V9 7/6/2019 6:24:29 PM V8 7/4/2019 11:42:05 AM
+	122348 V12 7/18/2019 11:32:28 PM V11 7/14/2019 10:20:53 AM V10 7/13/2019 7:20:00 PM V9 7/6/2019 6:24:29 PM
 #CE
 
 Func ConvDead($x, $y, $useNext = False) ; start map location
@@ -1669,7 +1547,7 @@ Func UpDateHiScore()
 	EndIf
 EndFunc   ;==>UpDateHiScore
 #CS INFO
-	74227 V12 7/13/2019 7:36:11 PM V11 7/5/2019 8:47:35 AM V10 7/1/2019 10:36:50 AM V9 6/28/2019 7:37:37 PM
+	74217 V13 7/18/2019 11:32:28 PM V12 7/13/2019 7:36:11 PM V11 7/5/2019 8:47:35 AM V10 7/1/2019 10:36:50 AM
 #CE
 
 Func SaveHiScore()
@@ -2020,4 +1898,4 @@ Main()
 
 Exit
 
-;~T ScriptFunc.exe V0.54a 15 May 2019 - 7/15/2019 9:15:04 AM
+;~T ScriptFunc.exe V0.54a 15 May 2019 - 7/18/2019 11:32:28 PM
