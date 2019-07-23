@@ -5,7 +5,7 @@ AutoItSetOption("MustDeclareVars", 1)
 ;Global Static $MESSAGE =  False   ;Pause will still work in script  No DataOut
 
 ; Must be Declared before _Prf_startup
-Global $ver = "0.58 18 Jul 2019 Found below problem - something I tried but didn't like, no removed completely"
+Global $ver = "0.59 23 Jul 2019 Format Game score"
 Global $ini_ver = "3" ;15 Jul 2019 Timing changes
 ;"2" ;5 Jul 2019 removed Len and add Max in extra
 ; "1" start
@@ -15,7 +15,7 @@ Global $ini_ver = "3" ;15 Jul 2019 Timing changes
 #include "R:\!Autoit\Blank\_prf_startup.au3"
 
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
-#AutoIt3Wrapper_Res_Fileversion=0.0.5.8
+#AutoIt3Wrapper_Res_Fileversion=0.0.5.9
 #AutoIt3Wrapper_Icon=R:\!Autoit\Ico\prf.ico
 #AutoIt3Wrapper_Res_Description=Another snake game
 #AutoIt3Wrapper_Res_LegalCopyright=© Phillip Forrestal 2019
@@ -77,7 +77,8 @@ Global $ini_ver = "3" ;15 Jul 2019 Timing changes
 	Version
 	Problem: 0.58 left some testing in just in case  X & Y 3 & 4
 
-	0.58 18 Jul 2019 Found below problem - something I tried but didn't like, no removed completely
+	0.59 23 Jul 2019 Format Game score
+	0.58 18 Jul 2019 Found below problem - something I tried but didn't like, now removed completely
 	Problem: 0.51 Still have the NULL snake location problem. Upper Left of board turns black.
 	Problem: Testing mode has some test to show when this happens. Rarely happens. Err
 	Problem: 0.53 Testing mode: Added 4 test point X & Y #  #1 has occurred (once)
@@ -872,12 +873,18 @@ Func Extra()
 	If $LS_SnakeLenLast <> $a Then
 		$LS_SnakeLenLast = $a
 		$g_GameScore = $g_iScore + $g_ScoreFood + $g_SnakeMax
-		Status(1, "Snake length: " & $a & " Max " & $g_SnakeMax & "   Score: " & $g_GameScore & "     tick:" & $g_tc, 2)
+
+		;	Local $s=StringFormat("Lenght: %4u, Max: %4u, Score: %6u,   ms/cyc %u",$a,$g_SnakeMax, $g_GameScore,;$g_tc)
+
+		Status(1, StringFormat("Lenght: %4u, Max: %4u, Score: %6u,   ms/cyc %u", $a, $g_SnakeMax, $g_GameScore, $g_tc), 2)
+
+		;		Status(1, "Snake length: " & $a & " Max " & $g_SnakeMax & "   Score: " & $g_GameScore & "     tick:" & $g_tc, 2)
+
 	EndIf
 
 EndFunc   ;==>Extra
 #CS INFO
-	326109 V23 7/18/2019 11:32:28 PM V22 7/15/2019 9:15:04 AM V21 7/14/2019 10:20:53 AM V20 7/13/2019 7:36:11 PM
+	342667 V24 7/23/2019 9:33:59 AM V23 7/18/2019 11:32:28 PM V22 7/15/2019 9:15:04 AM V21 7/14/2019 10:20:53 AM
 #CE
 
 Func Normal()
@@ -1898,4 +1905,4 @@ Main()
 
 Exit
 
-;~T ScriptFunc.exe V0.54a 15 May 2019 - 7/18/2019 11:32:28 PM
+;~T ScriptFunc.exe V0.54a 15 May 2019 - 7/23/2019 9:33:59 AM
