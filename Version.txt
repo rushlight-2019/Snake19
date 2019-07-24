@@ -1,5 +1,8 @@
 	Problem: 0.58 left some testing in just in case  X & Y 3 & 4
 
+	0.60 24 Jul 2019 Format High Score/ Normal
+
+	0.59 23 Jul 2019 Format Game score
 	0.58 18 Jul 2019 Found below problem - something I tried but didn't like, now removed completely
 	Problem: 0.51 Still have the NULL snake location problem. Upper Left of board turns black.
 	Problem: Testing mode has some test to show when this happens. Rarely happens. Err
