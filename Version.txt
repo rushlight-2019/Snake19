@@ -1,5 +1,6 @@
 	Problem: 0.58 left some testing in just in case  X & Y 3 & 4
 
+	0.61 24 Jul 2019 Score 8 to 10
 	0.60 24 Jul 2019 Format High Score/ Normal
 
 	0.59 23 Jul 2019 Format Game score
@@ -27,7 +28,7 @@
 	0.42 1 Jul 2019 Hunger removing to many
 	0.41 1 Jul 2019 End game Score
 	0.40 30 Jun 2019 Changed hunger (done)(not 0.42)
-	
+
 	0.39 28 Jun 2019 Fixed top 5 high score, Normal Food
 	0.38 28 Jun 2019 Update the failed.  Reverted to 0.37
 	0.37 28 Jun 2019  Better Create vs Clean board
@@ -38,7 +39,7 @@
 	0.32 22 Jun 2019 Internal changes
 	0.31 20 Jun 2019 Lost Focus Stop Game
 	0.30 20 Jun 2019 If PIC file missing  add warning and exit
-	
+
 	0.29 19 Jun 2019 just do 2nd blood old tail
 	0.28 19 Jun 2019 just do first blood
 	0.27 17 Jun 2019 Start Eat snake across bloody

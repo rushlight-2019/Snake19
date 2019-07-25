@@ -5,8 +5,9 @@ AutoItSetOption("MustDeclareVars", 1)
 ;Global Static $MESSAGE =  False   ;Pause will still work in script  No DataOut
 
 ; Must be Declared before _Prf_startup
-Global $ver = "0.60 24 Jul 2019 Format High Score/ Normal"
-Global $ini_ver = "3" ;15 Jul 2019 Timing changes
+Global $ver = "0.61 24 Jul 2019 Score 8 to 10"
+Global $ini_ver = "4" ;24 Jul 2019 8 to 10
+;"3" ;15 Jul 2019 Timing changes
 ;"2" ;5 Jul 2019 removed Len and add Max in extra
 ; "1" start
 
@@ -15,7 +16,7 @@ Global $ini_ver = "3" ;15 Jul 2019 Timing changes
 #include "R:\!Autoit\Blank\_prf_startup.au3"
 
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
-#AutoIt3Wrapper_Res_Fileversion=0.0.6.0
+#AutoIt3Wrapper_Res_Fileversion=	0.0.6.1
 #AutoIt3Wrapper_Icon=R:\!Autoit\Ico\prf.ico
 #AutoIt3Wrapper_Res_Description=Another snake game
 #AutoIt3Wrapper_Res_LegalCopyright=© Phillip Forrestal 2019
@@ -77,6 +78,7 @@ Global $ini_ver = "3" ;15 Jul 2019 Timing changes
 	Version
 	Problem: 0.58 left some testing in just in case  X & Y 3 & 4
 
+	0.61 24 Jul 2019 Score 8 to 10
 	0.60 24 Jul 2019 Format High Score/ Normal
 	0.59 23 Jul 2019 Format Game score
 	0.58 18 Jul 2019 Found below problem - something I tried but didn't like, now removed completely
@@ -191,6 +193,7 @@ Global $ini_ver = "3" ;15 Jul 2019 Timing changes
 #include <Date.au3>
 #include <File.au3>
 #include <ScreenCapture.au3>
+#include <EditConstants.au3>
 
 ;Static
 Static $s_data = @ScriptDir & "\SNAKE19-Data"
@@ -252,13 +255,13 @@ Global $g_Status[4]
 Global $g_StatusText[4]
 Global $g_StatusOff = 2
 
-Global $g_aHiScore[10][6] ; data load by INI.  10 =  score,  date, len.food, turns, Max
+Global $g_aHiScore[12][6] ; data load by INI.  10 =  score,  date, len.food, turns, Max
 Global $g_iScore
 Global $g_cSetting ;ini
 
 Global $g_GameWhich = 1 ; 0 Norma, 1 Mine
 Global $g_HiScoreWho ;ctrl
-Global $g_HiScore[8]
+Global $g_HiScore[10]
 
 Global $Radio1, $Radio2
 Global $g_ScoreLen ; Normal Traveled, Extra Length of snake
@@ -1492,7 +1495,7 @@ Func DisplayHiScore()
 
 	If $g_GameWhich = 0 Then ; 0 Normal, 1 Mine
 		GUICtrlSetData($g_HiScoreWho, "High Score - Normal")
-		For $i = 0 To 7
+		For $i = 0 To 9
 			If $g_aHiScore[$i + 1][0] = 0 Then
 				GUICtrlSetData($g_HiScore[$i], "")
 			Else
@@ -1503,7 +1506,7 @@ Func DisplayHiScore()
 		Next
 	Else
 		GUICtrlSetData($g_HiScoreWho, "High Score - Extra")
-		For $i = 0 To 7
+		For $i = 0 To 9
 			;GUICtrlSetData($g_HiScore[$i], $i + 1 & " - " & $g_aHiScore[$i + 1][0] & " - " & $g_aHiScore[$i + 1][1] & " Length: " & $g_aHiScore[$i + 1][2] & " Food: " & $g_aHiScore[$i + 1][3] & " Turn: " & $g_aHiScore[$i + 1][4])
 			If $g_aHiScore[$i + 1][0] = 0 Then
 				GUICtrlSetData($g_HiScore[$i], "")
@@ -1517,30 +1520,30 @@ Func DisplayHiScore()
 
 EndFunc   ;==>DisplayHiScore
 #CS INFO
-	102249 V6 7/24/2019 12:53:35 PM V5 7/15/2019 9:15:04 AM V4 7/5/2019 8:47:35 AM V3 7/4/2019 11:42:05 AM
+	102253 V7 7/24/2019 11:20:48 PM V6 7/24/2019 12:53:35 PM V5 7/15/2019 9:15:04 AM V4 7/5/2019 8:47:35 AM
 #CE
 
 Func UpDateHiScore()
 	Local $Form1
 
-	If $g_aHiScore[8][0] < $g_GameScore Then
+	If $g_aHiScore[10][0] < $g_GameScore Then
 		;		MsgBox($MB_TOPMOST, "High Score", "New High Score: " & $g_iScore, 5)
 		$Form1 = GUICreate("", 250, 100, -1, -1, $WS_DLGFRAME, BitOR($WS_EX_TOPMOST, $WS_EX_STATICEDGE))
 		GUICtrlCreateLabel("New High Score: " & $g_GameScore, 25, 30, 200, 25)
 		GUICtrlSetFont(-1, 12, 400, 0, "Arial")
 		GUISetState(@SW_SHOW)
 
-		$g_aHiScore[9][0] = $g_GameScore
-		$g_aHiScore[9][1] = _Now()
+		$g_aHiScore[11][0] = $g_GameScore
+		$g_aHiScore[11][1] = _Now()
 		If $g_GameWhich = 0 Then ; 0 Normal, 1 Mine
-			$g_aHiScore[9][2] = $g_SnakeCount
+			$g_aHiScore[11][2] = $g_SnakeCount
 		Else
-			$g_aHiScore[9][2] = $g_SnakeMax
+			$g_aHiScore[11][2] = $g_SnakeMax
 		EndIf
-		$g_aHiScore[9][3] = $g_ScoreFood
-		$g_aHiScore[9][4] = $g_ScoreTurn
+		$g_aHiScore[11][3] = $g_ScoreFood
+		$g_aHiScore[11][4] = $g_ScoreTurn
 
-		_ArraySort($g_aHiScore, 1, 1, 9)
+		_ArraySort($g_aHiScore, 1, 1, 11)
 		SaveHiScore()
 		Sleep(5000)
 		GUIDelete($Form1)
@@ -1556,17 +1559,17 @@ Func UpDateHiScore()
 	EndIf
 EndFunc   ;==>UpDateHiScore
 #CS INFO
-	74217 V13 7/18/2019 11:32:28 PM V12 7/13/2019 7:36:11 PM V11 7/5/2019 8:47:35 AM V10 7/1/2019 10:36:50 AM
+	74545 V14 7/24/2019 11:20:48 PM V13 7/18/2019 11:32:28 PM 123V12 7/13/2019 7:36:11 PM V11 7/5/2019 8:47:35 AM
 #CE
 
 Func SaveHiScore()
-	Local $x, $a[9][2]
+	Local $x, $a[12][2]
 
-	For $x = 1 To 8
+	For $x = 1 To 10
 		$a[$x][0] = String($x)
 		$a[$x][1] = $g_aHiScore[$x][0] & "|" & $g_aHiScore[$x][1] & "|" & $g_aHiScore[$x][2] & "|" & $g_aHiScore[$x][3] & "|" & $g_aHiScore[$x][4] & "|" & $g_aHiScore[$x][5]
 	Next
-	$a[0][0] = 8
+	$a[0][0] = 10
 	If $g_GameWhich = 0 Then ; 0 Normal, 1 Mine
 		$x = IniWriteSection($s_scoreini, "HighScoreNormal", $a)
 	Else
@@ -1575,7 +1578,7 @@ Func SaveHiScore()
 
 EndFunc   ;==>SaveHiScore
 #CS INFO
-	33313 V5 7/13/2019 7:20:00 PM V4 6/16/2019 10:16:04 AM V3 6/5/2019 11:59:45 PM V2 6/5/2019 2:01:25 AM
+	33437 V6 7/24/2019 11:20:48 PM V5 7/13/2019 7:20:00 PM V4 6/16/2019 10:16:04 AM V3 6/5/2019 11:59:45 PM
 #CE
 
 Func IniHighFive()
@@ -1590,7 +1593,7 @@ Func IniHighFive()
 		EndIf
 		If @error = 0 Then
 
-			For $i = 1 To 8
+			For $i = 1 To 10
 				If $i > 5 Then
 					$g_aHiScore[$i][0] = 0 ;
 					$g_aHiScore[$i][1] = "" ;date
@@ -1615,7 +1618,7 @@ Func IniHighFive()
 	Next
 EndFunc   ;==>IniHighFive
 #CS INFO
-	52761 V2 7/13/2019 7:20:00 PM V1 6/28/2019 7:37:37 PM
+	52802 V3 7/24/2019 11:20:48 PM V2 7/13/2019 7:20:00 PM V1 6/28/2019 7:37:37 PM
 #CE
 
 Func ReadHiScore()
@@ -1627,7 +1630,7 @@ Func ReadHiScore()
 	EndIf
 	If @error = 0 Then
 
-		For $i = 1 To 8
+		For $i = 1 To 10
 			If $g_first And $i > 5 Then
 				$g_aHiScore[$i][0] = 0 ;
 				$g_aHiScore[$i][1] = "" ;date
@@ -1648,7 +1651,7 @@ Func ReadHiScore()
 		$g_first = False ; first run since startup
 
 	Else
-		For $i = 1 To 8 ; not found load
+		For $i = 1 To 10 ; not found load
 			$g_aHiScore[$i][0] = 0 ;
 			$g_aHiScore[$i][1] = "" ;date
 			$g_aHiScore[$i][2] = "" ;len
@@ -1660,7 +1663,7 @@ Func ReadHiScore()
 	EndIf
 EndFunc   ;==>ReadHiScore
 #CS INFO
-	70421 V5 7/13/2019 7:20:00 PM V4 6/16/2019 10:16:04 AM V3 6/5/2019 11:59:45 PM V2 6/5/2019 2:01:25 AM
+	70503 V6 7/24/2019 11:20:48 PM V5 7/13/2019 7:20:00 PM V4 6/16/2019 10:16:04 AM V3 6/5/2019 11:59:45 PM
 #CE
 
 ;Load Level from THE GAME
@@ -1818,26 +1821,21 @@ Func StartForm()
 	GUICtrlCreateLabel($ver, 0, 24, 600, 20, $SS_CENTER)
 	GUICtrlSetFont(-1, 10, 400, 0, "Arial")
 
-	$Group1 = GUICtrlCreateGroup("", $a - 10, $b - 10, $c + 30, 40)
+	;$Group1 = GUICtrlCreateGroup("", $a - 10, $b - 10, $c + 30, 40)
+	$Group1 = GUIStartGroup()
 	$Radio1 = GUICtrlCreateRadio("Normal", $a, $b, $c, 20)
 	GUICtrlSetFont(-1, 10, 400, 0, "Arial")
 	$Radio2 = GUICtrlCreateRadio("Extra", $a, $b + 20, $c, 20)
 	GUICtrlSetFont(-1, 10, 400, 0, "Arial")
-
-	;$Radio3 = GUICtrlCreateRadio("Radio3", $a, $b + 60, 120, 20)
-	;	GUICtrlSetFont(-1, 10, 400, 0, "Arial")
-
-	;	GUICtrlSetFont(-1, 10, 400, 0, "Arial")
-	;		GUICtrlCreateGroup("", -99, -99, 1, 1)
 
 	$b += 40
 
 	$g_HiScoreWho = GUICtrlCreateLabel("High Score - Extra", $a, $b, $c + 30, 24) ; Height is twice font size
 	GUICtrlSetFont(-1, 10, 400, 0, "Arial")
 	$a = 50
-	$b += 40
+	$b += 20
 
-	For $x = 0 To 7
+	For $x = 0 To 9
 		$g_HiScore[$x] = GUICtrlCreateLabel(String($x + 1), $a, $b, 500, 24) ; Height is twice font size
 		GUICtrlSetFont($g_HiScore[$x], 10, 400, 0, "Arial")
 		$b += 20
@@ -1846,9 +1844,10 @@ Func StartForm()
 	$b_start = GUICtrlCreateButton("GO", 270, 550, 100, 35)
 	$Checkbox1 = GUICtrlCreateCheckbox("Testing", 1, 555)
 
-	Local $Edit1 = GUICtrlCreateEdit("", 20, $b, 550, 250)
+	Local $Edit1 = GUICtrlCreateEdit("", 20, $b, 550, 250, $ES_READONLY)
 	GUICtrlSetFont($Edit1, 10, 400, 0, "Arial")
 	GUICtrlSetData($Edit1, "Press ESC to quit." & @CRLF, 1)
+	GUICtrlSetData($Edit1, @CRLF, 1)
 	GUICtrlSetData($Edit1, "If you lose Focus the game will PAUSE" & @CRLF, 1)
 	GUICtrlSetData($Edit1, @CRLF, 1)
 
@@ -1862,10 +1861,8 @@ Func StartForm()
 	GUICtrlSetData($Edit1, "Bonus:" & @CRLF, 1)
 	GUICtrlSetData($Edit1, " Snake does not like to turn so, so few turns and Food increase snake & score" & @CRLF, 1)
 	GUICtrlSetData($Edit1, " Snake can 'double back' on self or wall, most of the times." & @CRLF, 1)
-	GUICtrlSetData($Edit1, " Snake does not like to travel far for next meal. Snake does get shorter" & @CRLF, 1)
+	GUICtrlSetData($Edit1, " Snake does not like to travel far for next meal. Snake does get shorter", 1)
 
-	;	GUICtrlSetData($Edit1, "NOT WORKING: Snake can eat itself - hurts. bloody. It it does snake get shorter & score get smaller" & @CRLF, 1)
-	;	GUICtrlSetData($Edit1, "NOT WORKING: When Snake is bloody, Not sure what happen with the food." & @CRLF, 1)
 	GUISetState(@SW_SHOW)
 
 	NormalExtra()
@@ -1901,7 +1898,7 @@ Func StartForm()
 
 EndFunc   ;==>StartForm
 #CS INFO
-	214814 V21 7/24/2019 12:53:35 PM V20 7/9/2019 1:03:14 AM V19 7/3/2019 6:50:03 PM V18 6/27/2019 5:39:48 PM
+	189246 V22 7/24/2019 11:20:48 PM V21 7/24/2019 12:53:35 PM V20 7/9/2019 1:03:14 AM V19 7/3/2019 6:50:03 PM
 #CE
 
 ;Main
@@ -1909,4 +1906,4 @@ Main()
 
 Exit
 
-;~T ScriptFunc.exe V0.54a 15 May 2019 - 7/24/2019 12:53:35 PM
+;~T ScriptFunc.exe V0.54a 15 May 2019 - 7/24/2019 11:20:48 PM
