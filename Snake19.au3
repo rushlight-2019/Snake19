@@ -5,7 +5,7 @@ AutoItSetOption("MustDeclareVars", 1)
 ;Global Static $MESSAGE =  False   ;Pause will still work in script  No DataOut
 
 ; Must be Declared before _Prf_startup
-Global $ver = "0.61 24 Jul 2019 Score 8 to 10"
+Global $ver = "0.62 2 Aug 2019 Startup Buttons"
 Global $ini_ver = "4" ;24 Jul 2019 8 to 10
 ;"3" ;15 Jul 2019 Timing changes
 ;"2" ;5 Jul 2019 removed Len and add Max in extra
@@ -16,7 +16,7 @@ Global $ini_ver = "4" ;24 Jul 2019 8 to 10
 #include "R:\!Autoit\Blank\_prf_startup.au3"
 
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
-#AutoIt3Wrapper_Res_Fileversion=	0.0.6.1
+#AutoIt3Wrapper_Res_Fileversion=0.0.6.2
 #AutoIt3Wrapper_Icon=R:\!Autoit\Ico\prf.ico
 #AutoIt3Wrapper_Res_Description=Another snake game
 #AutoIt3Wrapper_Res_LegalCopyright=© Phillip Forrestal 2019
@@ -69,8 +69,6 @@ Global $ini_ver = "4" ;24 Jul 2019 8 to 10
 
 	Remove things I won't do but left in code
 
-	Redo first screen.
-
 	Setting: Size, Speed.
 
 	No more just clean up game.
@@ -78,6 +76,12 @@ Global $ini_ver = "4" ;24 Jul 2019 8 to 10
 	Version
 	Problem: 0.58 left some testing in just in case  X & Y 3 & 4
 
+	Replay - Normal only -- need to rethink it. - maybe a mode of it own?
+	Setting
+	Color select
+	Size
+
+	0.62 2 Aug 2019 Startup Buttons. -- Fix Extra Food add from 1 to 2 -- Bug at watch 3 once
 	0.61 24 Jul 2019 Score 8 to 10
 	0.60 24 Jul 2019 Format High Score/ Normal
 	0.59 23 Jul 2019 Format Game score
@@ -337,6 +341,14 @@ Global $g_Ouch = 0 ;Ate Dead snake 2 or 1, 0 no   Set to 2 because b4 next check
 ;0.55
 Global $g_tc ; move to score
 
+;0.62 Replay  ~~
+Global $g_iReplaySz = 6000
+Global $g_aReplay[$g_iReplaySz]
+Global $g_fReplayRec = False
+Global $g_fReplayPlay = False
+Global $g_iReplayRecInx = 0
+Global $g_iReplayPlyInx = 0
+
 ; Main is call at end
 Func Main()
 	Local $a
@@ -361,8 +373,6 @@ Func Main()
 		pause(@StartMenuDir)
 		;pause(@DesktopCommonDir)
 	EndIf
-
-;~~
 
 	CheckJpg()
 
@@ -390,7 +400,7 @@ Func Main()
 
 EndFunc   ;==>Main
 #CS INFO
-	86997 V25 7/14/2019 10:10:20 PM V24 7/14/2019 10:20:53 AM V23 7/13/2019 7:20:00 PM V22 7/13/2019 3:59:17 PM
+	86686 V26 8/2/2019 8:56:18 PM V25 7/14/2019 10:10:20 PM V24 7/14/2019 10:20:53 AM V23 7/13/2019 7:20:00 PM
 #CE
 
 Func Game()
@@ -510,6 +520,12 @@ Func Game()
 	; Size can be zero at the begin so once size is > 0 then hunger is active.
 	$g_RemoveBegining = False
 
+	;Replay reset game ~~
+	$g_fReplayRec = True
+	Global $g_fReplayPlay = False
+	Global $g_iReplayRecInx = 0
+	Global $g_iReplayPlyInx = 0
+
 	Local $aAccelKey2[][] = [["{RIGHT}", $L_idRight], ["{LEFT}", $L_idLeft], ["{DOWN}", $L_idDown], ["{UP}", $L_idUp], ["{ESC}", $L_idEsc]]
 	GUISetAccelerators($aAccelKey2, $g_ctrlBoard)
 	MouseMove(0, 0, 0)
@@ -532,16 +548,45 @@ Func Game()
 		Tick()
 
 		$nMsg = GUIGetMsg()
-		If $nMsg = $GUI_EVENT_MINIMIZE Or $nMsg = $GUI_EVENT_CLOSE Then
-			DataOut("EVENT", $nMsg)
-			$nMsg = 0
+		If $nMsg = $GUI_EVENT_CLOSE Or $nMsg = $L_idEsc Then
+			ExitLoop
+		EndIf
+
+		If $g_fReplayPlay Then
+			If $g_iReplayPlyInx < $g_iReplaySz Then
+				Sleep(500)
+				$nMsg = $g_aReplay[$g_iReplayPlyInx]
+				$g_iReplayPlyInx += 1
+			Else
+				$g_fReplayPlay = False
+				pause()
+				ExitLoop
+			EndIf
 		EndIf
 
 		If $nMsg > 0 Then
-			Switch $nMsg
 
-				Case $L_idEsc
-					ExitLoop
+;~~
+			If $g_fReplayRec Then
+				If $g_iReplayRecInx < $g_iReplaySz Then
+					$g_aReplay[$g_iReplayRecInx] = $nMsg
+					$g_iReplayRecInx += 1
+				Else
+					$g_fReplayRec = False
+				EndIf
+			EndIf
+
+			;If $g_fReplayDo Then
+			;	$nMsg = $g_aReplay[$g_iTickPly]
+			;	If $g_iTickPly < 4500 Then
+			;		$g_iTickPly += 1
+			;	EndIf
+			;	If $g_iTickPly >= $g_iTickRec Then
+			;		$g_fReplayDo = False
+			;	EndIf
+			;EndIf
+
+			Switch $nMsg
 
 				Case $L_idLeft
 					Do
@@ -598,11 +643,16 @@ Func Game()
 
 	GUISetAccelerators(1, $g_ctrlBoard) ; Turn off Accelerator
 	UpDateHiScore()
-	;GUISetState(@SW_HIDE, $g_ctrlBoard)
+
+	DataOut("Traveled", $g_SnakeCount)
+	DataOut($g_iReplayRecInx) ;~~
+	;_ArrayDisplay($g_aReplay)
+	$g_fReplayPlay = False
+	$g_fReplayRec = False
 
 EndFunc   ;==>Game
 #CS INFO
-	321208 V41 7/24/2019 12:53:35 PM V40 7/18/2019 11:32:28 PM V39 7/15/2019 9:15:04 AM V38 7/14/2019 10:20:53 AM
+	379351 V42 8/2/2019 8:56:18 PM V41 7/24/2019 12:53:35 PM V40 7/18/2019 11:32:28 PM V39 7/15/2019 9:15:04 AM
 #CE
 
 Func Tick() ;
@@ -722,7 +772,7 @@ Func Extra()
 			If $flag Then
 				DataOut("Double back WALL")
 				Status(2, "Double back WALL", 3)
-				$g_gChange -= 2
+				;$g_gChange -= 2
 
 			Else
 				Status(0, "Ate Wall", 1)
@@ -739,7 +789,7 @@ Func Extra()
 				$flag = DoubleBack($g_dirX, $g_dirY)
 				If $flag Then
 					Status(2, "Double back on self", 3)
-					$g_gChange -= 2
+					;	$g_gChange -= 2
 				Else
 					Status(0, "Ate self", 1)
 					$g_endgame = True
@@ -768,6 +818,7 @@ Func Extra()
 
 			$HungerCycle = $HungerStr
 			$HungerCnt = 0
+			$g_gChange += 2
 
 			Switch $g_turnBonus
 				Case 6, 5, 4
@@ -794,7 +845,6 @@ Func Extra()
 			EndSwitch
 
 			$g_turnBonus = $g_turnExtraStr
-			$g_gChange += 1 ; doing this way because furture versions might not be one ***************************
 
 			;RemoveFood()  NOT needed because  snake will over write with out looking
 			AddFood()
@@ -883,7 +933,7 @@ Func Extra()
 
 EndFunc   ;==>Extra
 #CS INFO
-	334463 V25 7/24/2019 12:53:35 PM V24 7/23/2019 9:33:59 AM V23 7/18/2019 11:32:28 PM V22 7/15/2019 9:15:04 AM
+	328290 V26 8/2/2019 8:56:18 PM V25 7/24/2019 12:53:35 PM V24 7/23/2019 9:33:59 AM V23 7/18/2019 11:32:28 PM
 #CE
 
 Func Normal()
@@ -986,7 +1036,6 @@ Func StartDead($inX, $inY)
 	;	GUICtrlSetImage($Map[$ctrl][$x][$y], $cDEAD)
 
 	;-----------------------------end prev
-;~~
 	;-------------------------start old tail
 	;This one will be the new end.  The old end will be bdStart2
 
@@ -1035,7 +1084,7 @@ Func StartDead($inX, $inY)
 	Return True
 EndFunc   ;==>StartDead
 #CS INFO
-	122348 V12 7/18/2019 11:32:28 PM V11 7/14/2019 10:20:53 AM V10 7/13/2019 7:20:00 PM V9 7/6/2019 6:24:29 PM
+	122037 V13 8/2/2019 8:56:18 PM V12 7/18/2019 11:32:28 PM V11 7/14/2019 10:20:53 AM V10 7/13/2019 7:20:00 PM
 #CE
 
 Func ConvDead($x, $y, $useNext = False) ; start map location
@@ -1084,7 +1133,6 @@ EndFunc   ;==>ShowRow
 	15281 V2 6/24/2019 11:22:57 PM V1 6/16/2019 10:16:04 AM
 #CE
 
-;~~
 Func Status($status, $string, $color)
 	Local $c
 	;DataOut($status, $string)
@@ -1477,17 +1525,24 @@ EndFunc   ;==>NormalPoop
 	12381 V2 7/8/2019 1:00:13 AM V1 7/3/2019 8:35:19 PM
 #CE
 
-Func NormalExtra()
+Func NormalExtra($b_replay)
 	If $g_GameWhich = 0 Then ; 0 Normal, 1 Mine
 		GUICtrlSetState($Radio1, $GUI_CHECKED)
+		If $g_iReplayRecInx > 0 Then ;~~
+			GUICtrlSetState($b_replay, $GUI_SHOW)
+		Else
+			GUICtrlSetState($b_replay, $GUI_HIDE)
+		EndIf
+
 	Else
+		GUICtrlSetState($b_replay, $GUI_HIDE)
 		GUICtrlSetState($Radio2, $GUI_CHECKED)
 	EndIf
 	ReadHiScore()
 	DisplayHiScore()
 EndFunc   ;==>NormalExtra
 #CS INFO
-	16149 V1 6/5/2019 11:59:45 PM
+	29745 V2 8/2/2019 8:56:18 PM V1 6/5/2019 11:59:45 PM
 #CE
 
 Func DisplayHiScore()
@@ -1702,7 +1757,6 @@ EndFunc   ;==>SayClearBoard
 	59050 V1 6/27/2019 5:39:48 PM
 #CE
 
-;~~
 Func CheckJpg()
 	Local $hGUI
 	$hGUI = GUICreate("", 100, 100)
@@ -1799,11 +1853,9 @@ EndFunc   ;==>Sum
 	30111 V1 7/14/2019 10:20:53 AM
 #CE
 
-;~~
-
 Func StartForm()
 	Local $Form1, $Group1
-	Local $Radio3, $Checkbox1, $b_start
+	Local $Radio3, $Checkbox1, $b_start, $b_replay, $b_setting
 	Local $nMsg
 	Local $a = 260
 	Local $b = 50
@@ -1841,10 +1893,12 @@ Func StartForm()
 		$b += 20
 	Next
 
+	$b_setting = GUICtrlCreateButton("Setting", 100, 550, 75, 35) ;~~
+	$b_replay = GUICtrlCreateButton("Replay", 400, 550, 75, 35) ;~~
 	$b_start = GUICtrlCreateButton("GO", 270, 550, 100, 35)
 	$Checkbox1 = GUICtrlCreateCheckbox("Testing", 1, 555)
 
-	Local $Edit1 = GUICtrlCreateEdit("", 20, $b, 550, 250, $ES_READONLY)
+	Local $Edit1 = GUICtrlCreateEdit("", 20, $b, 550, 230, $ES_READONLY)
 	GUICtrlSetFont($Edit1, 10, 400, 0, "Arial")
 	GUICtrlSetData($Edit1, "Press ESC to quit." & @CRLF, 1)
 	GUICtrlSetData($Edit1, @CRLF, 1)
@@ -1865,7 +1919,7 @@ Func StartForm()
 
 	GUISetState(@SW_SHOW)
 
-	NormalExtra()
+	NormalExtra($b_replay)
 
 	While 1
 		$nMsg = GUIGetMsg()
@@ -1879,13 +1933,23 @@ Func StartForm()
 				GUIDelete($Form1)
 				Return False
 
+			Case $b_replay
+				$g_fReplayPlay = True
+				$TESTING = True
+				Pause("Replay - still has problems.", "Like no code added")
+				;Return False
+
+			Case $b_setting
+				$TESTING = True
+				Pause("Setting - still has problems.", "Like no code added")
+
 			Case $Radio1 ;Normal
 				$g_GameWhich = 0
-				NormalExtra()
+				NormalExtra($b_replay)
 
 			Case $Radio2 ; Extra
 				$g_GameWhich = 1
-				NormalExtra()
+				NormalExtra($b_replay)
 
 			Case $Checkbox1 ;debug
 
@@ -1898,7 +1962,7 @@ Func StartForm()
 
 EndFunc   ;==>StartForm
 #CS INFO
-	189246 V22 7/24/2019 11:20:48 PM V21 7/24/2019 12:53:35 PM V20 7/9/2019 1:03:14 AM V19 7/3/2019 6:50:03 PM
+	220604 V23 8/2/2019 8:56:18 PM V22 7/24/2019 11:20:48 PM V21 7/24/2019 12:53:35 PM V20 7/9/2019 1:03:14 AM
 #CE
 
 ;Main
@@ -1906,4 +1970,4 @@ Main()
 
 Exit
 
-;~T ScriptFunc.exe V0.54a 15 May 2019 - 7/24/2019 11:20:48 PM
+;~T ScriptFunc.exe V0.54a 15 May 2019 - 8/2/2019 8:56:18 PM
