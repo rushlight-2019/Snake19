@@ -5,7 +5,7 @@ AutoItSetOption("MustDeclareVars", 1)
 ;Global Static $MESSAGE =  False   ;Pause will still work in script  No DataOut
 
 ; Must be Declared before _Prf_startup
-Global $ver = "0.62 2 Aug 2019 Startup Buttons"
+Global $ver = "0.63 5 Aug 2019 Focus Start on top"
 Global $ini_ver = "4" ;24 Jul 2019 8 to 10
 ;"3" ;15 Jul 2019 Timing changes
 ;"2" ;5 Jul 2019 removed Len and add Max in extra
@@ -16,7 +16,7 @@ Global $ini_ver = "4" ;24 Jul 2019 8 to 10
 #include "R:\!Autoit\Blank\_prf_startup.au3"
 
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
-#AutoIt3Wrapper_Res_Fileversion=0.0.6.2
+#AutoIt3Wrapper_Res_Fileversion=0.0.6.3
 #AutoIt3Wrapper_Icon=R:\!Autoit\Ico\prf.ico
 #AutoIt3Wrapper_Res_Description=Another snake game
 #AutoIt3Wrapper_Res_LegalCopyright=© Phillip Forrestal 2019
@@ -81,7 +81,8 @@ Global $ini_ver = "4" ;24 Jul 2019 8 to 10
 	Color select
 	Size
 
-	0.62 2 Aug 2019 Startup Buttons. -- Fix Extra Food add from 1 to 2 -- Bug at watch 3 once
+	0.63 5 Aug 2019 Focus Start on top
+	0.62 2 Aug 2019 Startup Buttons. -- Fix Extra Food add from 1 to 2 -- Bug at watch 3 once  -- Bounce back wall
 	0.61 24 Jul 2019 Score 8 to 10
 	0.60 24 Jul 2019 Format High Score/ Normal
 	0.59 23 Jul 2019 Format Game score
@@ -1862,7 +1863,8 @@ Func StartForm()
 	Local $c = 120
 	Local $Z
 
-	$Form1 = GUICreate("Snake 19 - " & $ver, 600, 600, -1, -1)
+	Local $sForm1 = "Snake19 - Main Menu"
+	$Form1 = GUICreate($sForm1, 600, 600, -1, -1)
 	If IsArray($g_Mouse) Then
 		MouseMove($g_Mouse[0], $g_Mouse[1], 0)
 	EndIf
@@ -1873,7 +1875,6 @@ Func StartForm()
 	GUICtrlCreateLabel($ver, 0, 24, 600, 20, $SS_CENTER)
 	GUICtrlSetFont(-1, 10, 400, 0, "Arial")
 
-	;$Group1 = GUICtrlCreateGroup("", $a - 10, $b - 10, $c + 30, 40)
 	$Group1 = GUIStartGroup()
 	$Radio1 = GUICtrlCreateRadio("Normal", $a, $b, $c, 20)
 	GUICtrlSetFont(-1, 10, 400, 0, "Arial")
@@ -1922,6 +1923,10 @@ Func StartForm()
 	NormalExtra($b_replay)
 
 	While 1
+		If WinGetTitle("[ACTIVE]") <> $sForm1 Then
+			Sleep(3000)
+			ControlFocus($Form1, "", $b_start)
+		EndIf
 		$nMsg = GUIGetMsg()
 		Switch $nMsg
 			Case $GUI_EVENT_CLOSE
@@ -1962,7 +1967,7 @@ Func StartForm()
 
 EndFunc   ;==>StartForm
 #CS INFO
-	220604 V23 8/2/2019 8:56:18 PM V22 7/24/2019 11:20:48 PM V21 7/24/2019 12:53:35 PM V20 7/9/2019 1:03:14 AM
+	226191 V24 8/5/2019 2:37:25 PM V23 8/2/2019 8:56:18 PM V22 7/24/2019 11:20:48 PM V21 7/24/2019 12:53:35 PM
 #CE
 
 ;Main
@@ -1970,4 +1975,4 @@ Main()
 
 Exit
 
-;~T ScriptFunc.exe V0.54a 15 May 2019 - 8/2/2019 8:56:18 PM
+;~T ScriptFunc.exe V0.54a 15 May 2019 - 8/5/2019 2:37:25 PM
