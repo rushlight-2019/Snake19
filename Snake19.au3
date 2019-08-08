@@ -5,7 +5,7 @@ AutoItSetOption("MustDeclareVars", 1)
 ;Global Static $MESSAGE =  False   ;Pause will still work in script  No DataOut
 
 ; Must be Declared before _Prf_startup
-Global $ver = "0.63 5 Aug 2019 Focus Start on top"
+Global $ver = "0.65 7 Aug 2019 Replay to Test"
 Global $ini_ver = "4" ;24 Jul 2019 8 to 10
 ;"3" ;15 Jul 2019 Timing changes
 ;"2" ;5 Jul 2019 removed Len and add Max in extra
@@ -16,7 +16,7 @@ Global $ini_ver = "4" ;24 Jul 2019 8 to 10
 #include "R:\!Autoit\Blank\_prf_startup.au3"
 
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
-#AutoIt3Wrapper_Res_Fileversion=0.0.6.3
+#AutoIt3Wrapper_Res_Fileversion=0.0.6.5
 #AutoIt3Wrapper_Icon=R:\!Autoit\Ico\prf.ico
 #AutoIt3Wrapper_Res_Description=Another snake game
 #AutoIt3Wrapper_Res_LegalCopyright=© Phillip Forrestal 2019
@@ -81,6 +81,8 @@ Global $ini_ver = "4" ;24 Jul 2019 8 to 10
 	Color select
 	Size
 
+	0.65 7 Aug 2019 Replay to Test - works but wrong
+	0.64 6 Aug 2019 Add Test game
 	0.63 5 Aug 2019 Focus Start on top
 	0.62 2 Aug 2019 Startup Buttons. -- Fix Extra Food add from 1 to 2 -- Bug at watch 3 once  -- Bounce back wall
 	0.61 24 Jul 2019 Score 8 to 10
@@ -264,11 +266,19 @@ Global $g_aHiScore[12][6] ; data load by INI.  10 =  score,  date, len.food, tur
 Global $g_iScore
 Global $g_cSetting ;ini
 
-Global $g_GameWhich = 1 ; 0 Norma, 1 Mine
+Global $g_GameWhich = -1 ; 0 Normal, 1 Mine(extra), 2 Test
+Static $s_GameNormal = 0
+Static $s_GameExtra = 1
+Static $s_GameTest = 2
+If $TESTING Then
+	$g_GameWhich = $s_GameTest
+Else
+	$g_GameWhich = $s_GameExtra
+EndIf
+
 Global $g_HiScoreWho ;ctrl
 Global $g_HiScore[10]
 
-Global $Radio1, $Radio2
 Global $g_ScoreLen ; Normal Traveled, Extra Length of snake
 Global $g_ScoreTurn
 Global $g_ScoreFood
@@ -327,9 +337,6 @@ Global $g_Health = 100
 Global $timing[100]
 Global $timingCnt = -0
 
-;0.35
-Global $BounceWall = False
-
 ;0.40
 Global $HungerStr = ($g_sx + $g_sy) / 2
 Global $HungerSnake = 0
@@ -349,6 +356,14 @@ Global $g_fReplayRec = False
 Global $g_fReplayPlay = False
 Global $g_iReplayRecInx = 0
 Global $g_iReplayPlyInx = 0
+
+;0.66
+Global Static $L_idDown
+Global Static $L_idRight
+Global Static $L_idLeft
+Global Static $L_idUp
+Global Static $L_idEsc
+Global $NotFirstPass
 
 ; Main is call at end
 Func Main()
@@ -407,12 +422,6 @@ EndFunc   ;==>Main
 Func Game()
 	Local $nMsg, $x, $y, $flag
 	;Keys acc
-	Local Static $L_idDown
-	Local Static $L_idRight
-	Local Static $L_idLeft
-	Local Static $L_idUp
-	Local Static $L_idEsc
-	Local $NotFirstPass
 	Local $a, $b
 
 	$NotFirstPass = True
@@ -495,13 +504,7 @@ Func Game()
 		ClearBoard() ; Change how create is done not need on fist pass
 	EndIf
 
-	StartSnake()
-	AddFood(True)
-
-	$BounceWall = True
-
 	;Default before start
-	DataOut("New Game")
 	$g_turnLast = 0
 	$g_ScoreTurn = 0
 	$g_ScoreFood = 0
@@ -521,32 +524,62 @@ Func Game()
 	; Size can be zero at the begin so once size is > 0 then hunger is active.
 	$g_RemoveBegining = False
 
-	;Replay reset game ~~
-	$g_fReplayRec = True
-	Global $g_fReplayPlay = False
-	Global $g_iReplayRecInx = 0
-	Global $g_iReplayPlyInx = 0
-
-	Local $aAccelKey2[][] = [["{RIGHT}", $L_idRight], ["{LEFT}", $L_idLeft], ["{DOWN}", $L_idDown], ["{UP}", $L_idUp], ["{ESC}", $L_idEsc]]
-	GUISetAccelerators($aAccelKey2, $g_ctrlBoard)
-	MouseMove(0, 0, 0)
-
 	Switch $g_GameWhich
-		Case 1 ;extra
+		Case $s_GameExtra
 			$g_gChange = 4 ;Start with 5 so snake will not die at start
 			$g_turnBonus = $g_turnExtraStr + 1 ; The way it start with 1 turn on start. To fix start with +1
 
-		Case 0 ;			Normal
+		Case $s_GameNormal
 			$g_gChange = 1
 			$g_turnBonus = $g_turnNormalStr + 1 ; The way it start with 1 turn on start. To fix start with +1
+
+		Case $s_GameTest
+			$g_gChange = 0
+			$g_turnBonus = 0 ;$g_turnNormalStr + 1 ; The way it start with 1 turn on start. To fix start with +1
 
 	EndSwitch
 
 	$g_endgame = False
 
+	;+++++++++++++++++++++++++++++ GO TO REPLAY
+
+	If $g_fReplayPlay Then
+		ReplayDo()
+	Else
+		GameDo()
+
+	EndIf
+	dataout(";+++++++++++++++++++++++NORMAL GAME")
+EndFunc   ;==>Game
+#CS INFO
+	238085 V1 8/7/2019 11:02:23 PM
+#CE
+
+Func GameDo()
+	Local $nMsg
+	DataOut("New Game")
+
+	StartSnake()
+	AddFood(True)
+
+	;Replay reset game ~~
+	$g_fReplayRec = True
+	$g_fReplayPlay = False
+	$g_iReplayRecInx = 0
+	$g_iReplayPlyInx = 0
+
+	Do
+		$nMsg = GUIGetMsg()
+	Until $nMsg = 0
+
+	Local $aAccelKey2[][] = [["{RIGHT}", $L_idRight], ["{LEFT}", $L_idLeft], ["{DOWN}", $L_idDown], ["{UP}", $L_idUp], ["{ESC}", $L_idEsc]]
+	GUISetAccelerators($aAccelKey2, $g_ctrlBoard)
+	MouseMove(0, 0, 0)
+
 	$g_hTick = TimerInit()
 	Do ;game Loop
 		Tick()
+		Local $ReplayMove = -1
 
 		$nMsg = GUIGetMsg()
 		If $nMsg = $GUI_EVENT_CLOSE Or $nMsg = $L_idEsc Then
@@ -560,23 +593,15 @@ Func Game()
 				$g_iReplayPlyInx += 1
 			Else
 				$g_fReplayPlay = False
-				pause()
+				pause(2)
 				ExitLoop
 			EndIf
 		EndIf
 
 		If $nMsg > 0 Then
 
-;~~
-			If $g_fReplayRec Then
-				If $g_iReplayRecInx < $g_iReplaySz Then
-					$g_aReplay[$g_iReplayRecInx] = $nMsg
-					$g_iReplayRecInx += 1
-				Else
-					$g_fReplayRec = False
-				EndIf
-			EndIf
-
+;~~  This is wrong.  Game store the move and load it into tick.   The game also has to save object  add or removed on each tick.
+			;
 			;If $g_fReplayDo Then
 			;	$nMsg = $g_aReplay[$g_iTickPly]
 			;	If $g_iTickPly < 4500 Then
@@ -587,9 +612,11 @@ Func Game()
 			;	EndIf
 			;EndIf
 
+			$ReplayMove = $M1
 			Switch $nMsg
 
 				Case $L_idLeft
+					$ReplayMove = $nMsg
 					Do
 					Until GUIGetMsg() <> $L_idLeft
 					$g_turnNo = 1
@@ -597,6 +624,7 @@ Func Game()
 					$g_dirY = 0
 
 				Case $L_idRight
+					$ReplayMove = $nMsg
 					Do
 					Until GUIGetMsg() <> $L_idRight
 					$g_turnNo = 2
@@ -604,7 +632,7 @@ Func Game()
 					$g_dirY = 0
 
 				Case $L_idUp
-
+					$ReplayMove = $nMsg
 					Do
 					Until GUIGetMsg() <> $L_idUp
 					$g_turnNo = 3
@@ -612,6 +640,7 @@ Func Game()
 					$g_dirY = -1
 
 				Case $L_idDown
+					$ReplayMove = $nMsg
 					Do
 					Until GUIGetMsg() <> $L_idDown
 					$g_turnNo = 4
@@ -619,6 +648,7 @@ Func Game()
 					$g_dirY = 1
 
 			EndSwitch
+
 			If $g_turnNo <> $g_turnLast Then
 				$g_turnLast = $g_turnNo
 				$g_ScoreTurn += 1
@@ -633,12 +663,30 @@ Func Game()
 			ContinueLoop
 		EndIf
 
-		Switch $g_GameWhich
-			Case 1
-				Extra()
-			Case 0
-				Normal()
-		EndSwitch
+		dataout($ReplayMove)
+		If $g_fReplayRec Then
+			If $g_iReplayRecInx < $g_iReplaySz Then
+				$g_aReplay[$g_iReplayRecInx] = $ReplayMove
+				$g_iReplayRecInx += 1
+			Else
+				$g_fReplayRec = False
+			EndIf
+		EndIf
+
+		If $g_fReplayPlay Then
+			ReplayDo()
+		Else
+
+			Switch $g_GameWhich
+				Case $s_GameExtra
+					Extra()
+				Case $s_GameNormal
+					Normal()
+				Case $s_GameTest
+					;pause(3)
+					TestCycle()
+			EndSwitch
+		EndIf
 
 	Until $g_endgame
 
@@ -651,9 +699,9 @@ Func Game()
 	$g_fReplayPlay = False
 	$g_fReplayRec = False
 
-EndFunc   ;==>Game
+EndFunc   ;==>GameDo
 #CS INFO
-	379351 V42 8/2/2019 8:56:18 PM V41 7/24/2019 12:53:35 PM V40 7/18/2019 11:32:28 PM V39 7/15/2019 9:15:04 AM
+	184258 V43 8/7/2019 11:02:23 PM V42 8/2/2019 8:56:18 PM V41 7/24/2019 12:53:35 PM V40 7/18/2019 11:32:28 PM
 #CE
 
 Func Tick() ;
@@ -718,6 +766,294 @@ EndFunc   ;==>Tick
 	69726 V14 7/14/2019 10:20:53 AM V13 7/13/2019 7:20:00 PM V12 7/13/2019 3:59:17 PM V11 7/9/2019 1:03:14 AM
 #CE
 
+;+++++++++++++++++++++++++++++++++++++++Repay
+Func ReplayDo()
+	Local $nMsg
+	DataOut("Replay Game")
+
+	Pause("Replay DO")
+	Do
+		$nMsg = GUIGetMsg()
+	Until $nMsg = 0
+
+	;Local $aAccelKey2[][] = [["{RIGHT}", $L_idRight], ["{LEFT}", $L_idLeft], ["{DOWN}", $L_idDown], ["{UP}", $L_idUp], ["{ESC}", $L_idEsc]]
+	;GUISetAccelerators($aAccelKey2, $g_ctrlBoard)
+	MouseMove(0, 0, 0)
+
+	$g_hTick = TimerInit()
+	Do ;Replay Loop
+		Tick()
+		Local $ReplayMove = -1
+
+		;$nMsg = GUIGetMsg()
+		;		If $nMsg = $GUI_EVENT_CLOSE Or $nMsg = $L_idEsc Then
+		;			ExitLoop
+		;		EndIf
+
+		$nMsg = $g_aReplay[$g_iReplayPlyInx]
+		dataout("nmsg", $nMsg)
+		dataout($g_iReplayPlyInx, $g_iReplayRecInx)
+
+		$g_iReplayPlyInx += 1
+		If $g_iReplayPlyInx >= $g_iReplayRecInx Then
+			Sleep(500)
+
+			Pause("Replay done")
+			$g_fReplayPlay = False
+			ExitLoop
+		EndIf
+
+		;		If $nMsg > 0 Then
+
+		Switch $nMsg
+
+			Case $L_idLeft
+				$ReplayMove = $nMsg
+				Do
+				Until GUIGetMsg() <> $L_idLeft
+				$g_turnNo = 1
+				$g_dirX = -1
+				$g_dirY = 0
+
+			Case $L_idRight
+				$ReplayMove = $nMsg
+				Do
+				Until GUIGetMsg() <> $L_idRight
+				$g_turnNo = 2
+				$g_dirX = 1
+				$g_dirY = 0
+
+			Case $L_idUp
+				$ReplayMove = $nMsg
+				Do
+				Until GUIGetMsg() <> $L_idUp
+				$g_turnNo = 3
+				$g_dirX = 0
+				$g_dirY = -1
+
+			Case $L_idDown
+				$ReplayMove = $nMsg
+				Do
+				Until GUIGetMsg() <> $L_idDown
+				$g_turnNo = 4
+				$g_dirX = 0
+				$g_dirY = 1
+
+		EndSwitch
+
+		If $g_turnNo <> $g_turnLast Then
+			$g_turnLast = $g_turnNo
+			$g_ScoreTurn += 1
+			$g_turnBonus -= 1
+		EndIf
+
+		;Else
+		;	Do
+		;	Until GUIGetMsg() = 0
+		;EndIf
+		If $g_dirX = 0 And $g_dirY = 0 Then
+			ContinueLoop
+		EndIf
+
+		dataout($x_new, $g_dirX)
+		dataout($y_new, $g_dirY)
+		dataout("11")
+		;---------------
+		Switch $Map[$what][$x_new + $g_dirX][$y_new + $g_dirY]
+			Case $WALL ;Normal Wall
+				;		Status(0, "Ate wall", 1)
+				;		$g_endgame = True
+				;		Return
+
+			Case $SNAKE ;Normal
+				;		Status(0, "Ate self", 1)
+				;		$g_endgame = True
+				;		Return
+
+			Case $FOOD ;Normal
+				;Switch $g_turnBonus
+				;	Case 4
+				;		$g_gChange += 4
+				;		Status(0, "Turn bonus: Snake 4", 4)
+				;	Case 3
+				;		$g_gChange += 3
+				;		$g_iScore += 80
+				;		Status(0, "Turn bonus: Snake 3", 4)
+				;	Case 2
+				;		$g_gChange += 2
+				;		$g_iScore += 60
+				;		Status(0, "Turn bonus: Snake 2", 4)
+				;	Case 1
+				;		$g_gChange += 1
+				;		Status(0, "Turn bonus: Snake 1", 4)
+				;	Case Else
+				;		Status(0, "", 0)
+				;EndSwitch
+				;$g_turnBonus = $g_turnNormalStr
+				;$g_gChangeHalf = $s_gChangeBaseNormal
+
+				;Remove Food  NOT needed because  snake will over write with out looking
+				;		$g_ScoreFood += 1 ;Score of pick up a piece of Food.
+				;		AddFood()
+				;		PrevNext($x_new + $g_dirX, $y_new + $g_dirY) ;New value
+
+			Case $EMPTY ;Normal
+
+				PrevNext($x_new + $g_dirX, $y_new + $g_dirY) ;New value
+				;
+				;			Select
+				;				Case $g_gChange = 0
+				;					RemoveSnakeTest()
+
+				;				Case $g_gChange > 0 ; snake get longer don't remove end
+				;	Switch $g_gChangeHalf
+				;		Case 0
+				;					$g_gChange -= 1
+				;			$g_gChangeHalf = $s_gChangeBaseNormal
+				;		Case Else
+				;			RemoveSnakeTest() ;Same size
+				;			$g_gChangeHalf -= 1
+				;	EndSwitch
+
+				;				Case $g_gChange < 0 ; snake get shorter buy removing the end twice
+				;					$g_gChange += 1
+				;					RemoveSnakeTest() ; to keep same size
+				;					RemoveSnakeTest() ;to get one smaller
+
+				;			EndSelect
+		EndSwitch
+		;---------------
+
+	Until $g_endgame
+
+	;GUISetAccelerators(1, $g_ctrlBoard) ; Turn off Accelerator
+	;UpDateHiScore()
+
+	;DataOut($g_iReplayRecInx) ;~~
+	;_ArrayDisplay($g_aReplay)
+	$g_fReplayPlay = False
+	$g_fReplayRec = False
+
+	DataOut("Traveled", "Replay")
+
+EndFunc   ;==>ReplayDo
+#CS INFO
+	236994 V43 8/7/2019 11:02:23 PM V42 8/2/2019 8:56:18 PM V41 7/24/2019 12:53:35 PM V40 7/18/2019 11:32:28 PM
+#CE
+
+;+++++++++++++++++++++++++++++++++++++++TEST
+Func TestCycle()
+	Local $a
+	Local Static $LS_SnakeLenLast = 0
+
+	Switch $Map[$what][$x_new + $g_dirX][$y_new + $g_dirY]
+		Case $WALL ;Normal Wall
+			Status(0, "Ate wall", 1)
+			$g_endgame = True
+			Return
+
+		Case $SNAKE ;Normal
+			Status(0, "Ate self", 1)
+			$g_endgame = True
+			Return
+
+		Case $FOOD ;Normal
+			;Switch $g_turnBonus
+			;	Case 4
+			;		$g_gChange += 4
+			;		Status(0, "Turn bonus: Snake 4", 4)
+			;	Case 3
+			;		$g_gChange += 3
+			;		$g_iScore += 80
+			;		Status(0, "Turn bonus: Snake 3", 4)
+			;	Case 2
+			;		$g_gChange += 2
+			;		$g_iScore += 60
+			;		Status(0, "Turn bonus: Snake 2", 4)
+			;	Case 1
+			;		$g_gChange += 1
+			;		Status(0, "Turn bonus: Snake 1", 4)
+			;	Case Else
+			;		Status(0, "", 0)
+			;EndSwitch
+			;$g_turnBonus = $g_turnNormalStr
+			;$g_gChangeHalf = $s_gChangeBaseNormal
+
+			;Remove Food  NOT needed because  snake will over write with out looking
+			$g_ScoreFood += 1 ;Score of pick up a piece of Food.
+			AddFood()
+			PrevNext($x_new + $g_dirX, $y_new + $g_dirY) ;New value
+
+		Case $EMPTY ;Normal
+
+			PrevNext($x_new + $g_dirX, $y_new + $g_dirY) ;New value
+
+			Select
+				Case $g_gChange = 0
+					RemoveSnakeTest()
+
+				Case $g_gChange > 0 ; snake get longer don't remove end
+					;	Switch $g_gChangeHalf
+					;		Case 0
+					$g_gChange -= 1
+					;			$g_gChangeHalf = $s_gChangeBaseNormal
+					;		Case Else
+					;			RemoveSnakeTest() ;Same size
+					;			$g_gChangeHalf -= 1
+					;	EndSwitch
+
+				Case $g_gChange < 0 ; snake get shorter buy removing the end twice
+					$g_gChange += 1
+					RemoveSnakeTest() ; to keep same size
+					RemoveSnakeTest() ;to get one smaller
+
+			EndSelect
+	EndSwitch
+
+	$a = $Map[$num][$x_new][$y_new] - $Map[$num][$x_end][$y_end] + 1
+	If $a > $g_SnakeMax Then
+		$g_SnakeMax = $a
+	EndIf
+
+	If $LS_SnakeLenLast <> $a Then
+		$LS_SnakeLenLast = $a
+		$g_GameScore = $g_iScore + $g_ScoreFood + $g_SnakeMax
+
+		Status(1, StringFormat("Lenght: %4u, Max: %4u, Score: %6u,   ms/cyc %u", $a, $g_SnakeMax, $g_GameScore, $g_tc), 2)
+
+	EndIf
+
+EndFunc   ;==>TestCycle
+#CS INFO
+	135792 V9 8/7/2019 11:02:23 PM V8 7/18/2019 11:32:28 PM V7 7/15/2019 9:15:04 AM V6 7/13/2019 7:36:11 PM
+#CE
+
+Func RemoveSnakeTest() ; at end
+	Local $x, $y
+
+	$x = $x_end
+	$y = $y_end
+	If $TESTING Then
+		If $x = 0 Or $y = 0 Then
+
+			Pause("Null X & Y 4:", $Map[$what][0][0])
+			Pause($x, $y)
+
+		EndIf
+	EndIf
+
+	$Map[$what][$x][$y] = $EMPTY
+	GUICtrlSetImage($Map[$ctrl][$x][$y], $cEMPTY)
+
+	$x_end = $Map[$nxX][$x][$y]
+	$y_end = $Map[$nxY][$x][$y]
+
+EndFunc   ;==>RemoveSnakeTest
+#CS INFO
+	24866 V11 8/7/2019 11:02:23 PM V10 7/13/2019 3:59:17 PM V9 6/24/2019 11:22:57 PM V8 6/22/2019 7:09:09 PM
+#CE
+
+;++++++++++++++++++++++++++++++++++++++++++++++EXTRA
 ; $g_iscore is extra + length
 Func Extra()
 	Local $a
@@ -1425,7 +1761,6 @@ Func AddFood($start = False)
 	If Not $start Then ;Force start with one food  below math sometime cause 0 food on start
 
 		$x = Int(($Map[$num][$x_new][$y_new] - $Map[$num][$x_end][$y_end]) / 100) + 1
-
 		If $g_foodCnt > $x Then
 			$g_foodCnt -= 1
 			Return
@@ -1435,6 +1770,7 @@ Func AddFood($start = False)
 		EndIf
 
 	EndIf
+
 	If $g_GameWhich = 0 Then ; 0 Normal, 1 Mine
 
 		Local $area = 10
@@ -1526,57 +1862,74 @@ EndFunc   ;==>NormalPoop
 	12381 V2 7/8/2019 1:00:13 AM V1 7/3/2019 8:35:19 PM
 #CE
 
-Func NormalExtra($b_replay)
-	If $g_GameWhich = 0 Then ; 0 Normal, 1 Mine
-		GUICtrlSetState($Radio1, $GUI_CHECKED)
-		If $g_iReplayRecInx > 0 Then ;~~
-			GUICtrlSetState($b_replay, $GUI_SHOW)
-		Else
+Func SwapGame($b_replay)
+	Switch $g_GameWhich
+		Case $s_GameNormal
 			GUICtrlSetState($b_replay, $GUI_HIDE)
-		EndIf
 
-	Else
-		GUICtrlSetState($b_replay, $GUI_HIDE)
-		GUICtrlSetState($Radio2, $GUI_CHECKED)
-	EndIf
+		Case $s_GameExtra
+			GUICtrlSetState($b_replay, $GUI_HIDE)
+
+		Case $s_GameTest
+			If $g_iReplayRecInx > 0 Then ;~~
+				GUICtrlSetState($b_replay, $GUI_SHOW)
+			Else
+				GUICtrlSetState($b_replay, $GUI_HIDE)
+			EndIf
+
+	EndSwitch
+
 	ReadHiScore()
 	DisplayHiScore()
-EndFunc   ;==>NormalExtra
+EndFunc   ;==>SwapGame
 #CS INFO
-	29745 V2 8/2/2019 8:56:18 PM V1 6/5/2019 11:59:45 PM
+	29506 V3 8/7/2019 11:02:23 PM V2 8/2/2019 8:56:18 PM V1 6/5/2019 11:59:45 PM
 #CE
 
 Func DisplayHiScore()
 	Local $s
+	Switch $g_GameWhich
 
-	If $g_GameWhich = 0 Then ; 0 Normal, 1 Mine
-		GUICtrlSetData($g_HiScoreWho, "High Score - Normal")
-		For $i = 0 To 9
-			If $g_aHiScore[$i + 1][0] = 0 Then
-				GUICtrlSetData($g_HiScore[$i], "")
-			Else
-				$s = StringFormat("%u : %5u - Turn: %4u, Food; %4u, Travel: %6u,  %s", $i + 1, $g_aHiScore[$i + 1][0], $g_aHiScore[$i + 1][4], $g_aHiScore[$i + 1][3], $g_aHiScore[$i + 1][2], $g_aHiScore[$i + 1][1])
-				GUICtrlSetData($g_HiScore[$i], $s)
-				;GUICtrlSetData($g_HiScore[$i], $i + 1 & " - " & $g_aHiScore[$i + 1][0] & " - " & $g_aHiScore[$i + 1][1] & " Travel: " & $g_aHiScore[$i + 1][2] & " Turn: " & $g_aHiScore[$i + 1][4])
-			EndIf
-		Next
-	Else
-		GUICtrlSetData($g_HiScoreWho, "High Score - Extra")
-		For $i = 0 To 9
-			;GUICtrlSetData($g_HiScore[$i], $i + 1 & " - " & $g_aHiScore[$i + 1][0] & " - " & $g_aHiScore[$i + 1][1] & " Length: " & $g_aHiScore[$i + 1][2] & " Food: " & $g_aHiScore[$i + 1][3] & " Turn: " & $g_aHiScore[$i + 1][4])
-			If $g_aHiScore[$i + 1][0] = 0 Then
-				GUICtrlSetData($g_HiScore[$i], "")
-			Else
-				$s = StringFormat("%u : %5u - Max: %4u, Food; %4u, Turn: %5u,  %s", $i + 1, $g_aHiScore[$i + 1][0], $g_aHiScore[$i + 1][2], $g_aHiScore[$i + 1][3], $g_aHiScore[$i + 1][4], $g_aHiScore[$i + 1][1])
-				GUICtrlSetData($g_HiScore[$i], $s)
-				;	GUICtrlSetData($g_HiScore[$i], $i + 1 & " - " & $g_aHiScore[$i + 1][0] & " - " & $g_aHiScore[$i + 1][1] & " Max: " & $g_aHiScore[$i + 1][2] & " Food: " & $g_aHiScore[$i + 1][3] & " Turn: " & $g_aHiScore[$i + 1][4])
-			EndIf
-		Next
-	EndIf
+		Case $s_GameNormal
+			GUICtrlSetData($g_HiScoreWho, "High Score - Normal")
+			For $i = 0 To 9
+				If $g_aHiScore[$i + 1][0] = 0 Then
+					GUICtrlSetData($g_HiScore[$i], "")
+				Else
+					$s = StringFormat("%u : %5u - Turn: %4u, Food; %4u, Travel: %6u,  %s", $i + 1, $g_aHiScore[$i + 1][0], $g_aHiScore[$i + 1][4], $g_aHiScore[$i + 1][3], $g_aHiScore[$i + 1][2], $g_aHiScore[$i + 1][1])
+					GUICtrlSetData($g_HiScore[$i], $s)
+					;GUICtrlSetData($g_HiScore[$i], $i + 1 & " - " & $g_aHiScore[$i + 1][0] & " - " & $g_aHiScore[$i + 1][1] & " Travel: " & $g_aHiScore[$i + 1][2] & " Turn: " & $g_aHiScore[$i + 1][4])
+				EndIf
+			Next
+		Case $s_GameExtra
+			GUICtrlSetData($g_HiScoreWho, "High Score - Extra")
+			For $i = 0 To 9
+				;GUICtrlSetData($g_HiScore[$i], $i + 1 & " - " & $g_aHiScore[$i + 1][0] & " - " & $g_aHiScore[$i + 1][1] & " Length: " & $g_aHiScore[$i + 1][2] & " Food: " & $g_aHiScore[$i + 1][3] & " Turn: " & $g_aHiScore[$i + 1][4])
+				If $g_aHiScore[$i + 1][0] = 0 Then
+					GUICtrlSetData($g_HiScore[$i], "")
+				Else
+					$s = StringFormat("%u : %5u - Max: %4u, Food; %4u, Turn: %5u,  %s", $i + 1, $g_aHiScore[$i + 1][0], $g_aHiScore[$i + 1][2], $g_aHiScore[$i + 1][3], $g_aHiScore[$i + 1][4], $g_aHiScore[$i + 1][1])
+					GUICtrlSetData($g_HiScore[$i], $s)
+					;	GUICtrlSetData($g_HiScore[$i], $i + 1 & " - " & $g_aHiScore[$i + 1][0] & " - " & $g_aHiScore[$i + 1][1] & " Max: " & $g_aHiScore[$i + 1][2] & " Food: " & $g_aHiScore[$i + 1][3] & " Turn: " & $g_aHiScore[$i + 1][4])
+				EndIf
+			Next
+		Case $s_GameTest
+			GUICtrlSetData($g_HiScoreWho, "High Score - TEST")
+			For $i = 0 To 9
+				;GUICtrlSetData($g_HiScore[$i], $i + 1 & " - " & $g_aHiScore[$i + 1][0] & " - " & $g_aHiScore[$i + 1][1] & " Length: " & $g_aHiScore[$i + 1][2] & " Food: " & $g_aHiScore[$i + 1][3] & " Turn: " & $g_aHiScore[$i + 1][4])
+				If $g_aHiScore[$i + 1][0] = 0 Then
+					GUICtrlSetData($g_HiScore[$i], "")
+				Else
+					$s = StringFormat("%u : %5u - Max: %4u, Food; %4u, Turn: %5u,  %s", $i + 1, $g_aHiScore[$i + 1][0], $g_aHiScore[$i + 1][2], $g_aHiScore[$i + 1][3], $g_aHiScore[$i + 1][4], $g_aHiScore[$i + 1][1])
+					GUICtrlSetData($g_HiScore[$i], $s)
+					;	GUICtrlSetData($g_HiScore[$i], $i + 1 & " - " & $g_aHiScore[$i + 1][0] & " - " & $g_aHiScore[$i + 1][1] & " Max: " & $g_aHiScore[$i + 1][2] & " Food: " & $g_aHiScore[$i + 1][3] & " Turn: " & $g_aHiScore[$i + 1][4])
+				EndIf
+			Next
+	EndSwitch
 
 EndFunc   ;==>DisplayHiScore
 #CS INFO
-	102253 V7 7/24/2019 11:20:48 PM V6 7/24/2019 12:53:35 PM V5 7/15/2019 9:15:04 AM V4 7/5/2019 8:47:35 AM
+	159792 V8 8/7/2019 11:02:23 PM V7 7/24/2019 11:20:48 PM V6 7/24/2019 12:53:35 PM V5 7/15/2019 9:15:04 AM
 #CE
 
 Func UpDateHiScore()
@@ -1591,31 +1944,35 @@ Func UpDateHiScore()
 
 		$g_aHiScore[11][0] = $g_GameScore
 		$g_aHiScore[11][1] = _Now()
-		If $g_GameWhich = 0 Then ; 0 Normal, 1 Mine
-			$g_aHiScore[11][2] = $g_SnakeCount
-		Else
-			$g_aHiScore[11][2] = $g_SnakeMax
-		EndIf
+		Switch $g_GameWhich
+			Case $s_GameNormal
+				$g_aHiScore[11][2] = $g_SnakeCount
+			Case $s_GameExtra
+				$g_aHiScore[11][2] = $g_SnakeMax
+			Case $s_GameTest
+				$g_aHiScore[11][2] = $g_SnakeMax
+		EndSwitch
+
 		$g_aHiScore[11][3] = $g_ScoreFood
 		$g_aHiScore[11][4] = $g_ScoreTurn
 
 		_ArraySort($g_aHiScore, 1, 1, 11)
 		SaveHiScore()
-		Sleep(5000)
-		GUIDelete($Form1)
-		$g_GameScore = 0
 
 	ElseIf $g_GameScore > 0 Then
 		$Form1 = GUICreate("", 250, 100, -1, -1, $WS_DLGFRAME, BitOR($WS_EX_TOPMOST, $WS_EX_STATICEDGE))
 		GUICtrlCreateLabel("Score: " & $g_GameScore, 25, 30, 200, 25)
 		GUICtrlSetFont(-1, 12, 400, 0, "Arial")
 		GUISetState(@SW_SHOW)
-		Sleep(5000)
-		GUIDelete($Form1)
 	EndIf
+
+	$g_GameScore = 0
+	Sleep(5000)
+	GUIDelete($Form1)
+
 EndFunc   ;==>UpDateHiScore
 #CS INFO
-	74545 V14 7/24/2019 11:20:48 PM V13 7/18/2019 11:32:28 PM 123V12 7/13/2019 7:36:11 PM V11 7/5/2019 8:47:35 AM
+	78339 V15 8/7/2019 11:02:23 PM V14 7/24/2019 11:20:48 PM V13 7/18/2019 11:32:28 PM 123V12 7/13/2019 7:36:11 PM
 #CE
 
 Func SaveHiScore()
@@ -1626,27 +1983,36 @@ Func SaveHiScore()
 		$a[$x][1] = $g_aHiScore[$x][0] & "|" & $g_aHiScore[$x][1] & "|" & $g_aHiScore[$x][2] & "|" & $g_aHiScore[$x][3] & "|" & $g_aHiScore[$x][4] & "|" & $g_aHiScore[$x][5]
 	Next
 	$a[0][0] = 10
-	If $g_GameWhich = 0 Then ; 0 Normal, 1 Mine
-		$x = IniWriteSection($s_scoreini, "HighScoreNormal", $a)
-	Else
-		$x = IniWriteSection($s_scoreini, "HighScoreExtra", $a)
-	EndIf
+	Switch $g_GameWhich
+		Case $s_GameNormal
+			$x = IniWriteSection($s_scoreini, "HighScoreNormal", $a)
+		Case $s_GameExtra
+			$x = IniWriteSection($s_scoreini, "HighScoreExtra", $a)
+		Case $s_GameTest
+			$x = IniWriteSection($s_scoreini, "HighScoreTest", $a)
+	EndSwitch
 
 EndFunc   ;==>SaveHiScore
 #CS INFO
-	33437 V6 7/24/2019 11:20:48 PM V5 7/13/2019 7:20:00 PM V4 6/16/2019 10:16:04 AM V3 6/5/2019 11:59:45 PM
+	41326 V7 8/7/2019 11:02:23 PM V6 7/24/2019 11:20:48 PM V5 7/13/2019 7:20:00 PM V4 6/16/2019 10:16:04 AM
 #CE
 
 Func IniHighFive()
-	Local $a, $c, $Z
+	Local $a, $c, $Z, $keep
+
+	$keep = $g_GameWhich
 
 	For $x = 0 To 1
 		$g_GameWhich = $x
-		If $g_GameWhich = 0 Then ; 0 Normal, 1 Mine
-			$a = IniReadSection($s_scoreini, "HighScoreNormal")
-		Else
-			$a = IniReadSection($s_scoreini, "HighScoreExtra")
-		EndIf
+		Switch $g_GameWhich
+			Case $s_GameNormal
+				$a = IniReadSection($s_scoreini, "HighScoreNormal")
+			Case $s_GameExtra
+				$a = IniReadSection($s_scoreini, "HighScoreExtra")
+			Case $s_GameTest
+				$a = IniReadSection($s_scoreini, "HighScoreTest")
+		EndSwitch
+
 		If @error = 0 Then
 
 			For $i = 1 To 10
@@ -1672,18 +2038,22 @@ Func IniHighFive()
 
 		EndIf
 	Next
+	$g_GameWhich = $keep
 EndFunc   ;==>IniHighFive
 #CS INFO
-	52802 V3 7/24/2019 11:20:48 PM V2 7/13/2019 7:20:00 PM V1 6/28/2019 7:37:37 PM
+	64107 V4 8/7/2019 11:02:23 PM V3 7/24/2019 11:20:48 PM V2 7/13/2019 7:20:00 PM V1 6/28/2019 7:37:37 PM
 #CE
 
 Func ReadHiScore()
 	Local $a, $c, $Z
-	If $g_GameWhich = 0 Then ; 0 Normal, 1 Mine
-		$a = IniReadSection($s_scoreini, "HighScoreNormal")
-	Else
-		$a = IniReadSection($s_scoreini, "HighScoreExtra")
-	EndIf
+	Switch $g_GameWhich
+		Case $s_GameNormal
+			$a = IniReadSection($s_scoreini, "HighScoreNormal")
+		Case $s_GameExtra
+			$a = IniReadSection($s_scoreini, "HighScoreExtra")
+		Case $s_GameTest
+			$a = IniReadSection($s_scoreini, "HighScoreTest")
+	EndSwitch
 	If @error = 0 Then
 
 		For $i = 1 To 10
@@ -1719,7 +2089,7 @@ Func ReadHiScore()
 	EndIf
 EndFunc   ;==>ReadHiScore
 #CS INFO
-	70503 V6 7/24/2019 11:20:48 PM V5 7/13/2019 7:20:00 PM V4 6/16/2019 10:16:04 AM V3 6/5/2019 11:59:45 PM
+	78049 V7 8/7/2019 11:02:23 PM V6 7/24/2019 11:20:48 PM V5 7/13/2019 7:20:00 PM V4 6/16/2019 10:16:04 AM
 #CE
 
 ;Load Level from THE GAME
@@ -1854,9 +2224,12 @@ EndFunc   ;==>Sum
 	30111 V1 7/14/2019 10:20:53 AM
 #CE
 
+;+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 Func StartForm()
 	Local $Form1, $Group1
-	Local $Radio3, $Checkbox1, $b_start, $b_replay, $b_setting
+	Global $Radio1, $Radio2, $Radio3
+
+	Local $Checkbox1, $b_start, $b_replay, $b_setting
 	Local $nMsg
 	Local $a = 260
 	Local $b = 50
@@ -1876,12 +2249,14 @@ Func StartForm()
 	GUICtrlSetFont(-1, 10, 400, 0, "Arial")
 
 	$Group1 = GUIStartGroup()
-	$Radio1 = GUICtrlCreateRadio("Normal", $a, $b, $c, 20)
+	$Radio1 = GUICtrlCreateRadio("Normal", $a, $b + 20, $c, 20)
 	GUICtrlSetFont(-1, 10, 400, 0, "Arial")
-	$Radio2 = GUICtrlCreateRadio("Extra", $a, $b + 20, $c, 20)
+	$Radio2 = GUICtrlCreateRadio("Extra", $a, $b + 40, $c, 20)
+	GUICtrlSetFont(-1, 10, 400, 0, "Arial")
+	$Radio3 = GUICtrlCreateRadio("Test", $a, $b, $c, 20)
 	GUICtrlSetFont(-1, 10, 400, 0, "Arial")
 
-	$b += 40
+	$b += 60
 
 	$g_HiScoreWho = GUICtrlCreateLabel("High Score - Extra", $a, $b, $c + 30, 24) ; Height is twice font size
 	GUICtrlSetFont(-1, 10, 400, 0, "Arial")
@@ -1893,34 +2268,48 @@ Func StartForm()
 		GUICtrlSetFont($g_HiScore[$x], 10, 400, 0, "Arial")
 		$b += 20
 	Next
+	DataOut("$B", $b)
+
+	Local $b_info
+
+	$b_info = GUICtrlCreateButton($ver, 50, $b, 100, 25) ;~~
 
 	$b_setting = GUICtrlCreateButton("Setting", 100, 550, 75, 35) ;~~
 	$b_replay = GUICtrlCreateButton("Replay", 400, 550, 75, 35) ;~~
 	$b_start = GUICtrlCreateButton("GO", 270, 550, 100, 35)
 	$Checkbox1 = GUICtrlCreateCheckbox("Testing", 1, 555)
 
-	Local $Edit1 = GUICtrlCreateEdit("", 20, $b, 550, 230, $ES_READONLY)
-	GUICtrlSetFont($Edit1, 10, 400, 0, "Arial")
-	GUICtrlSetData($Edit1, "Press ESC to quit." & @CRLF, 1)
-	GUICtrlSetData($Edit1, @CRLF, 1)
-	GUICtrlSetData($Edit1, "If you lose Focus the game will PAUSE" & @CRLF, 1)
-	GUICtrlSetData($Edit1, @CRLF, 1)
+	;	Local $Edit1 = GUICtrlCreateEdit("", 20, $b, 550, 230, $ES_READONLY)
+	;	GUICtrlSetFont($Edit1, 10, 400, 0, "Arial")
+	;	GUICtrlSetData($Edit1, "Press ESC to quit." & @CRLF, 1)
+	;	GUICtrlSetData($Edit1, @CRLF, 1)
+	;	GUICtrlSetData($Edit1, "If you lose Focus the game will PAUSE" & @CRLF, 1)
+	;	GUICtrlSetData($Edit1, @CRLF, 1)
 
-	GUICtrlSetData($Edit1, "Normal" & @CRLF, 1)
-	GUICtrlSetData($Edit1, "  Food increase Snake by 1.  Score +1 per food pickup.  There is a bonus." & @CRLF, 1)
-	GUICtrlSetData($Edit1, @CRLF, 1)
+	;	GUICtrlSetData($Edit1, "Normal" & @CRLF, 1)
+	;	GUICtrlSetData($Edit1, "  Food increase Snake by 1.  Score +1 per food pickup.  There is a bonus." & @CRLF, 1)
+	;	GUICtrlSetData($Edit1, @CRLF, 1)
 
-	GUICtrlSetData($Edit1, "Extra:" & @CRLF, 1)
-	GUICtrlSetData($Edit1, "  Food increase snake by 2" & @CRLF, 1)
-	GUICtrlSetData($Edit1, @CRLF, 1)
-	GUICtrlSetData($Edit1, "Bonus:" & @CRLF, 1)
-	GUICtrlSetData($Edit1, " Snake does not like to turn so, so few turns and Food increase snake & score" & @CRLF, 1)
-	GUICtrlSetData($Edit1, " Snake can 'double back' on self or wall, most of the times." & @CRLF, 1)
-	GUICtrlSetData($Edit1, " Snake does not like to travel far for next meal. Snake does get shorter", 1)
+	;	GUICtrlSetData($Edit1, "Extra:" & @CRLF, 1)
+	;	GUICtrlSetData($Edit1, "  Food increase snake by 2" & @CRLF, 1)
+	;	GUICtrlSetData($Edit1, @CRLF, 1)
+	;	GUICtrlSetData($Edit1, "Bonus:" & @CRLF, 1)
+	;	GUICtrlSetData($Edit1, " Snake does not like to turn so, so few turns and Food increase snake & score" & @CRLF, 1)
+	;	GUICtrlSetData($Edit1, " Snake can 'double back' on self or wall, most of the times." & @CRLF, 1)
+	;	GUICtrlSetData($Edit1, " Snake does not like to travel far for next meal. Snake does get shorter", 1)
 
 	GUISetState(@SW_SHOW)
 
-	NormalExtra($b_replay)
+	Switch $g_GameWhich
+		Case $s_GameNormal
+			GUICtrlSetState($Radio1, $GUI_CHECKED)
+		Case $s_GameExtra
+			GUICtrlSetState($Radio2, $GUI_CHECKED)
+		Case $s_GameTest
+			GUICtrlSetState($Radio3, $GUI_CHECKED)
+	EndSwitch
+
+	SwapGame($b_replay)
 
 	While 1
 		If WinGetTitle("[ACTIVE]") <> $sForm1 Then
@@ -1939,22 +2328,34 @@ Func StartForm()
 				Return False
 
 			Case $b_replay
+				GUIDelete($Form1)
 				$g_fReplayPlay = True
 				$TESTING = True
-				Pause("Replay - still has problems.", "Like no code added")
-				;Return False
+				$g_iReplayPlyInx = 0
+				Pause("Replay - still has problems.")
+				Return False
 
 			Case $b_setting
 				$TESTING = True
 				Pause("Setting - still has problems.", "Like no code added")
 
 			Case $Radio1 ;Normal
-				$g_GameWhich = 0
-				NormalExtra($b_replay)
+				GUICtrlSetState($Radio1, $GUI_CHECKED)
+				$g_GameWhich = $s_GameNormal
+				SwapGame($b_replay)
 
 			Case $Radio2 ; Extra
-				$g_GameWhich = 1
-				NormalExtra($b_replay)
+				GUICtrlSetState($Radio2, $GUI_CHECKED)
+				$g_GameWhich = $s_GameExtra
+				SwapGame($b_replay)
+
+			Case $Radio3 ; Test
+				GUICtrlSetState($Radio3, $GUI_CHECKED)
+				$g_GameWhich = $s_GameTest
+				SwapGame($b_replay)
+
+			Case $b_info
+				MsgBox(0, "Readme", $ver)
 
 			Case $Checkbox1 ;debug
 
@@ -1963,11 +2364,11 @@ Func StartForm()
 
 		EndSwitch
 	WEnd
-	pause()
+	pause("Should never get here")
 
 EndFunc   ;==>StartForm
 #CS INFO
-	226191 V24 8/5/2019 2:37:25 PM V23 8/2/2019 8:56:18 PM V22 7/24/2019 11:20:48 PM V21 7/24/2019 12:53:35 PM
+	282662 V25 8/7/2019 11:02:23 PM V24 8/5/2019 2:37:25 PM V23 8/2/2019 8:56:18 PM V22 7/24/2019 11:20:48 PM
 #CE
 
 ;Main
@@ -1975,4 +2376,4 @@ Main()
 
 Exit
 
-;~T ScriptFunc.exe V0.54a 15 May 2019 - 8/5/2019 2:37:25 PM
+;~T ScriptFunc.exe V0.54a 15 May 2019 - 8/7/2019 11:02:23 PM

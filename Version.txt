@@ -1,5 +1,8 @@
 	Problem: 0.58 left some testing in just in case  X & Y 3 & 4
 
+	0.65 7 Aug 2019 Replay to Test - works but wrong
+	0.64 6 Aug 2019 Add Test game
+	0.63 5 Aug 2019 Focus Start on top
 	0.62 2 Aug 2019 Startup Buttons. -- Fix Extra Food  -- Bug at watch 3 once
 	0.61 24 Jul 2019 Score 8 to 10
 	0.60 24 Jul 2019 Format High Score/ Normal
