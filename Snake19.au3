@@ -5,18 +5,18 @@ AutoItSetOption("MustDeclareVars", 1)
 ;Global Static $MESSAGE =  False   ;Pause will still work in script  No DataOut
 
 ; Must be Declared before _Prf_startup
-Global $ver = "0.67 8 Aug 2019 Remove Tail, Food"
+Global $ver = "0.68 9 Aug 2019 Replay full speed, no tick"
 Global $ini_ver = "4" ;24 Jul 2019 8 to 10
 ;"3" ;15 Jul 2019 Timing changes
 ;"2" ;5 Jul 2019 removed Len and add Max in extra
-; "1" start
+; "1" start+
 
 ;Global $TESTING = False
 
 #include "R:\!Autoit\Blank\_prf_startup.au3"
 
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
-#AutoIt3Wrapper_Res_Fileversion=0.0.6.7
+#AutoIt3Wrapper_Res_Fileversion=0.0.6.8
 #AutoIt3Wrapper_Icon=R:\!Autoit\Ico\prf.ico
 #AutoIt3Wrapper_Res_Description=Another snake game
 #AutoIt3Wrapper_Res_LegalCopyright=© Phillip Forrestal 2019
@@ -82,6 +82,7 @@ Global $ini_ver = "4" ;24 Jul 2019 8 to 10
 	Size
 	Yuck
 
+	0.68 8 Aug 2019 Replay full speed, no tick
 	0.67 8 Aug 2019 Remove Tail, Food
 	0.66 8 Aug 2019 More replay work: Start Snake XY, Move snake
 	0.65 7 Aug 2019 Replay to Test - works but wrong
@@ -815,7 +816,7 @@ Func ReplayDo()
 			Case 3 ; Add Food
 				MapFood($func[2], $func[3])
 			Case 2 ; Move
-				Tick()
+				;Tick()
 				$g_dirX = $func[2]
 				$g_dirY = $func[3]
 
@@ -904,7 +905,7 @@ Func ReplayDo()
 
 EndFunc   ;==>ReplayDo
 #CS INFO
-	204234 V45 8/8/2019 11:30:50 PM V44 8/8/2019 4:33:56 PM V43 8/7/2019 11:02:23 PM V42 8/2/2019 8:56:18 PM
+	204293 V46 8/9/2019 8:40:50 AM V45 8/8/2019 11:30:50 PM V44 8/8/2019 4:33:56 PM V43 8/7/2019 11:02:23 PM
 #CE
 
 ;+++++++++++++++++++++++++++++++++++++++TEST~~
@@ -1049,7 +1050,7 @@ Func Extra()
 
 			EndIf
 
-			Status(3, "Ate DEAD snake UG! Lost " & $MaxLost & " cells of snake", 1)
+			Status(3, "Ate DEAD snake Yuck! Lost " & $MaxLost & " cells of snake", 1)
 			;Status(2, "Lost 10 Snake cells. Lost 100 points.", 1)
 			$g_gChange -= $MaxLost
 
@@ -1058,7 +1059,7 @@ Func Extra()
 			PrevNext($x_new + $g_dirX, $y_new + $g_dirY) ;New value
 
 		Case $POOP
-			Status(3, "Ate  snake POOP - UG! Lost " & $MaxLost & " cells of snake", 1)
+			Status(3, "Ate  snake POOP - Yuck! Lost " & $MaxLost & " cells of snake", 1)
 			;Status(2, "Lost 10 Snake cells. Lost 100 points.", 1)
 			$g_gChange -= $MaxLost
 
@@ -1236,7 +1237,7 @@ Func Extra()
 
 EndFunc   ;==>Extra
 #CS INFO
-	328290 V26 8/2/2019 8:56:18 PM V25 7/24/2019 12:53:35 PM V24 7/23/2019 9:33:59 AM V23 7/18/2019 11:32:28 PM
+	328802 V27 8/9/2019 8:40:50 AM V26 8/2/2019 8:56:18 PM V25 7/24/2019 12:53:35 PM V24 7/23/2019 9:33:59 AM
 #CE
 
 Func Normal()
@@ -1646,7 +1647,6 @@ Func RemoveSnakeExtra($inputflag = False) ; at end
 	$x = $x_end
 	$y = $y_end
 
-	;MsgBox(0, "Remove snake", "x " & $x & " y " & $y & " Num: " & $Map[$num][$x][$y], 10)
 	$flag = False
 	If $inputflag Then
 		$PoopCnt -= 1
@@ -1920,7 +1920,6 @@ Func UpDateHiScore()
 	Local $Form1
 
 	If $g_aHiScore[10][0] < $g_GameScore Then
-		;		MsgBox($MB_TOPMOST, "High Score", "New High Score: " & $g_iScore, 5)
 		$Form1 = GUICreate("", 250, 100, -1, -1, $WS_DLGFRAME, BitOR($WS_EX_TOPMOST, $WS_EX_STATICEDGE))
 		GUICtrlCreateLabel("New High Score: " & $g_GameScore, 25, 30, 200, 25)
 		GUICtrlSetFont(-1, 12, 400, 0, "Arial")
@@ -2316,7 +2315,7 @@ Func StartForm()
 				GUIDelete($Form1)
 				$g_fReplayPlay = True
 				$g_iReplayPlyInx = 0
-				MsgBox(0, "Replay - still has problems.", "Snake start, food and movers work, many adds fail.")
+				MsgBox(0, "Replay - still has problems.", "FULL speed, No TICK.  Snake start, food and movers work, many adds fail.")
 				$TESTING = False
 				Return False
 
@@ -2361,4 +2360,4 @@ Main()
 
 Exit
 
-;~T ScriptFunc.exe V0.54a 15 May 2019 - 8/8/2019 11:30:50 PM
+;~T ScriptFunc.exe V0.54a 15 May 2019 - 8/9/2019 8:40:50 AM
