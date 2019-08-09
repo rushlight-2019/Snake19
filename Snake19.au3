@@ -5,7 +5,7 @@ AutoItSetOption("MustDeclareVars", 1)
 ;Global Static $MESSAGE =  False   ;Pause will still work in script  No DataOut
 
 ; Must be Declared before _Prf_startup
-Global $ver = "0.65 7 Aug 2019 Replay to Test"
+Global $ver = "0.67 8 Aug 2019 Remove Tail, Food"
 Global $ini_ver = "4" ;24 Jul 2019 8 to 10
 ;"3" ;15 Jul 2019 Timing changes
 ;"2" ;5 Jul 2019 removed Len and add Max in extra
@@ -16,7 +16,7 @@ Global $ini_ver = "4" ;24 Jul 2019 8 to 10
 #include "R:\!Autoit\Blank\_prf_startup.au3"
 
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
-#AutoIt3Wrapper_Res_Fileversion=0.0.6.5
+#AutoIt3Wrapper_Res_Fileversion=0.0.6.7
 #AutoIt3Wrapper_Icon=R:\!Autoit\Ico\prf.ico
 #AutoIt3Wrapper_Res_Description=Another snake game
 #AutoIt3Wrapper_Res_LegalCopyright=© Phillip Forrestal 2019
@@ -80,7 +80,10 @@ Global $ini_ver = "4" ;24 Jul 2019 8 to 10
 	Setting
 	Color select
 	Size
+	Yuck
 
+	0.67 8 Aug 2019 Remove Tail, Food
+	0.66 8 Aug 2019 More replay work: Start Snake XY, Move snake
 	0.65 7 Aug 2019 Replay to Test - works but wrong
 	0.64 6 Aug 2019 Add Test game
 	0.63 5 Aug 2019 Focus Start on top
@@ -270,11 +273,11 @@ Global $g_GameWhich = -1 ; 0 Normal, 1 Mine(extra), 2 Test
 Static $s_GameNormal = 0
 Static $s_GameExtra = 1
 Static $s_GameTest = 2
-If $TESTING Then
-	$g_GameWhich = $s_GameTest
-Else
-	$g_GameWhich = $s_GameExtra
-EndIf
+;If $TESTING Then
+$g_GameWhich = $s_GameTest
+;Else
+;	$g_GameWhich = $s_GameExtra
+;EndIf
 
 Global $g_HiScoreWho ;ctrl
 Global $g_HiScore[10]
@@ -534,39 +537,69 @@ Func Game()
 			$g_turnBonus = $g_turnNormalStr + 1 ; The way it start with 1 turn on start. To fix start with +1
 
 		Case $s_GameTest
-			$g_gChange = 0
+			$g_gChange = 50
 			$g_turnBonus = 0 ;$g_turnNormalStr + 1 ; The way it start with 1 turn on start. To fix start with +1
 
 	EndSwitch
 
 	$g_endgame = False
 
-	;+++++++++++++++++++++++++++++ GO TO REPLAY
-
 	If $g_fReplayPlay Then
+		dataout("+++++++++++++++++++++++++++++ GO TO REPLAY")
 		ReplayDo()
 	Else
+		dataout("+++++++++++++++++++++++NORMAL GAME")
 		GameDo()
 
 	EndIf
-	dataout(";+++++++++++++++++++++++NORMAL GAME")
 EndFunc   ;==>Game
 #CS INFO
-	238085 V1 8/7/2019 11:02:23 PM
+	238923 V3 8/8/2019 11:30:50 PM V2 8/8/2019 4:33:56 PM V1 8/7/2019 11:02:23 PM
 #CE
 
+Func ReplayRecData($func, $x = 0, $y = 0)
+	;Func ~~
+	;1 Start Snake
+	;2 Move snake
+	;3 Food add
+	;
+	;X, Y
+
+	If $g_fReplayRec Then
+		If $g_iReplayRecInx < $g_iReplaySz Then
+			dataout("Func: ", $func)
+			dataout($x, $y)
+
+			Switch $func
+				Case 1, 2, 3
+					$g_aReplay[$g_iReplayRecInx] = $func & "|" & $x & "|" & $y
+					$g_iReplayRecInx += 1
+
+			EndSwitch
+
+		Else
+			$g_fReplayRec = False
+		EndIf
+	EndIf
+
+EndFunc   ;==>ReplayRecData
+#CS INFO
+	28735 V2 8/8/2019 11:30:50 PM V1 8/8/2019 4:33:56 PM
+#CE
+
+;+++++++++++++++++++++++++++++++++++~~
 Func GameDo()
 	Local $nMsg
 	DataOut("New Game")
-
-	StartSnake()
-	AddFood(True)
 
 	;Replay reset game ~~
 	$g_fReplayRec = True
 	$g_fReplayPlay = False
 	$g_iReplayRecInx = 0
 	$g_iReplayPlyInx = 0
+
+	StartSnake()
+	AddFood(True)
 
 	Do
 		$nMsg = GUIGetMsg()
@@ -586,37 +619,24 @@ Func GameDo()
 			ExitLoop
 		EndIf
 
-		If $g_fReplayPlay Then
-			If $g_iReplayPlyInx < $g_iReplaySz Then
-				Sleep(500)
-				$nMsg = $g_aReplay[$g_iReplayPlyInx]
-				$g_iReplayPlyInx += 1
-			Else
-				$g_fReplayPlay = False
-				pause(2)
-				ExitLoop
-			EndIf
-		EndIf
+		;	If $g_fReplayPlay Then
+		;		If $g_iReplayPlyInx < $g_iReplaySz Then
+		;			Sleep(500)
+		;			$nMsg = $g_aReplay[$g_iReplayPlyInx]
+		;			$g_iReplayPlyInx += 1
+		;		Else
+		;			$g_fReplayPlay = False
+		;			pause(2)
+		;			ExitLoop
+		;		EndIf
+		;	EndIf
 
 		If $nMsg > 0 Then
 
-;~~  This is wrong.  Game store the move and load it into tick.   The game also has to save object  add or removed on each tick.
-			;
-			;If $g_fReplayDo Then
-			;	$nMsg = $g_aReplay[$g_iTickPly]
-			;	If $g_iTickPly < 4500 Then
-			;		$g_iTickPly += 1
-			;	EndIf
-			;	If $g_iTickPly >= $g_iTickRec Then
-			;		$g_fReplayDo = False
-			;	EndIf
-			;EndIf
-
-			$ReplayMove = $M1
 			Switch $nMsg
 
 				Case $L_idLeft
-					$ReplayMove = $nMsg
+					;$ReplayMove = $nMsg
 					Do
 					Until GUIGetMsg() <> $L_idLeft
 					$g_turnNo = 1
@@ -624,7 +644,7 @@ Func GameDo()
 					$g_dirY = 0
 
 				Case $L_idRight
-					$ReplayMove = $nMsg
+					;$ReplayMove = $nMsg
 					Do
 					Until GUIGetMsg() <> $L_idRight
 					$g_turnNo = 2
@@ -632,7 +652,7 @@ Func GameDo()
 					$g_dirY = 0
 
 				Case $L_idUp
-					$ReplayMove = $nMsg
+					;$ReplayMove = $nMsg
 					Do
 					Until GUIGetMsg() <> $L_idUp
 					$g_turnNo = 3
@@ -640,7 +660,7 @@ Func GameDo()
 					$g_dirY = -1
 
 				Case $L_idDown
-					$ReplayMove = $nMsg
+					;$ReplayMove = $nMsg
 					Do
 					Until GUIGetMsg() <> $L_idDown
 					$g_turnNo = 4
@@ -663,30 +683,16 @@ Func GameDo()
 			ContinueLoop
 		EndIf
 
-		dataout($ReplayMove)
-		If $g_fReplayRec Then
-			If $g_iReplayRecInx < $g_iReplaySz Then
-				$g_aReplay[$g_iReplayRecInx] = $ReplayMove
-				$g_iReplayRecInx += 1
-			Else
-				$g_fReplayRec = False
-			EndIf
-		EndIf
+		ReplayRecData(2, $g_dirX, $g_dirY)
 
-		If $g_fReplayPlay Then
-			ReplayDo()
-		Else
-
-			Switch $g_GameWhich
-				Case $s_GameExtra
-					Extra()
-				Case $s_GameNormal
-					Normal()
-				Case $s_GameTest
-					;pause(3)
-					TestCycle()
-			EndSwitch
-		EndIf
+		Switch $g_GameWhich
+			Case $s_GameExtra
+				Extra()
+			Case $s_GameNormal
+				Normal()
+			Case $s_GameTest
+				TestCycle() ;~~
+		EndSwitch
 
 	Until $g_endgame
 
@@ -694,14 +700,14 @@ Func GameDo()
 	UpDateHiScore()
 
 	DataOut("Traveled", $g_SnakeCount)
-	DataOut($g_iReplayRecInx) ;~~
+	DataOut($g_iReplayRecInx)
 	;_ArrayDisplay($g_aReplay)
 	$g_fReplayPlay = False
 	$g_fReplayRec = False
 
 EndFunc   ;==>GameDo
 #CS INFO
-	184258 V43 8/7/2019 11:02:23 PM V42 8/2/2019 8:56:18 PM V41 7/24/2019 12:53:35 PM V40 7/18/2019 11:32:28 PM
+	142526 V45 8/8/2019 11:30:50 PM V44 8/8/2019 4:33:56 PM V43 8/7/2019 11:02:23 PM V42 8/2/2019 8:56:18 PM
 #CE
 
 Func Tick() ;
@@ -766,12 +772,14 @@ EndFunc   ;==>Tick
 	69726 V14 7/14/2019 10:20:53 AM V13 7/13/2019 7:20:00 PM V12 7/13/2019 3:59:17 PM V11 7/9/2019 1:03:14 AM
 #CE
 
-;+++++++++++++++++++++++++++++++++++++++Repay
+;+++++++++++++++++++++++++++++++++++++++Replay ~~
 Func ReplayDo()
 	Local $nMsg
+	Local $func
+
 	DataOut("Replay Game")
 
-	Pause("Replay DO")
+	;Pause("Replay DO")
 	Do
 		$nMsg = GUIGetMsg()
 	Until $nMsg = 0
@@ -782,146 +790,104 @@ Func ReplayDo()
 
 	$g_hTick = TimerInit()
 	Do ;Replay Loop
-		Tick()
 		Local $ReplayMove = -1
 
 		;$nMsg = GUIGetMsg()
 		;		If $nMsg = $GUI_EVENT_CLOSE Or $nMsg = $L_idEsc Then
 		;			ExitLoop
 		;		EndIf
-
-		$nMsg = $g_aReplay[$g_iReplayPlyInx]
-		dataout("nmsg", $nMsg)
-		dataout($g_iReplayPlyInx, $g_iReplayRecInx)
+		dataout($g_aReplay[$g_iReplayPlyInx])
+		$func = StringSplit($g_aReplay[$g_iReplayPlyInx], "|")
+		;_ArrayDisplay($func)
 
 		$g_iReplayPlyInx += 1
 		If $g_iReplayPlyInx >= $g_iReplayRecInx Then
 			Sleep(500)
 
-			Pause("Replay done")
+			pause("Replay done")
 			$g_fReplayPlay = False
 			ExitLoop
 		EndIf
 
-		;		If $nMsg > 0 Then
+		Switch $func[1] ;Func  ~~
+			Case 1 ; Add snake
+				StartSnakeLoc($func[2], $func[3])
+			Case 3 ; Add Food
+				MapFood($func[2], $func[3])
+			Case 2 ; Move
+				Tick()
+				$g_dirX = $func[2]
+				$g_dirY = $func[3]
 
-		Switch $nMsg
+				dataout($x_new, $g_dirX)
+				dataout($y_new, $g_dirY)
+				dataout("11")
+				;---------------
+				Switch $Map[$what][$x_new + $g_dirX][$y_new + $g_dirY]
+					Case $WALL ;Normal Wall
+						;		Status(0, "Ate wall", 1)
+						;		$g_endgame = True
+						;		Return
 
-			Case $L_idLeft
-				$ReplayMove = $nMsg
-				Do
-				Until GUIGetMsg() <> $L_idLeft
-				$g_turnNo = 1
-				$g_dirX = -1
-				$g_dirY = 0
+					Case $SNAKE ;Normal
+						;		Status(0, "Ate self", 1)
+						;		$g_endgame = True
+						;		Return
 
-			Case $L_idRight
-				$ReplayMove = $nMsg
-				Do
-				Until GUIGetMsg() <> $L_idRight
-				$g_turnNo = 2
-				$g_dirX = 1
-				$g_dirY = 0
+					Case $FOOD ;Normal
+						;Switch $g_turnBonus
+						;	Case 4
+						;		$g_gChange += 4
+						;		Status(0, "Turn bonus: Snake 4", 4)
+						;	Case 3
+						;		$g_gChange += 3
+						;		$g_iScore += 80
+						;		Status(0, "Turn bonus: Snake 3", 4)
+						;	Case 2
+						;		$g_gChange += 2
+						;		$g_iScore += 60
+						;		Status(0, "Turn bonus: Snake 2", 4)
+						;	Case 1
+						;		$g_gChange += 1
+						;		Status(0, "Turn bonus: Snake 1", 4)
+						;	Case Else
+						;		Status(0, "", 0)
+						;EndSwitch
+						;$g_turnBonus = $g_turnNormalStr
+						;$g_gChangeHalf = $s_gChangeBaseNormal
 
-			Case $L_idUp
-				$ReplayMove = $nMsg
-				Do
-				Until GUIGetMsg() <> $L_idUp
-				$g_turnNo = 3
-				$g_dirX = 0
-				$g_dirY = -1
+						;Remove Food  NOT needed because  snake will over write with out looking
+						$g_ScoreFood += 1 ;Score of pick up a piece of Food.
+						;	AddFood()
+						PrevNext($x_new + $g_dirX, $y_new + $g_dirY) ;New value
 
-			Case $L_idDown
-				$ReplayMove = $nMsg
-				Do
-				Until GUIGetMsg() <> $L_idDown
-				$g_turnNo = 4
-				$g_dirX = 0
-				$g_dirY = 1
+					Case $EMPTY ;Normal
 
+						PrevNext($x_new + $g_dirX, $y_new + $g_dirY) ;New value
+						;
+						;			Select
+						;				Case $g_gChange = 0
+						RemoveSnakeTest()
+
+						;				Case $g_gChange > 0 ; snake get longer don't remove end
+						;	Switch $g_gChangeHalf
+						;		Case 0
+						;					$g_gChange -= 1
+						;			$g_gChangeHalf = $s_gChangeBaseNormal
+						;		Case Else
+						;			RemoveSnakeTest() ;Same size
+						;			$g_gChangeHalf -= 1
+						;	EndSwitch
+
+						;				Case $g_gChange < 0 ; snake get shorter buy removing the end twice
+						;					$g_gChange += 1
+						;					RemoveSnakeTest() ; to keep same size
+						;					RemoveSnakeTest() ;to get one smaller
+
+						;			EndSelect
+				EndSwitch
 		EndSwitch
 
-		If $g_turnNo <> $g_turnLast Then
-			$g_turnLast = $g_turnNo
-			$g_ScoreTurn += 1
-			$g_turnBonus -= 1
-		EndIf
-
-		;Else
-		;	Do
-		;	Until GUIGetMsg() = 0
-		;EndIf
-		If $g_dirX = 0 And $g_dirY = 0 Then
-			ContinueLoop
-		EndIf
-
-		dataout($x_new, $g_dirX)
-		dataout($y_new, $g_dirY)
-		dataout("11")
-		;---------------
-		Switch $Map[$what][$x_new + $g_dirX][$y_new + $g_dirY]
-			Case $WALL ;Normal Wall
-				;		Status(0, "Ate wall", 1)
-				;		$g_endgame = True
-				;		Return
-
-			Case $SNAKE ;Normal
-				;		Status(0, "Ate self", 1)
-				;		$g_endgame = True
-				;		Return
-
-			Case $FOOD ;Normal
-				;Switch $g_turnBonus
-				;	Case 4
-				;		$g_gChange += 4
-				;		Status(0, "Turn bonus: Snake 4", 4)
-				;	Case 3
-				;		$g_gChange += 3
-				;		$g_iScore += 80
-				;		Status(0, "Turn bonus: Snake 3", 4)
-				;	Case 2
-				;		$g_gChange += 2
-				;		$g_iScore += 60
-				;		Status(0, "Turn bonus: Snake 2", 4)
-				;	Case 1
-				;		$g_gChange += 1
-				;		Status(0, "Turn bonus: Snake 1", 4)
-				;	Case Else
-				;		Status(0, "", 0)
-				;EndSwitch
-				;$g_turnBonus = $g_turnNormalStr
-				;$g_gChangeHalf = $s_gChangeBaseNormal
-
-				;Remove Food  NOT needed because  snake will over write with out looking
-				;		$g_ScoreFood += 1 ;Score of pick up a piece of Food.
-				;		AddFood()
-				;		PrevNext($x_new + $g_dirX, $y_new + $g_dirY) ;New value
-
-			Case $EMPTY ;Normal
-
-				PrevNext($x_new + $g_dirX, $y_new + $g_dirY) ;New value
-				;
-				;			Select
-				;				Case $g_gChange = 0
-				;					RemoveSnakeTest()
-
-				;				Case $g_gChange > 0 ; snake get longer don't remove end
-				;	Switch $g_gChangeHalf
-				;		Case 0
-				;					$g_gChange -= 1
-				;			$g_gChangeHalf = $s_gChangeBaseNormal
-				;		Case Else
-				;			RemoveSnakeTest() ;Same size
-				;			$g_gChangeHalf -= 1
-				;	EndSwitch
-
-				;				Case $g_gChange < 0 ; snake get shorter buy removing the end twice
-				;					$g_gChange += 1
-				;					RemoveSnakeTest() ; to keep same size
-				;					RemoveSnakeTest() ;to get one smaller
-
-				;			EndSelect
-		EndSwitch
 		;---------------
 
 	Until $g_endgame
@@ -938,10 +904,10 @@ Func ReplayDo()
 
 EndFunc   ;==>ReplayDo
 #CS INFO
-	236994 V43 8/7/2019 11:02:23 PM V42 8/2/2019 8:56:18 PM V41 7/24/2019 12:53:35 PM V40 7/18/2019 11:32:28 PM
+	204234 V45 8/8/2019 11:30:50 PM V44 8/8/2019 4:33:56 PM V43 8/7/2019 11:02:23 PM V42 8/2/2019 8:56:18 PM
 #CE
 
-;+++++++++++++++++++++++++++++++++++++++TEST
+;+++++++++++++++++++++++++++++++++++++++TEST~~
 Func TestCycle()
 	Local $a
 	Local Static $LS_SnakeLenLast = 0
@@ -1511,6 +1477,15 @@ Func StartSnake()
 	$x = Int(Random(5, $g_sx - 5))
 	$y = Int(Random(5, $g_sy - 5))
 
+	ReplayRecData(1, $x, $y)
+
+	StartSnakeLoc($x, $y)
+EndFunc   ;==>StartSnake
+#CS INFO
+	11755 V1 8/8/2019 4:33:56 PM
+#CE
+
+Func StartSnakeLoc($x, $y)
 	$x_new = $x
 	$y_new = $y
 	$Map[$prX][$x_new][$y_new] = 0
@@ -1527,9 +1502,9 @@ Func StartSnake()
 	$x_end = $x_new
 	$y_end = $y_new
 
-EndFunc   ;==>StartSnake
+EndFunc   ;==>StartSnakeLoc
 #CS INFO
-	33453 V5 6/22/2019 7:09:09 PM V4 6/6/2019 11:09:42 PM V3 6/3/2019 8:05:25 PM V2 6/3/2019 10:34:22 AM
+	29630 V6 8/8/2019 4:33:56 PM V5 6/22/2019 7:09:09 PM V4 6/6/2019 11:09:42 PM V3 6/3/2019 8:05:25 PM
 #CE
 
 ; Dirx& Diry moving to wall not like Double Back which has reserves direction
@@ -1809,13 +1784,22 @@ Func AddFood($start = False)
 			$y = Int(Random(1, $g_sy))
 		Until $Map[$what][$x][$y] = $EMPTY
 	EndIf
+	ReplayRecData(3, $x, $y)
+	MapFood($x, $y)
+
+EndFunc   ;==>AddFood
+#CS INFO
+	71982 V1 8/8/2019 11:30:50 PM
+#CE
+
+Func MapFood($x, $y)
 
 	$Map[$what][$x][$y] = $FOOD
 	GUICtrlSetImage($Map[$ctrl][$x][$y], $cFOOD)
 
-EndFunc   ;==>AddFood
+EndFunc   ;==>MapFood
 #CS INFO
-	74737 V10 6/28/2019 7:37:37 PM V9 6/24/2019 11:22:57 PM V8 6/22/2019 7:09:09 PM V7 6/3/2019 1:09:45 AM
+	8793 V11 8/8/2019 11:30:50 PM V10 6/28/2019 7:37:37 PM V9 6/24/2019 11:22:57 PM V8 6/22/2019 7:09:09 PM
 #CE
 
 Func ClearBoard()
@@ -1871,7 +1855,7 @@ Func SwapGame($b_replay)
 			GUICtrlSetState($b_replay, $GUI_HIDE)
 
 		Case $s_GameTest
-			If $g_iReplayRecInx > 0 Then ;~~
+			If $g_iReplayRecInx > 0 Then
 				GUICtrlSetState($b_replay, $GUI_SHOW)
 			Else
 				GUICtrlSetState($b_replay, $GUI_HIDE)
@@ -1883,7 +1867,7 @@ Func SwapGame($b_replay)
 	DisplayHiScore()
 EndFunc   ;==>SwapGame
 #CS INFO
-	29506 V3 8/7/2019 11:02:23 PM V2 8/2/2019 8:56:18 PM V1 6/5/2019 11:59:45 PM
+	29195 V4 8/8/2019 11:30:50 PM V3 8/7/2019 11:02:23 PM V2 8/2/2019 8:56:18 PM V1 6/5/2019 11:59:45 PM
 #CE
 
 Func DisplayHiScore()
@@ -2272,10 +2256,10 @@ Func StartForm()
 
 	Local $b_info
 
-	$b_info = GUICtrlCreateButton($ver, 50, $b, 100, 25) ;~~
+	$b_info = GUICtrlCreateButton($ver, 50, $b, 100, 25)
 
-	$b_setting = GUICtrlCreateButton("Setting", 100, 550, 75, 35) ;~~
-	$b_replay = GUICtrlCreateButton("Replay", 400, 550, 75, 35) ;~~
+	$b_setting = GUICtrlCreateButton("Setting", 100, 550, 75, 35)
+	$b_replay = GUICtrlCreateButton("Replay", 400, 550, 75, 35)
 	$b_start = GUICtrlCreateButton("GO", 270, 550, 100, 35)
 	$Checkbox1 = GUICtrlCreateCheckbox("Testing", 1, 555)
 
@@ -2328,11 +2312,12 @@ Func StartForm()
 				Return False
 
 			Case $b_replay
+				$TESTING = True
 				GUIDelete($Form1)
 				$g_fReplayPlay = True
-				$TESTING = True
 				$g_iReplayPlyInx = 0
-				Pause("Replay - still has problems.")
+				MsgBox(0, "Replay - still has problems.", "Snake start, food and movers work, many adds fail.")
+				$TESTING = False
 				Return False
 
 			Case $b_setting
@@ -2368,7 +2353,7 @@ Func StartForm()
 
 EndFunc   ;==>StartForm
 #CS INFO
-	282662 V25 8/7/2019 11:02:23 PM V24 8/5/2019 2:37:25 PM V23 8/2/2019 8:56:18 PM V22 7/24/2019 11:20:48 PM
+	284373 V27 8/8/2019 11:30:50 PM V26 8/8/2019 4:33:56 PM V25 8/7/2019 11:02:23 PM V24 8/5/2019 2:37:25 PM
 #CE
 
 ;Main
@@ -2376,4 +2361,4 @@ Main()
 
 Exit
 
-;~T ScriptFunc.exe V0.54a 15 May 2019 - 8/7/2019 11:02:23 PM
+;~T ScriptFunc.exe V0.54a 15 May 2019 - 8/8/2019 11:30:50 PM
