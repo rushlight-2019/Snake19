@@ -1,9 +1,18 @@
 	Problem: 0.58 left some testing in just in case  X & Y 3 & 4
 
+    0.71 11 Aug 2019 reverted to version 0.63
+
+	Removed 0.70 to 0.64 Works. But not the way I wanted. May put it back later.
+		Directory Version 0.70 has code and executable
+	0.70 11 Aug 2019 Replay is not right  - Reverting to 0.64  Save this version
+	0.69 9 Aug 2019 Replay - Set speed Std, 200ms, 1/2 speed, no tick
+	0.68 8 Aug 2019 Replay full speed, no tick
 	0.67 8 Aug 2019 Remove Tail, Food
 	0.66 8 Aug 2019 More replay work: Start Snake XY, Move snake
 	0.65 7 Aug 2019 Replay to Test - works but wrong
 	0.64 6 Aug 2019 Add Test game
+	Removed replaced with 0..63
+
 	0.63 5 Aug 2019 Focus Start on top
 	0.62 2 Aug 2019 Startup Buttons. -- Fix Extra Food  -- Bug at watch 3 once
 	0.61 24 Jul 2019 Score 8 to 10
