@@ -5,7 +5,7 @@ AutoItSetOption("MustDeclareVars", 1)
 ;Global Static $MESSAGE =  False   ;Pause will still work in script  No DataOut
 
 ; Must be Declared before _Prf_startup
-Global $ver = "0.71 11 Aug 2019 reverted to version 0.63"
+Global $ver = "0.72 12 Aug 2019 Setting: Size"
 Global $ini_ver = "5" ;12 Aug 2019 Revert to 0.63
 ;"4" ;24 Jul 2019 8 to 10
 ;"3" ;15 Jul 2019 Timing changes
@@ -17,7 +17,7 @@ Global $ini_ver = "5" ;12 Aug 2019 Revert to 0.63
 #include "R:\!Autoit\Blank\_prf_startup.au3"
 
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
-#AutoIt3Wrapper_Res_Fileversion=0.0.7.1
+#AutoIt3Wrapper_Res_Fileversion=0.0.7.2
 #AutoIt3Wrapper_Icon=R:\!Autoit\Ico\prf.ico
 #AutoIt3Wrapper_Res_Description=Another snake game
 #AutoIt3Wrapper_Res_LegalCopyright=© Phillip Forrestal 2019
@@ -81,6 +81,7 @@ Global $ini_ver = "5" ;12 Aug 2019 Revert to 0.63
 	Color select
 	Size
 
+	0.72 12 Aug 2019 Setting: Size
 	0.71 11 Aug 2019 reverted to version 0.63
 
 	Removed 0.70 to 0.64 Works. But not the way I wanted. May put it back later.
@@ -240,9 +241,14 @@ Static $MaxLost = 10 ;   5 to 10
 Global $g_first = True
 Global $g_sx = 50
 Global $g_sy = 40
-Global $g_bx = $g_sx + 2
-Global $g_by = $g_sy + 2
+Global $g_boardx = $g_sx + 2
+Global $g_boardy = $g_sy + 2
 Global $g_ctrlBoard = -1
+
+Global $g_Size = 16 ; max?20 ;min = 10
+Global $g_Font = 24
+
+ReadIni()
 
 ;Map
 ;Column 1
@@ -253,7 +259,7 @@ Static $prY = 3 ;	3 = previous Y
 Static $nxX = 4 ;	4 = next X
 Static $nxY = 5 ;	5 = next Y
 Static $num = 6 ;	6 = snake cell number
-Global $Map[7][$g_bx][$g_by]
+Global $Map[7][$g_boardx][$g_boardy]
 ;$Map[$what][x][y]
 
 Global $g_SnakeCount
@@ -265,9 +271,6 @@ Global $y_end
 Global $g_foodCnt = 1
 
 Global $g_hTick
-
-Global $g_Size = 16 ; max?20 ;min = 10
-Global $g_Font = 24
 
 Global $g_Status[4]
 Global $g_StatusText[4]
@@ -427,7 +430,7 @@ Func Game()
 		$b = $g_Font * 2
 		SayClearBoard(True)
 
-		$g_ctrlBoard = GUICreate("Snake19 - " & $ver, $g_bx * $g_Size, $g_by * $g_Size + $b + 2)
+		$g_ctrlBoard = GUICreate("Snake19 - " & $ver, $g_boardx * $g_Size, $g_boardy * $g_Size + $b + 2)
 
 		MouseMove(0, 0, 0)
 
@@ -438,10 +441,10 @@ Func Game()
 		$L_idEsc = GUICtrlCreateDummy()
 		GUISetState(@SW_SHOW, $g_ctrlBoard)
 
-		For $y = 0 To $g_by - 1
-			For $x = 0 To $g_bx - 1
+		For $y = 0 To $g_boardy - 1
+			For $x = 0 To $g_boardx - 1
 				Select
-					Case $x = 0 Or $x = $g_bx - 1 Or $y = 0 Or $y = $g_by - 1
+					Case $x = 0 Or $x = $g_boardx - 1 Or $y = 0 Or $y = $g_boardy - 1
 						$Map[$what][$x][$y] = $WALL ;outside edge
 						$a = $cEDGE
 					Case Else
@@ -453,7 +456,7 @@ Func Game()
 		Next
 		$NotFirstPass = False
 
-		$a = ($g_bx * $g_Size) / 2 ;Half way
+		$a = ($g_boardx * $g_Size) / 2 ;Half way
 		$b = $a - $g_Size ; len  = half - $g_size (half of it at both ends)
 		; Start both 1) ($g_size/2)  2) half +($g_size/2)
 
@@ -615,7 +618,7 @@ Func Game()
 
 EndFunc   ;==>Game
 #CS INFO
-	317080 V43 8/11/2019 11:35:36 PM V42 8/2/2019 8:56:18 PM V41 7/24/2019 12:53:35 PM V40 7/18/2019 11:32:28 PM
+	320034 V44 8/12/2019 11:06:11 AM V43 8/11/2019 11:35:36 PM V42 8/2/2019 8:56:18 PM V41 7/24/2019 12:53:35 PM
 #CE
 
 Func Tick() ;
@@ -1449,10 +1452,10 @@ Func ClearBoard()
 
 	SayClearBoard(True, False)
 
-	For $y = 0 To $g_by - 1
-		For $x = 0 To $g_bx - 1
+	For $y = 0 To $g_boardy - 1
+		For $x = 0 To $g_boardx - 1
 			Select
-				Case $x = 0 Or $x = $g_bx - 1 Or $y = 0 Or $y = $g_by - 1
+				Case $x = 0 Or $x = $g_boardx - 1 Or $y = 0 Or $y = $g_boardy - 1
 					$Map[$what][$x][$y] = $WALL ;outside edge  does need to change picture
 					;$var = $cEDGE
 				Case Else
@@ -1471,7 +1474,7 @@ Func ClearBoard()
 
 EndFunc   ;==>ClearBoard
 #CS INFO
-	36469 V15 7/13/2019 3:59:17 PM V14 7/8/2019 1:00:13 AM V13 7/6/2019 6:24:29 PM V12 7/5/2019 4:03:49 PM
+	38157 V16 8/12/2019 11:06:11 AM V15 7/13/2019 3:59:17 PM V14 7/8/2019 1:00:13 AM V13 7/6/2019 6:24:29 PM
 #CE
 
 Func NormalPoop()
@@ -1811,7 +1814,7 @@ EndFunc   ;==>Sum
 
 Func StartForm()
 	Local $Form1, $Group1
-	Local $Radio3, $Checkbox1, $b_start,  $b_setting
+	Local $Radio3, $Checkbox1, $b_start, $b_setting
 	Local $nMsg
 	Local $a = 260
 	Local $b = 50
@@ -1850,7 +1853,7 @@ Func StartForm()
 	Next
 
 	$b_setting = GUICtrlCreateButton("Setting", 100, 550, 75, 35) ;~~
-	 GUICtrlCreateButton("?????", 400, 550, 75, 35) ;~~
+	GUICtrlCreateButton("?????", 400, 550, 75, 35) ;~~
 	$b_start = GUICtrlCreateButton("GO", 270, 550, 100, 35)
 	$Checkbox1 = GUICtrlCreateCheckbox("Testing", 1, 555)
 
@@ -1894,8 +1897,7 @@ Func StartForm()
 				Return False
 
 			Case $b_setting
-				$TESTING = True
-				Pause("Setting - still has problems.", "Like no code added")
+				Settings()
 
 			Case $Radio1 ;Normal
 				$g_GameWhich = 0
@@ -1916,7 +1918,106 @@ Func StartForm()
 
 EndFunc   ;==>StartForm
 #CS INFO
-	211285 V25 8/11/2019 11:35:36 PM V24 8/5/2019 2:37:25 PM V23 8/2/2019 8:56:18 PM V22 7/24/2019 11:20:48 PM
+	206309 V26 8/12/2019 11:06:11 AM V25 8/11/2019 11:35:36 PM V24 8/5/2019 2:37:25 PM V23 8/2/2019 8:56:18 PM
+#CE
+
+Func Settings()
+	Local $Setting, $y
+
+	$Setting = GUICreate("Change Setting", 615, 125, 577, 345)
+	GUICtrlCreateLabel("Settings ", 296, 8, 75, 28)
+	GUICtrlSetFont(-1, 14, 400, 0, "MS Sans Serif")
+	Local $ScreenSize = GUICtrlCreateButton("Screen Size", 32, 48, 153, 41)
+	;	Local $BackupDays = GUICtrlCreateButton("Backup days", 248, 48, 129, 41)
+	;	Local $Button3 = GUICtrlCreateButton("Button3", 432, 40, 145, 49)
+	GUISetState(@SW_SHOW)
+
+	While 1
+
+		Local $nMsg = GUIGetMsg()
+		Switch $nMsg
+			Case $GUI_EVENT_CLOSE
+				GUIDelete($Setting)
+				ExitLoop
+			Case $ScreenSize
+				ScreenSize()
+
+		EndSwitch
+	WEnd
+
+	GUIDelete($Setting)
+EndFunc   ;==>Settings
+#CS INFO
+	45171 V1 8/12/2019 11:06:11 AM
+#CE
+
+Func ScreenSize()
+	Local $sInputBoxAnswer, $keep, $s, $mathW, $mathH, $Math
+
+	$keep = $g_Size
+	$mathW = Int(@DesktopWidth / $g_boardx) - 1
+	$mathH = Int((@DesktopHeight - ($g_Font * 2)) / $g_boardy) - 1
+
+	dataout($g_boardx, ($g_boardy + ($g_Font * 2)))
+	dataout($mathW, $mathH)
+
+	If $mathW > $mathH Then
+		$Math = $mathH
+	Else
+		$Math = $mathW
+	EndIf
+
+	$s = "Default side is 16."
+	$s &= @CRLF & "Current cell size: " & $g_Size & @CRLF & "Desktop screen size: " & @DesktopHeight & "x" & @DesktopWidth & @CRLF & "Maximum cell size: "
+	$s &= $Math & @CRLF & @CRLF & "Use Maximum cell size or enter a smaller size."
+
+	;$g_ctrlBoard = GUICreate("Snake19 - " & $ver, $g_boardx * $g_Size, $g_boardy * $g_Size + $g_Font * 2 + 2)
+
+	$sInputBoxAnswer = Int(InputBox("Cell size", $s, $Math))
+	Select
+		Case @error = 0 ;OK - The string returned is valid
+
+			If $sInputBoxAnswer <= $Math Then
+				If $sInputBoxAnswer < 10 Then
+					$sInputBoxAnswer = 10
+				EndIf
+				$g_Size = Int($sInputBoxAnswer)
+			Else
+				$g_Size = $Math
+			EndIf
+			If $g_Size <> $keep Then
+				IniWrite($s_ini, "General", "SizeCell", $g_Size)
+				Sleep(500)
+
+				If @Compiled Then
+					Run(@ScriptFullPath)
+					Exit
+				Else
+					Pause("Compile it would restart the program")
+				EndIf
+				Exit
+			EndIf
+	EndSelect
+EndFunc   ;==>ScreenSize
+#CS INFO
+	89895 V1 8/12/2019 11:06:11 AM
+#CE
+
+; Read INI setting
+Func ReadIni()
+	Local $i
+	Local $a, $c
+
+	;SizeCell  default 16
+	$g_Size = Int(IniRead($s_ini, "General", "SizeCell", 0))
+	If $g_Size = 0 Then
+		IniWrite($s_ini, "General", "SizeCell", 16)
+		$g_Size = 16
+	EndIf
+
+EndFunc   ;==>ReadIni
+#CS INFO
+	15995 V1 8/12/2019 11:06:11 AM
 #CE
 
 ;Main
@@ -1924,4 +2025,4 @@ Main()
 
 Exit
 
-;~T ScriptFunc.exe V0.54a 15 May 2019 - 8/11/2019 11:35:36 PM
+;~T ScriptFunc.exe V0.54a 15 May 2019 - 8/12/2019 11:06:11 AM
