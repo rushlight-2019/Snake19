@@ -1,5 +1,7 @@
 	Problem: 0.58 left some testing in just in case  X & Y 3 & 4
 
+	0.74 16 Aug 2019 Setting: Color Works
+	0.73 15 Aug 2019 Setting: Color  - Screen size change
 	0.72 12 Aug 2019 Setting: Size
     0.71 11 Aug 2019 reverted to version 0.63
 

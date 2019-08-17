@@ -5,8 +5,9 @@ AutoItSetOption("MustDeclareVars", 1)
 ;Global Static $MESSAGE =  False   ;Pause will still work in script  No DataOut
 
 ; Must be Declared before _Prf_startup
-Global $ver = "0.72 12 Aug 2019 Setting: Size"
-Global $ini_ver = "5" ;12 Aug 2019 Revert to 0.63
+Global $ver = "0.74 16 Aug 2019 Setting: Color"
+Global $ini_ver = "6" ;Screen size change
+;"5" ;12 Aug 2019 Revert to 0.63
 ;"4" ;24 Jul 2019 8 to 10
 ;"3" ;15 Jul 2019 Timing changes
 ;"2" ;5 Jul 2019 removed Len and add Max in extra
@@ -17,7 +18,7 @@ Global $ini_ver = "5" ;12 Aug 2019 Revert to 0.63
 #include "R:\!Autoit\Blank\_prf_startup.au3"
 
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
-#AutoIt3Wrapper_Res_Fileversion=0.0.7.2
+#AutoIt3Wrapper_Res_Fileversion=0.0.7.4
 #AutoIt3Wrapper_Icon=R:\!Autoit\Ico\prf.ico
 #AutoIt3Wrapper_Res_Description=Another snake game
 #AutoIt3Wrapper_Res_LegalCopyright=© Phillip Forrestal 2019
@@ -79,8 +80,9 @@ Global $ini_ver = "5" ;12 Aug 2019 Revert to 0.63
 
 	Setting
 	Color select
-	Size
 
+	0.74 16 Aug 2019 Setting: Color Works
+	0.73 15 Aug 2019 Setting: Color  - Screen size change
 	0.72 12 Aug 2019 Setting: Size
 	0.71 11 Aug 2019 reverted to version 0.63
 
@@ -239,13 +241,14 @@ Static $MaxLost = 10 ;   5 to 10
 
 ;Global
 Global $g_first = True
-Global $g_sx = 50
-Global $g_sy = 40
+Global $g_sx = 40 ;50
+Global $g_sy = 30 ;40
 Global $g_boardx = $g_sx + 2
 Global $g_boardy = $g_sy + 2
 Global $g_ctrlBoard = -1
 
-Global $g_Size = 16 ; max?20 ;min = 10
+Global $g_Size = 22 ; max?20 ;min = 10
+Global $g_sizeDef = $g_Size
 Global $g_Font = 24
 
 ReadIni()
@@ -373,16 +376,17 @@ Func Main()
 	EndIf
 	IniWrite($s_ini, "Program", "Version", $ver)
 
-	If False Then
-		pause(@AppDataDir)
-		pause()
-		pause(@LocalAppDataDir)
-		pause(@ProgramsDir)
-		pause(@UserProfileDir)
-		pause(@StartMenuDir)
-		;pause(@DesktopCommonDir)
-	EndIf
+	;	If False Then
+	;		pause(@AppDataDir)
+	;		pause()
+	;		pause(@LocalAppDataDir)
+	;		pause(@ProgramsDir)
+	;		pause(@UserProfileDir)
+	;		pause(@StartMenuDir)
+	;		pause(@DesktopCommonDir)
+	;	EndIf
 
+	;Check to see if color files exist, if not create them.
 	CheckJpg()
 
 	;Check Version of INI if wrong version delete Hi Scores
@@ -409,7 +413,7 @@ Func Main()
 
 EndFunc   ;==>Main
 #CS INFO
-	86686 V26 8/2/2019 8:56:18 PM V25 7/14/2019 10:10:20 PM V24 7/14/2019 10:20:53 AM V23 7/13/2019 7:20:00 PM
+	91769 V28 8/16/2019 10:06:14 PM V27 8/16/2019 8:51:46 AM V26 8/2/2019 8:56:18 PM V25 7/14/2019 10:10:20 PM
 #CE
 
 Func Game()
@@ -1716,100 +1720,76 @@ EndFunc   ;==>SayClearBoard
 	59050 V1 6/27/2019 5:39:48 PM
 #CE
 
+;Check to see if color files exist, if not create them.
 Func CheckJpg()
-	Local $hGUI
-	$hGUI = GUICreate("", 100, 100)
 
-	CheckColorJpg("Snake", 0xfc8c04, $hGUI)
-	CheckColorJpg("Edge", 0x989898, $hGUI)
-	CheckColorJpg("Empty", 0x000000, $hGUI)
-	CheckColorJpg("Head", 0xFFFFFF, $hGUI)
+	CheckColorJpg("Snake", 0xfc8c04)
+	CheckColorJpg("Edge", 0x989898)
+	CheckColorJpg("Empty", 0x000000)
+	CheckColorJpg("Head", 0xFFFFFF)
 
-	CheckColorJpg("Dead", 0xA42C2C, $hGUI)
-	CheckColorJpg("Poop", 0x9C5404, $hGUI)
-	CheckColorJpg("Food", 0x20CC1C, $hGUI)
+	CheckColorJpg("Dead", 0xA42C2C)
+	CheckColorJpg("Poop", 0x9C5404)
+	CheckColorJpg("Food", 0x20CC1C)
 
-	GUIDelete($hGUI)
 EndFunc   ;==>CheckJpg
 #CS INFO
-	26680 V2 7/14/2019 10:10:20 PM V1 7/14/2019 10:20:53 AM
+	19873 V3 8/16/2019 8:51:46 AM V2 7/14/2019 10:10:20 PM V1 7/14/2019 10:20:53 AM
 #CE
 
-Func CheckColorJpg($filename, $color, $hform) ; $color is only the default color if INI color then use it.
-	Local $sum
+;Check to see if color files exist, if not create them.
+;Does a sum check to make sure they haven't change
+;Might remove sum check.
+Func CheckColorJpg($filename, $color) ; $color is only the default color if INI color then use it.
+	Local $a
+
+	$a = IniRead($s_ini, "Color", $filename, "X")
 
 	If FileExists($s_data & "\" & $filename & ".jpg") = 0 Then ;Not found
-		CreateColorJpg($filename, $color, $hform)
+
+		If $a <> "X" Then ; if INI exist then use INI
+			$color = $a
+		EndIf
+		CreateColorJpg($filename, $color)
 		Return
 	EndIf
 
-	If IniRead($s_ini, "Color", $filename, "X") = "X" Then ;COLOR in INI does not exist use $color
-		CreateColorJpg($filename, $color, $hform)
+	If $a = "X" Then ;COLOR in INI does not exist use $color
+		CreateColorJpg($filename, $color)
 		Return
 	EndIf
-
-	$color = IniRead($s_ini, "Color", $filename, "X") ;use COLOR in INI if create pass here.
-	$sum = Int(IniRead($s_ini, "Sum", $filename, 0))
-
-	If $sum = Sum($filename) Then ;same exit
-		Return
-	EndIf
-	; Sum not equal recreate.
-	CreateColorJpg($filename, $color, $hform)
 
 EndFunc   ;==>CheckColorJpg
 #CS INFO
-	53308 V2 7/14/2019 10:10:20 PM V1 7/14/2019 10:20:53 AM
+	35567 V3 8/16/2019 8:51:46 AM V2 7/14/2019 10:10:20 PM V1 7/14/2019 10:20:53 AM
 #CE
 
-Func CreateColorJpg($filename, $color, $hform)
-	Local $sum, $a
+;Create Color file and write INI
+Func CreateColorJpg($filename, $color)
+	Local $a
 	Local $handle, $err
 	Local $tRECT
-	GUISetState(@SW_SHOW, $hform)
+	Local $hGUI
+
+	$hGUI = GUICreate("", 100, 100)
+	GUISetState(@SW_SHOW, $hGUI)
 
 	; create, sumchk, store in ini Color Filename
-	GUISetBkColor($color, $hform)
+	GUISetBkColor($color, $hGUI)
 	Sleep(250)
-	_ScreenCapture_CaptureWnd($s_data & "\" & $filename & ".jpg", $hform, 30, 30, 30 + 25, 30 + 25, False)
+	_ScreenCapture_CaptureWnd($s_data & "\" & $filename & ".jpg", $hGUI, 30, 30, 30 + 25, 30 + 25, False)
 	If @error <> 0 Then ;Failed
 		MsgBox(0, "ERROR", "Color Jpg could not be created " & $filename)
 		Exit
 	EndIf
 
-	$sum = Sum($filename)
-
 	IniWrite($s_ini, "Color", $filename, "0x" & Hex($color, 6))
-	IniWrite($s_ini, "Sum", $filename, $sum)
+
+	GUIDelete($hGUI)
 
 EndFunc   ;==>CreateColorJpg
 #CS INFO
-	43159 V2 7/14/2019 10:10:20 PM V1 7/14/2019 10:20:53 AM
-#CE
-
-Func Sum($filename)
-	Local $handle, $sum, $a, $err
-
-	$handle = FileOpen($s_data & "\" & $filename & ".jpg", $FO_BINARY)
-	If $handle = -1 Then
-		MsgBox($MB_SYSTEMMODAL, "", "An error occurred when reading the file.")
-		Exit
-	EndIf
-	$sum = 0
-
-	$a = FileRead($handle, 1)
-	$err = @extended
-	While @extended = 1
-		$sum += Number($a, 1)
-		$a = FileRead($handle, 1)
-		$err = @extended
-
-	WEnd
-	FileClose($handle)
-	Return $sum
-EndFunc   ;==>Sum
-#CS INFO
-	30111 V1 7/14/2019 10:20:53 AM
+	40503 V3 8/16/2019 8:51:46 AM V2 7/14/2019 10:10:20 PM V1 7/14/2019 10:20:53 AM
 #CE
 
 Func StartForm()
@@ -1853,9 +1833,9 @@ Func StartForm()
 	Next
 
 	$b_setting = GUICtrlCreateButton("Setting", 100, 550, 75, 35) ;~~
-	GUICtrlCreateButton("?????", 400, 550, 75, 35) ;~~
+	;GUICtrlCreateButton("?????", 400, 550, 75, 35) ;~~
 	$b_start = GUICtrlCreateButton("GO", 270, 550, 100, 35)
-	$Checkbox1 = GUICtrlCreateCheckbox("Testing", 1, 555)
+	;$Checkbox1 = GUICtrlCreateCheckbox("Testing", 1, 555)
 
 	Local $Edit1 = GUICtrlCreateEdit("", 20, $b, 550, 230, $ES_READONLY)
 	GUICtrlSetFont($Edit1, 10, 400, 0, "Arial")
@@ -1907,10 +1887,10 @@ Func StartForm()
 				$g_GameWhich = 1
 				NormalExtra()
 
-			Case $Checkbox1 ;debug
+				;Case $Checkbox1 ;debug
 
-				$TESTING = BitAND(GUICtrlRead($Checkbox1), $GUI_CHECKED) = $GUI_CHECKED
-				DataOut($TESTING)
+				;$TESTING = BitAND(GUICtrlRead($Checkbox1), $GUI_CHECKED) = $GUI_CHECKED
+				;DataOut($TESTING)
 
 		EndSwitch
 	WEnd
@@ -1918,7 +1898,7 @@ Func StartForm()
 
 EndFunc   ;==>StartForm
 #CS INFO
-	206309 V26 8/12/2019 11:06:11 AM V25 8/11/2019 11:35:36 PM V24 8/5/2019 2:37:25 PM V23 8/2/2019 8:56:18 PM
+	206604 V27 8/16/2019 8:51:46 AM V26 8/12/2019 11:06:11 AM V25 8/11/2019 11:35:36 PM V24 8/5/2019 2:37:25 PM
 #CE
 
 Func Settings()
@@ -1927,9 +1907,9 @@ Func Settings()
 	$Setting = GUICreate("Change Setting", 615, 125, 577, 345)
 	GUICtrlCreateLabel("Settings ", 296, 8, 75, 28)
 	GUICtrlSetFont(-1, 14, 400, 0, "MS Sans Serif")
-	Local $ScreenSize = GUICtrlCreateButton("Screen Size", 32, 48, 153, 41)
-	;	Local $BackupDays = GUICtrlCreateButton("Backup days", 248, 48, 129, 41)
-	;	Local $Button3 = GUICtrlCreateButton("Button3", 432, 40, 145, 49)
+	Local $b_ScreenSize = GUICtrlCreateButton("Screen Size", 32, 48, 100, 40)
+	Local $b_Color = GUICtrlCreateButton("Colors", 248, 48, 100, 40)
+	;	Local $Button3 = GUICtrlCreateButton("Button3", 432, 40, 100, 40)
 	GUISetState(@SW_SHOW)
 
 	While 1
@@ -1939,16 +1919,17 @@ Func Settings()
 			Case $GUI_EVENT_CLOSE
 				GUIDelete($Setting)
 				ExitLoop
-			Case $ScreenSize
+			Case $b_ScreenSize
 				ScreenSize()
-
+			Case $b_Color
+				ChooseColor()
 		EndSwitch
 	WEnd
 
 	GUIDelete($Setting)
 EndFunc   ;==>Settings
 #CS INFO
-	45171 V1 8/12/2019 11:06:11 AM
+	47080 V2 8/16/2019 8:51:46 AM V1 8/12/2019 11:06:11 AM
 #CE
 
 Func ScreenSize()
@@ -1967,7 +1948,7 @@ Func ScreenSize()
 		$Math = $mathW
 	EndIf
 
-	$s = "Default side is 16."
+	$s = "Default side is " & $g_sizeDef
 	$s &= @CRLF & "Current cell size: " & $g_Size & @CRLF & "Desktop screen size: " & @DesktopHeight & "x" & @DesktopWidth & @CRLF & "Maximum cell size: "
 	$s &= $Math & @CRLF & @CRLF & "Use Maximum cell size or enter a smaller size."
 
@@ -2000,7 +1981,7 @@ Func ScreenSize()
 	EndSelect
 EndFunc   ;==>ScreenSize
 #CS INFO
-	89895 V1 8/12/2019 11:06:11 AM
+	90732 V2 8/16/2019 8:51:46 AM V1 8/12/2019 11:06:11 AM
 #CE
 
 ; Read INI setting
@@ -2011,13 +1992,146 @@ Func ReadIni()
 	;SizeCell  default 16
 	$g_Size = Int(IniRead($s_ini, "General", "SizeCell", 0))
 	If $g_Size = 0 Then
-		IniWrite($s_ini, "General", "SizeCell", 16)
-		$g_Size = 16
+		IniWrite($s_ini, "General", "SizeCell", $g_sizeDef)
+		$g_Size = $g_sizeDef
 	EndIf
 
 EndFunc   ;==>ReadIni
 #CS INFO
-	15995 V1 8/12/2019 11:06:11 AM
+	17685 V2 8/16/2019 8:51:46 AM V1 8/12/2019 11:06:11 AM
+#CE
+
+Func ChooseColor()
+	Local $Which = 1
+	Local $a, $color, $y
+	Local $r_what[8][5]
+	Local $Form1 = GUICreate("Colors", 150, 600)
+	GUISetState(@SW_SHOW)
+
+	Local $Group1 = GUIStartGroup()
+
+	$r_what[1][0] = GUICtrlCreateRadio("Background", 40, 20, 113, 17)
+	$r_what[2][0] = GUICtrlCreateRadio("Edge", 40, 40, 113, 17)
+	$r_what[3][0] = GUICtrlCreateRadio("Snake Head", 40, 70, 113, 17)
+	$r_what[4][0] = GUICtrlCreateRadio("Snake", 40, 90, 113, 17)
+	$r_what[5][0] = GUICtrlCreateRadio("Food", 40, 110, 113, 17)
+	$r_what[6][0] = GUICtrlCreateRadio("Dead snake", 40, 140, 113, 17)
+	$r_what[7][0] = GUICtrlCreateRadio("Snake Poop", 40, 160, 113, 17)
+
+	GUICtrlCreateLabel("Default Color", 40, 200)
+	Local $b_default = GUICtrlCreateButton("", 40, 220, 50, 50)
+	GUICtrlCreateLabel("Current", 40, 300)
+	Local $b_current = GUICtrlCreateButton("", 40, 320, 50, 50)
+	GUICtrlCreateLabel("Change", 40, 400)
+	Local $b_change = GUICtrlCreateButton("", 40, 420, 50, 50)
+
+	Local $e_value = GUICtrlCreateInput("FFFFFF", 30, 480, 60, 20)
+	GUICtrlSetFont(-1, 10, 900, 0, "Arial")
+
+	Local $b_save = GUICtrlCreateButton(" Save ", 40, 530) ;, 50, 50)
+
+	GUISetState(@SW_SHOW)
+
+	$a = IniReadSection($s_ini, "Color")
+
+	For $x = 1 To 7
+		Select
+			Case $a[$x][0] = "Empty"
+				$y = 1
+				$r_what[$y][1] = $a[$x][0]
+				$r_what[$y][2] = 0x000000
+				$r_what[$y][3] = $a[$x][1]
+				$r_what[$y][4] = $a[$x][1]
+			Case $a[$x][0] = "Edge"
+				$y = 2
+				$r_what[$y][1] = $a[$x][0]
+				$r_what[$y][2] = 0x989898
+				$r_what[$y][3] = $a[$x][1]
+				$r_what[$y][4] = $a[$x][1]
+			Case $a[$x][0] = "Head"
+				$y = 3
+				$r_what[$y][1] = $a[$x][0]
+				$r_what[$y][2] = 0xFFFFFF
+				$r_what[$y][3] = $a[$x][1]
+				$r_what[$y][4] = $a[$x][1]
+			Case $a[$x][0] = "Snake"
+				$y = 4
+				$r_what[$y][1] = $a[$x][0]
+				$r_what[$y][2] = 0xfc8c04
+				$r_what[$y][3] = $a[$x][1]
+				$r_what[$y][4] = $a[$x][1]
+			Case $a[$x][0] = "Food"
+				$y = 5
+				$r_what[$y][1] = $a[$x][0]
+				$r_what[$y][2] = 0x20CC1C
+				$r_what[$y][3] = $a[$x][1]
+				$r_what[$y][4] = $a[$x][1]
+			Case $a[$x][0] = "Dead"
+				$y = 6
+				$r_what[$y][1] = $a[$x][0]
+				$r_what[$y][2] = 0xA42C2C
+				$r_what[$y][3] = $a[$x][1]
+				$r_what[$y][4] = $a[$x][1]
+			Case $a[$x][0] = "Poop"
+				$y = 7
+				$r_what[$y][1] = $a[$x][0]
+				$r_what[$y][2] = 0x9C5404
+				$r_what[$y][3] = $a[$x][1]
+				$r_what[$y][4] = $a[$x][1]
+
+		EndSelect
+	Next
+
+	$Which = 1
+
+	GUICtrlSetState($r_what[$Which][0], $GUI_CHECKED)
+	GUICtrlSetBkColor($b_default, $r_what[$Which][2])
+	GUICtrlSetBkColor($b_current, $r_what[$Which][3])
+	GUICtrlSetBkColor($b_change, $r_what[$Which][4])
+	GUICtrlSetData($e_value, Hex($r_what[$Which][4], 6))
+
+	While 1
+		Local $nMsg = GUIGetMsg()
+
+		For $x = 1 To 7
+			If $r_what[$x][0] = $nMsg Then
+				GUICtrlSetState($r_what[$x][0], $GUI_CHECKED)
+				$Which = $x
+				GUICtrlSetBkColor($b_default, $r_what[$Which][2])
+				GUICtrlSetBkColor($b_current, $r_what[$Which][3])
+				GUICtrlSetBkColor($b_change, $r_what[$Which][4])
+				GUICtrlSetData($e_value, Hex($r_what[$Which][4], 6))
+				ContinueLoop 2
+			EndIf
+		Next
+
+		Switch $nMsg
+			Case $GUI_EVENT_CLOSE
+				ExitLoop
+
+			Case $b_default
+				$r_what[$Which][4] = $r_what[$Which][2]
+				GUICtrlSetBkColor($b_change, $r_what[$Which][2])
+				GUICtrlSetData($e_value, Hex($r_what[$Which][2], 6))
+			Case $b_current
+				$r_what[$Which][4] = $r_what[$Which][3]
+				GUICtrlSetBkColor($b_change, $r_what[$Which][3])
+				GUICtrlSetData($e_value, Hex($r_what[$Which][3], 6))
+			Case $b_change
+				$r_what[$Which][4] = _ChooseColor(2, $r_what[$Which][4], 2, $Form1)
+				GUICtrlSetBkColor($b_change, $r_what[$Which][4])
+				GUICtrlSetData($e_value, Hex($r_what[$Which][4], 6))
+			Case $b_save
+				$r_what[$Which][3] = $r_what[$Which][4]
+				GUICtrlSetBkColor($b_current, $r_what[$Which][3])
+				CreateColorJpg($r_what[$Which][1], $r_what[$Which][3])
+
+		EndSwitch
+	WEnd
+	GUIDelete($Form1)
+EndFunc   ;==>ChooseColor
+#CS INFO
+	284852 V2 8/16/2019 10:06:14 PM V1 8/16/2019 8:51:46 AM
 #CE
 
 ;Main
@@ -2025,4 +2139,4 @@ Main()
 
 Exit
 
-;~T ScriptFunc.exe V0.54a 15 May 2019 - 8/12/2019 11:06:11 AM
+;~T ScriptFunc.exe V0.54a 15 May 2019 - 8/16/2019 10:06:14 PM
