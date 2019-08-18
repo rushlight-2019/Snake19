@@ -5,7 +5,7 @@ AutoItSetOption("MustDeclareVars", 1)
 ;Global Static $MESSAGE =  False   ;Pause will still work in script  No DataOut
 
 ; Must be Declared before _Prf_startup
-Global $ver = "0.74 16 Aug 2019 Setting: Color"
+Global $ver = "0.75 18 Aug 2019 Extra - Hunger"
 Global $ini_ver = "6" ;Screen size change
 ;"5" ;12 Aug 2019 Revert to 0.63
 ;"4" ;24 Jul 2019 8 to 10
@@ -18,7 +18,7 @@ Global $ini_ver = "6" ;Screen size change
 #include "R:\!Autoit\Blank\_prf_startup.au3"
 
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
-#AutoIt3Wrapper_Res_Fileversion=0.0.7.4
+#AutoIt3Wrapper_Res_Fileversion=0.0.7.5
 #AutoIt3Wrapper_Icon=R:\!Autoit\Ico\prf.ico
 #AutoIt3Wrapper_Res_Description=Another snake game
 #AutoIt3Wrapper_Res_LegalCopyright=© Phillip Forrestal 2019
@@ -81,6 +81,7 @@ Global $ini_ver = "6" ;Screen size change
 	Setting
 	Color select
 
+	0.75 18 Aug 2019 Extra - Hunger
 	0.74 16 Aug 2019 Setting: Color Works
 	0.73 15 Aug 2019 Setting: Color  - Screen size change
 	0.72 12 Aug 2019 Setting: Size
@@ -170,37 +171,6 @@ Global $ini_ver = "6" ;Screen size change
 	0.01 28 May 2019 Start form
 	Version end
 
-	Start of Game
-	$HungerStr  =30
-	Goes down 1 of each 100 snake length created.
-	$HungerSnake =0
-	Lowest is 20
-
-	Start
-	$HungerStr  =30
-	$HungerSnake=0
-	$HungerCycle=$HungerStr
-	$HungerCnt = 0
-
-	Each Food
-	$HungerCycle=$HungerStr
-	$HungerCnt = 0
-
-	Add Snake
-	Each Hunger Time off goes up 1  Max value is 10
-	$HungerCycle  -1
-	$HungerCycle=$HungerStr - $HungerCnt
-	$HungerSnake +1
-	$HungerSnake  = 100 then
-	$HungerStr  -1
-	Lowest vaule is 20
-	$HungerSnake = 0
-
-	$HungerStr  =30
-	$HungerSnake =0
-	$HungerCycle=$HungerStr
-	$HungerCnt
-
 #ce ----------------------------------------------------------------------------
 
 ;StringFormat
@@ -237,7 +207,7 @@ Static $cDEAD = $s_data & "\Dead.jpg"
 Static $POOP = 5
 Static $cPOOP = $s_data & "\Poop.jpg"
 
-Static $MaxLost = 10 ;   5 to 10
+Static $MaxLost = 7 ;   5 to 10
 
 ;Global
 Global $g_first = True
@@ -325,15 +295,9 @@ Global $g_gChangeHalf
 Static $s_gChangeBaseExtra = 5
 Static $s_gChangeBaseNormal = 10
 
-;Global $g_gHunger
-;Global $g_gHungerCnt
-;Static $g_gHungerStr = 30
+Global $g_turnNo ; Keyboard turn number
+Global $g_turnLast ;Keyboard turn number last to see it a turn was made.
 
-Global $g_turnBonus
-Static $g_turnExtraStr = 6
-Static $g_turnNormalStr = 3
-Global $g_turnNo
-Global $g_turnLast
 Global $g_dirX
 Global $g_dirY
 
@@ -349,10 +313,10 @@ Global $timingCnt = -0
 ;0.35
 Global $BounceWall = False
 
-;0.40
-Global $HungerStr = ($g_sx + $g_sy) / 2
-Global $HungerSnake = 0
-Global $HungerCycle = $HungerStr
+;0.40 0.75
+Global $g_Turns
+Static $g_turnNormalStr = 3
+
 Global $HungerCnt = 0
 
 ;0.51
@@ -360,6 +324,9 @@ Global $g_Ouch = 0 ;Ate Dead snake 2 or 1, 0 no   Set to 2 because b4 next check
 
 ;0.55
 Global $g_tc ; move to score
+
+;0.75
+Global $g_HungeryLast
 
 ; Main is call at end
 Func Main()
@@ -525,9 +492,6 @@ Func Game()
 	$g_tc = "??"
 
 	;0.40
-	$HungerStr = ($g_sx + $g_sy) / 2
-	$HungerSnake = 0
-	$HungerCycle = $HungerStr
 	$HungerCnt = 0
 
 	; Size can be zero at the begin so once size is > 0 then hunger is active.
@@ -539,12 +503,13 @@ Func Game()
 
 	Switch $g_GameWhich
 		Case 1 ;extra
-			$g_gChange = 4 ;Start with 5 so snake will not die at start
-			$g_turnBonus = $g_turnExtraStr + 1 ; The way it start with 1 turn on start. To fix start with +1
-
+			$g_gChange = 2 ;Start with 5 so snake will not die at start
+			$g_Turns = -1 ; The way it start with 1 turn on start. To fix start with +1
+			$g_HungeryLast = $g_Turns
+			$HungerCnt = 0
 		Case 0 ;			Normal
 			$g_gChange = 1
-			$g_turnBonus = $g_turnNormalStr + 1 ; The way it start with 1 turn on start. To fix start with +1
+			$g_Turns = -1 ; The way it start with 1 turn on start. To fix start with +1
 
 	EndSwitch
 
@@ -595,7 +560,8 @@ Func Game()
 			If $g_turnNo <> $g_turnLast Then
 				$g_turnLast = $g_turnNo
 				$g_ScoreTurn += 1
-				$g_turnBonus -= 1
+				$g_Turns += 1
+				Dataout("Turns", $g_Turns)
 			EndIf
 
 		Else
@@ -622,7 +588,7 @@ Func Game()
 
 EndFunc   ;==>Game
 #CS INFO
-	320034 V44 8/12/2019 11:06:11 AM V43 8/11/2019 11:35:36 PM V42 8/2/2019 8:56:18 PM V41 7/24/2019 12:53:35 PM
+	315457 V45 8/18/2019 11:56:18 AM V44 8/12/2019 11:06:11 AM V43 8/11/2019 11:35:36 PM V42 8/2/2019 8:56:18 PM
 #CE
 
 Func Tick() ;
@@ -687,7 +653,7 @@ EndFunc   ;==>Tick
 	69726 V14 7/14/2019 10:20:53 AM V13 7/13/2019 7:20:00 PM V12 7/13/2019 3:59:17 PM V11 7/9/2019 1:03:14 AM
 #CE
 
-; $g_iscore is extra + length
+; $g_iscore is extra + length  ~~
 Func Extra()
 	Local $a
 	Local Static $LS_SnakeLenLast
@@ -695,6 +661,7 @@ Func Extra()
 
 	If $g_Ouch > 0 Then
 		DataOut("OUCH", $g_Ouch)
+		pause("Ouch", $g_Ouch)
 		$g_Ouch -= 1
 	EndIf
 
@@ -716,25 +683,29 @@ Func Extra()
 
 			EndIf
 
-			Status(3, "Ate DEAD snake Yuck!! Lost " & $MaxLost & " cells of snake", 1)
-			;Status(2, "Lost 10 Snake cells. Lost 100 points.", 1)
-			$g_gChange -= $MaxLost
+			Status(3, "Ate DEAD snake  Yuck!! Lost " & $MaxLost + 3 & " cells of snake", 1)
+			If $g_gChange > $MaxLost * 2 Then
+				$g_gChange -= Int($MaxLost / 2)
+			Else
+				$g_gChange -= $MaxLost + 3
+			EndIf
 
 			$Map[$what][$x_new + $g_dirX][$y_new + $g_dirY] = $EMPTY
 			$g_Ouch = 2
 			PrevNext($x_new + $g_dirX, $y_new + $g_dirY) ;New value
 
 		Case $POOP
-			Status(3, "Ate  snake POOP -Yuck! Lost " & $MaxLost & " cells of snake", 1)
-			;Status(2, "Lost 10 Snake cells. Lost 100 points.", 1)
-			$g_gChange -= $MaxLost
-
+			Status(3, "Ate  snake POOP  Yuck! Lost " & $MaxLost & " cells of snake", 1)
+			If $g_gChange > $MaxLost * 1.5 Then
+				$g_gChange -= Int($MaxLost / 2)
+			Else
+				$g_gChange -= $MaxLost
+			EndIf
 			PrevNext($x_new + $g_dirX, $y_new + $g_dirY) ;New value
-			;			$Map[$what][$x_new + $g_dirX][$y_new + $g_dirY] = $EMPTY
 
 		Case $WALL
 			DataOut("WALL")
-
+			pause("Walll")
 			; Check  prev to be the same  last location
 			DataOut("Eat wall Double back on self")
 
@@ -742,14 +713,11 @@ Func Extra()
 			If $flag Then
 				DataOut("Double back WALL")
 				Status(2, "Double back WALL", 3)
-				;$g_gChange -= 2
-
 			Else
 				Status(0, "Ate Wall", 1)
 				$g_endgame = True
 				Return
 			EndIf
-			;				EndIf
 
 		Case $SNAKE
 
@@ -759,7 +727,6 @@ Func Extra()
 				$flag = DoubleBack($g_dirX, $g_dirY)
 				If $flag Then
 					Status(2, "Double back on self", 3)
-					;	$g_gChange -= 2
 				Else
 					Status(0, "Ate self", 1)
 					$g_endgame = True
@@ -773,48 +740,36 @@ Func Extra()
 					Return
 
 				EndIf
-
 				PrevNext($x_new + $g_dirX, $y_new + $g_dirY) ;New value
-
-				;ShowRow($x_new, $y_new)
-				;ShowRow($x_new + $g_dirX, $y_new + $g_dirY)
-
-				;	Status(0, "Ate self", 1)
-				;	ExitLoop
 			EndIf
 
 		Case $FOOD
 			$g_ScoreFood += 1
-
-			$HungerCycle = $HungerStr
+			dataout("Food", $g_Turns)
 			$HungerCnt = 0
-			$g_gChange += 2
+			$g_gChange += 1
 
-			Switch $g_turnBonus
-				Case 6, 5, 4
-					$g_gChange += 3
-					$g_iScore += 100
-					Status(0, "Turn bonus 100 Snake 3", 4)
+			Switch $g_Turns
+				Case 0, 1, 2
+					$g_gChange += 2
+					$g_iScore += 50
+					Status(0, "Turn bonus 50 Snake 2", 4)
 				Case 3
-					$g_gChange += 2
-					$g_iScore += 80
-					Status(0, "Turn bonus 80 Snake 2", 4)
-				Case 2
-					$g_gChange += 2
-					$g_iScore += 60
-					Status(0, "Turn bonus 60 Snake 2", 4)
-				Case 1
 					$g_gChange += 1
-					$g_iScore += 30
-					Status(0, "Turn bonus 30 Snake 1", 4)
-				Case 0
-					$g_iScore += 10
-					Status(0, "Turn bonus 10", 4)
+					$g_iScore += 20
+					Status(0, "Turn bonus 20 Snake 1", 4)
+				Case 4
+					$g_gChange += 0
+					$g_iScore += 5
+					Status(0, "Turn bonus 5", 4)
 				Case Else
 					Status(0, "", 0)
+
 			EndSwitch
 
-			$g_turnBonus = $g_turnExtraStr
+			$g_Turns = 0
+			$g_HungeryLast = 0
+			$HungerCnt = 0
 
 			;RemoveFood()  NOT needed because  snake will over write with out looking
 			AddFood()
@@ -822,32 +777,6 @@ Func Extra()
 			RemoveSnakeExtra() ;onlhy empty cell change len
 
 		Case $EMPTY
-
-			;	Each Hunger Time off goes up 1 Max value is 10
-			$HungerSnake += 1
-			If $HungerSnake = 100 Then
-				$HungerStr -= 1
-				$HungerSnake = 0
-				If $HungerStr < 20 Then
-					$HungerStr = 20
-				EndIf
-			EndIf
-
-			$HungerCycle -= 1
-			If $HungerCycle = 0 Then
-				$HungerCnt += 1
-				If $HungerCnt > 5 Then
-					$HungerCnt = 5
-				EndIf
-				$HungerCycle = $HungerStr - $HungerCnt
-
-				Status(2, "Hungery - " & $HungerCnt & " Snake shorter", 3)
-				;$g_Status0Off = 30
-
-				$g_gChange -= $HungerCnt
-
-			EndIf
-
 			PrevNext($x_new + $g_dirX, $y_new + $g_dirY) ;New value
 
 			;Check to see if snake grow longer or shorter
@@ -881,7 +810,26 @@ Func Extra()
 						RemoveSnakeExtra() ;same size
 				EndSwitch
 			EndIf
+			If $g_Turns > 3 Then
+				dataout("Hungery", $g_Turns)
+				dataout($g_HungeryLast, $HungerCnt)
 
+				If $g_HungeryLast < $g_Turns Then
+					$g_HungeryLast = $g_Turns
+					$HungerCnt += 1
+
+					$a = 4- int($LS_SnakeLenLast / 30)
+					If $a < 1 Then
+						$a = 1
+					EndIf
+
+					If $HungerCnt > $a Then
+						Status(2, "Hungery -  Snake shorter -- test " & $a, 3)
+						$HungerCnt = 0
+						$g_gChange -= 1
+					EndIf
+				EndIf
+			EndIf
 	EndSwitch
 
 	;Score
@@ -903,7 +851,7 @@ Func Extra()
 
 EndFunc   ;==>Extra
 #CS INFO
-	328835 V28 8/11/2019 11:35:36 PM V27 8/11/2019 11:19:15 PM V26 8/2/2019 8:56:18 PM V25 7/24/2019 12:53:35 PM
+	305050 V29 8/18/2019 11:56:18 AM V28 8/11/2019 11:35:36 PM V27 8/11/2019 11:19:15 PM V26 8/2/2019 8:56:18 PM
 #CE
 
 Func Normal()
@@ -921,11 +869,11 @@ Func Normal()
 			Return
 
 		Case $FOOD ;Normal
-			Switch $g_turnBonus
-				Case 4
+			Switch $g_Turns
+				Case 0
 					$g_gChange += 4
 					Status(0, "Turn bonus: Snake 4", 4)
-				Case 3
+				Case 1
 					$g_gChange += 3
 					$g_iScore += 80
 					Status(0, "Turn bonus: Snake 3", 4)
@@ -933,13 +881,13 @@ Func Normal()
 					$g_gChange += 2
 					$g_iScore += 60
 					Status(0, "Turn bonus: Snake 2", 4)
-				Case 1
+				Case 3
 					$g_gChange += 1
 					Status(0, "Turn bonus: Snake 1", 4)
 				Case Else
 					Status(0, "", 0)
 			EndSwitch
-			$g_turnBonus = $g_turnNormalStr
+			$g_Turns = 0
 			$g_gChangeHalf = $s_gChangeBaseNormal
 			$g_ScoreFood += 1
 
@@ -975,7 +923,7 @@ Func Normal()
 	; END NORMAL
 EndFunc   ;==>Normal
 #CS INFO
-	110432 V8 7/18/2019 11:32:28 PM V7 7/15/2019 9:15:04 AM V6 7/13/2019 7:36:11 PM V5 7/13/2019 7:20:00 PM
+	107983 V9 8/18/2019 11:56:18 AM V8 7/18/2019 11:32:28 PM V7 7/15/2019 9:15:04 AM V6 7/13/2019 7:36:11 PM
 #CE
 
 Func StartDead($inX, $inY)
@@ -1167,7 +1115,7 @@ EndFunc   ;==>StartSnake
 
 ; Dirx& Diry moving to wall not like Double Back which has reserves direction
 ; So they will change, I can't make them Global because I used this name as Local in a number of Function.
-Func DoubleBackWall() ;(ByRef $dirx, ByRef $diry) ;
+Func DoubleBackWall() ;(ByRef $dirx, ByRef $diry) ; ~~
 	;	$g_dirX, $g_dirY
 	Local $a, $flag
 
@@ -1194,6 +1142,8 @@ Func DoubleBackWall() ;(ByRef $dirx, ByRef $diry) ;
 		EndIf
 		If $flag Then
 			PrevNext($x_new + $a, $y_new + $g_dirY)
+			RemoveSnakeExtra() ;Same size
+			$g_Turns += 2
 		EndIf
 	Else ;$g_diry =0
 		$a = Random(0, 1, 1)
@@ -1211,6 +1161,8 @@ Func DoubleBackWall() ;(ByRef $dirx, ByRef $diry) ;
 		EndIf
 		If $flag Then
 			PrevNext($x_new + $g_dirX, $y_new + $a)
+			RemoveSnakeExtra() ;Same size
+			$g_Turns += 2
 		EndIf
 
 	EndIf
@@ -1218,7 +1170,7 @@ Func DoubleBackWall() ;(ByRef $dirx, ByRef $diry) ;
 
 EndFunc   ;==>DoubleBackWall
 #CS INFO
-	65243 V6 7/5/2019 4:03:49 PM V5 7/4/2019 11:42:05 AM V4 6/27/2019 5:39:48 PM V3 6/27/2019 1:22:34 AM
+	72569 V7 8/18/2019 11:56:18 AM V6 7/5/2019 4:03:49 PM V5 7/4/2019 11:42:05 AM V4 6/27/2019 5:39:48 PM
 #CE
 
 Func DoubleBack($dirx, $diry)
@@ -1318,9 +1270,9 @@ Func RemoveSnakeExtra($inputflag = False) ; at end
 		$Map[$what][$x][$y] = $POOP
 		GUICtrlSetImage($Map[$ctrl][$x][$y], $cPOOP)
 	Else
-		If NormalPoop() Then
-			$Map[$what][$x][$y] = $POOP
-			GUICtrlSetImage($Map[$ctrl][$x][$y], $cPOOP)
+ If NormalPoop() Then
+$Map[$what][$x][$y] = $POOP
+	GUICtrlSetImage($Map[$ctrl][$x][$y], $cPOOP)
 		Else
 			If $TESTING Then
 				If $x = 0 Or $y = 0 Then
@@ -1330,7 +1282,6 @@ Func RemoveSnakeExtra($inputflag = False) ; at end
 
 				EndIf
 			EndIf
-
 			$Map[$what][$x][$y] = $EMPTY
 			GUICtrlSetImage($Map[$ctrl][$x][$y], $cEMPTY)
 		EndIf
@@ -1849,7 +1800,7 @@ Func StartForm()
 	GUICtrlSetData($Edit1, @CRLF, 1)
 
 	GUICtrlSetData($Edit1, "Extra:" & @CRLF, 1)
-	GUICtrlSetData($Edit1, "  Food increase snake by 2" & @CRLF, 1)
+	GUICtrlSetData($Edit1, "  Food increase snake by 1" & @CRLF, 1)
 	GUICtrlSetData($Edit1, @CRLF, 1)
 	GUICtrlSetData($Edit1, "Bonus:" & @CRLF, 1)
 	GUICtrlSetData($Edit1, " Snake does not like to turn so, so few turns and Food increase snake & score" & @CRLF, 1)
@@ -1898,7 +1849,7 @@ Func StartForm()
 
 EndFunc   ;==>StartForm
 #CS INFO
-	206604 V27 8/16/2019 8:51:46 AM V26 8/12/2019 11:06:11 AM V25 8/11/2019 11:35:36 PM V24 8/5/2019 2:37:25 PM
+	206603 V28 8/18/2019 11:56:18 AM V27 8/16/2019 8:51:46 AM V26 8/12/2019 11:06:11 AM V25 8/11/2019 11:35:36 PM
 #CE
 
 Func Settings()
@@ -2131,7 +2082,7 @@ Func ChooseColor()
 	GUIDelete($Form1)
 EndFunc   ;==>ChooseColor
 #CS INFO
-	284852 V2 8/16/2019 10:06:14 PM V1 8/16/2019 8:51:46 AM
+	267760 V3 8/18/2019 11:56:18 AM V2 8/16/2019 10:06:14 PM V1 8/16/2019 8:51:46 AM
 #CE
 
 ;Main
@@ -2139,4 +2090,4 @@ Main()
 
 Exit
 
-;~T ScriptFunc.exe V0.54a 15 May 2019 - 8/16/2019 10:06:14 PM
+;~T ScriptFunc.exe V0.54a 15 May 2019 - 8/18/2019 11:56:18 AM
