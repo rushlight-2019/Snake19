@@ -5,7 +5,7 @@ AutoItSetOption("MustDeclareVars", 1)
 ;Global Static $MESSAGE =  False   ;Pause will still work in script  No DataOut
 
 ; Must be Declared before _Prf_startup
-Global $ver = "0.75 18 Aug 2019 Extra - Hunger"
+Global $ver = "0.76 18 Aug 2019 Fix Setting Size - Color"
 Global $ini_ver = "6" ;Screen size change
 ;"5" ;12 Aug 2019 Revert to 0.63
 ;"4" ;24 Jul 2019 8 to 10
@@ -18,10 +18,12 @@ Global $ini_ver = "6" ;Screen size change
 #include "R:\!Autoit\Blank\_prf_startup.au3"
 
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
-#AutoIt3Wrapper_Res_Fileversion=0.0.7.5
+#AutoIt3Wrapper_Res_Fileversion=0.0.7.6
 #AutoIt3Wrapper_Icon=R:\!Autoit\Ico\prf.ico
 #AutoIt3Wrapper_Res_Description=Another snake game
 #AutoIt3Wrapper_Res_LegalCopyright=© Phillip Forrestal 2019
+
+#pragma compile(inputboxres, true)
 
 ;#AutoIt3Wrapper_Outfile=Snake19_32.exe
 #AutoIt3Wrapper_Outfile_x64=BETA-Snake19.exe
@@ -71,16 +73,13 @@ Global $ini_ver = "6" ;Screen size change
 
 	Remove things I won't do but left in code
 
-	Setting: Size, Speed.
-
-	No more just clean up game.
+	Setting: Speed.
 
 	Version
 	Problem: 0.58 left some testing in just in case  X & Y 3 & 4
 
-	Setting
-	Color select
-
+	0.7719 Aug 2019 Extra - Wall
+	0.76 18 Aug 2019 Fix Setting Size - Color
 	0.75 18 Aug 2019 Extra - Hunger
 	0.74 16 Aug 2019 Setting: Color Works
 	0.73 15 Aug 2019 Setting: Color  - Screen size change
@@ -170,6 +169,13 @@ Global $ini_ver = "6" ;Screen size change
 	0.02 29 May 2019 Layout game.
 	0.01 28 May 2019 Start form
 	Version end
+
+	Extra:
+	$g_iScore + $g_ScoreFood + $g_SnakeMax
+
+	iScore added only when Snake increase max length
+	Lenght decrease when to many turns between food, eat dead snake, eat poop
+	Poop added when eat poop.
 
 #ce ----------------------------------------------------------------------------
 
@@ -818,7 +824,7 @@ Func Extra()
 					$g_HungeryLast = $g_Turns
 					$HungerCnt += 1
 
-					$a = 4- int($LS_SnakeLenLast / 30)
+					$a = 4 - Int($LS_SnakeLenLast / 30)
 					If $a < 1 Then
 						$a = 1
 					EndIf
@@ -851,7 +857,7 @@ Func Extra()
 
 EndFunc   ;==>Extra
 #CS INFO
-	305050 V29 8/18/2019 11:56:18 AM V28 8/11/2019 11:35:36 PM V27 8/11/2019 11:19:15 PM V26 8/2/2019 8:56:18 PM
+	305018 V30 8/18/2019 11:15:59 PM V29 8/18/2019 11:56:18 AM V28 8/11/2019 11:35:36 PM V27 8/11/2019 11:19:15 PM
 #CE
 
 Func Normal()
@@ -1258,34 +1264,34 @@ Func RemoveSnakeExtra($inputflag = False) ; at end
 
 	;MsgBox(0, "Remove snake", "x " & $x & " y " & $y & " Num: " & $Map[$num][$x][$y], 10)
 	$flag = False
-	If $inputflag Then
-		$PoopCnt -= 1
-		If $PoopCnt = 0 Then
-			$PoopCnt = Random(20, 40, 1)
-			$flag = True
+	;If $inputflag Then
+	;	$PoopCnt -= 1
+	;	If $PoopCnt = 0 Then
+	;		$PoopCnt = Random(20, 40, 1)
+	;		$flag = True
+	;	EndIf
+	;EndIf
+
+	;If $flag Then
+	;	$Map[$what][$x][$y] = $POOP
+	;	GUICtrlSetImage($Map[$ctrl][$x][$y], $cPOOP)
+	;Else
+	;	If NormalPoop() Then
+	;		$Map[$what][$x][$y] = $POOP
+	;		GUICtrlSetImage($Map[$ctrl][$x][$y], $cPOOP)
+	;	Else
+	If $TESTING Then
+		If $x = 0 Or $y = 0 Then
+
+			Pause("Null X & Y 3:", $Map[$what][0][0])
+			Pause($x, $y)
+
 		EndIf
 	EndIf
-
-	If $flag Then
-		$Map[$what][$x][$y] = $POOP
-		GUICtrlSetImage($Map[$ctrl][$x][$y], $cPOOP)
-	Else
- If NormalPoop() Then
-$Map[$what][$x][$y] = $POOP
-	GUICtrlSetImage($Map[$ctrl][$x][$y], $cPOOP)
-		Else
-			If $TESTING Then
-				If $x = 0 Or $y = 0 Then
-
-					Pause("Null X & Y 3:", $Map[$what][0][0])
-					Pause($x, $y)
-
-				EndIf
-			EndIf
-			$Map[$what][$x][$y] = $EMPTY
-			GUICtrlSetImage($Map[$ctrl][$x][$y], $cEMPTY)
-		EndIf
-	EndIf
+	$Map[$what][$x][$y] = $EMPTY
+	GUICtrlSetImage($Map[$ctrl][$x][$y], $cEMPTY)
+	;	EndIf
+	;EndIf
 
 	$x_end = $Map[$nxX][$x][$y]
 	$y_end = $Map[$nxY][$x][$y]
@@ -1311,7 +1317,7 @@ $Map[$what][$x][$y] = $POOP
 
 EndFunc   ;==>RemoveSnakeExtra
 #CS INFO
-	102579 V18 7/13/2019 7:20:00 PM V17 7/13/2019 3:59:17 PM V16 7/8/2019 1:00:13 AM V15 7/6/2019 6:24:29 PM
+	103582 V19 8/18/2019 11:15:59 PM V18 7/13/2019 7:20:00 PM V17 7/13/2019 3:59:17 PM V16 7/8/2019 1:00:13 AM
 #CE
 
 Func RemoveSnakeNormal() ; at end
@@ -1727,7 +1733,7 @@ Func CreateColorJpg($filename, $color)
 
 	; create, sumchk, store in ini Color Filename
 	GUISetBkColor($color, $hGUI)
-	Sleep(250)
+	Sleep(500)
 	_ScreenCapture_CaptureWnd($s_data & "\" & $filename & ".jpg", $hGUI, 30, 30, 30 + 25, 30 + 25, False)
 	If @error <> 0 Then ;Failed
 		MsgBox(0, "ERROR", "Color Jpg could not be created " & $filename)
@@ -1740,7 +1746,7 @@ Func CreateColorJpg($filename, $color)
 
 EndFunc   ;==>CreateColorJpg
 #CS INFO
-	40503 V3 8/16/2019 8:51:46 AM V2 7/14/2019 10:10:20 PM V1 7/14/2019 10:20:53 AM
+	40501 V4 8/18/2019 11:15:59 PM V3 8/16/2019 8:51:46 AM V2 7/14/2019 10:10:20 PM V1 7/14/2019 10:20:53 AM
 #CE
 
 Func StartForm()
@@ -1885,6 +1891,7 @@ EndFunc   ;==>Settings
 
 Func ScreenSize()
 	Local $sInputBoxAnswer, $keep, $s, $mathW, $mathH, $Math
+	Local $err
 
 	$keep = $g_Size
 	$mathW = Int(@DesktopWidth / $g_boardx) - 1
@@ -1903,12 +1910,13 @@ Func ScreenSize()
 	$s &= @CRLF & "Current cell size: " & $g_Size & @CRLF & "Desktop screen size: " & @DesktopHeight & "x" & @DesktopWidth & @CRLF & "Maximum cell size: "
 	$s &= $Math & @CRLF & @CRLF & "Use Maximum cell size or enter a smaller size."
 
-	;$g_ctrlBoard = GUICreate("Snake19 - " & $ver, $g_boardx * $g_Size, $g_boardy * $g_Size + $g_Font * 2 + 2)
-
-	$sInputBoxAnswer = Int(InputBox("Cell size", $s, $Math))
+	$sInputBoxAnswer = InputBox("Cell size", $s, $Math)
+	$err = @error
 	Select
-		Case @error = 0 ;OK - The string returned is valid
+		Case $err = 1 ; Cancle was pushed
+			Return
 
+		Case $err = 0 ;OK - The string returned is valid
 			If $sInputBoxAnswer <= $Math Then
 				If $sInputBoxAnswer < 10 Then
 					$sInputBoxAnswer = 10
@@ -1932,7 +1940,7 @@ Func ScreenSize()
 	EndSelect
 EndFunc   ;==>ScreenSize
 #CS INFO
-	90732 V2 8/16/2019 8:51:46 AM V1 8/12/2019 11:06:11 AM
+	87726 V3 8/18/2019 11:15:59 PM V2 8/16/2019 8:51:46 AM V1 8/12/2019 11:06:11 AM
 #CE
 
 ; Read INI setting
@@ -1956,7 +1964,10 @@ Func ChooseColor()
 	Local $Which = 1
 	Local $a, $color, $y
 	Local $r_what[8][5]
-	Local $Form1 = GUICreate("Colors", 150, 600)
+	Local $Form1
+	Local $restart = False
+
+	$Form1 = GUICreate("Colors", 150, 600)
 	GUISetState(@SW_SHOW)
 
 	Local $Group1 = GUIStartGroup()
@@ -2076,13 +2087,25 @@ Func ChooseColor()
 				$r_what[$Which][3] = $r_what[$Which][4]
 				GUICtrlSetBkColor($b_current, $r_what[$Which][3])
 				CreateColorJpg($r_what[$Which][1], $r_what[$Which][3])
+				If $Which = 1 Or $Which = 2 Then
+					$restart = True
+				EndIf
 
 		EndSwitch
 	WEnd
 	GUIDelete($Form1)
+	If $restart Then
+		If @Compiled Then
+			Run(@ScriptFullPath)
+			Exit
+		Else
+			Pause("Compile it would restart the program")
+		EndIf
+		Exit
+	EndIf
 EndFunc   ;==>ChooseColor
 #CS INFO
-	267760 V3 8/18/2019 11:56:18 AM V2 8/16/2019 10:06:14 PM V1 8/16/2019 8:51:46 AM
+	284931 V4 8/18/2019 11:15:59 PM V3 8/18/2019 11:56:18 AM V2 8/16/2019 10:06:14 PM V1 8/16/2019 8:51:46 AM
 #CE
 
 ;Main
@@ -2090,4 +2113,4 @@ Main()
 
 Exit
 
-;~T ScriptFunc.exe V0.54a 15 May 2019 - 8/18/2019 11:56:18 AM
+;~T ScriptFunc.exe V0.54a 15 May 2019 - 8/18/2019 11:15:59 PM

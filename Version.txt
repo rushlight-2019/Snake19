@@ -1,5 +1,6 @@
 	Problem: 0.58 left some testing in just in case  X & Y 3 & 4
 
+	0.76 18 Aug 2019 Fix Setting Size - Color
 	0.75 18 Aug 2019 Extra - Hunger
 	0.74 16 Aug 2019 Setting: Color Works
 	0.73 15 Aug 2019 Setting: Color  - Screen size change
