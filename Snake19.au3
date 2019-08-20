@@ -5,7 +5,7 @@ AutoItSetOption("MustDeclareVars", 1)
 ;Global Static $MESSAGE =  False   ;Pause will still work in script  No DataOut
 
 ; Must be Declared before _Prf_startup
-Global $ver = "0.76 18 Aug 2019 Fix Setting Size - Color"
+Global $ver = "0.77 20 Aug 2019 Playing with settings"
 Global $ini_ver = "6" ;Screen size change
 ;"5" ;12 Aug 2019 Revert to 0.63
 ;"4" ;24 Jul 2019 8 to 10
@@ -18,7 +18,7 @@ Global $ini_ver = "6" ;Screen size change
 #include "R:\!Autoit\Blank\_prf_startup.au3"
 
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
-#AutoIt3Wrapper_Res_Fileversion=0.0.7.6
+#AutoIt3Wrapper_Res_Fileversion=0.0.7.7
 #AutoIt3Wrapper_Icon=R:\!Autoit\Ico\prf.ico
 #AutoIt3Wrapper_Res_Description=Another snake game
 #AutoIt3Wrapper_Res_LegalCopyright=© Phillip Forrestal 2019
@@ -78,7 +78,8 @@ Global $ini_ver = "6" ;Screen size change
 	Version
 	Problem: 0.58 left some testing in just in case  X & Y 3 & 4
 
-	0.7719 Aug 2019 Extra - Wall
+	0.78 20 Aug 2019 Extra - Wall
+	0.77 20 Aug 2019 Playing with settings
 	0.76 18 Aug 2019 Fix Setting Size - Color
 	0.75 18 Aug 2019 Extra - Hunger
 	0.74 16 Aug 2019 Setting: Color Works
@@ -264,7 +265,7 @@ Global $g_HiScoreWho ;ctrl
 Global $g_HiScore[10]
 
 Global $Radio1, $Radio2
-Global $g_ScoreLen ; Normal Traveled, Extra Length of snake
+;Global $g_ScoreLen ; Normal Traveled, Extra Length of snake
 Global $g_ScoreTurn
 Global $g_ScoreFood
 Global $g_SnakeMax
@@ -662,7 +663,8 @@ EndFunc   ;==>Tick
 ; $g_iscore is extra + length  ~~
 Func Extra()
 	Local $a
-	Local Static $LS_SnakeLenLast
+	Local Static $ls_SnakeLenLast
+	Local Static $ls_HungerFug
 	Local $flag
 
 	If $g_Ouch > 0 Then
@@ -758,20 +760,36 @@ Func Extra()
 			Switch $g_Turns
 				Case 0, 1, 2
 					$g_gChange += 2
-					$g_iScore += 50
-					Status(0, "Turn bonus 50 Snake 2", 4)
+					If $LS_SnakeLenLast = $g_SnakeMax Then
+						$g_iScore += 50
+						Status(0, "Turn bonus: Score 50 Snake 2", 4)
+					Else
+						Status(0, "Turn bonus: Snake 2", 4)
+					EndIf
 				Case 3
 					$g_gChange += 1
-					$g_iScore += 20
-					Status(0, "Turn bonus 20 Snake 1", 4)
+					If $LS_SnakeLenLast = $g_SnakeMax Then
+						$g_iScore += 20
+						Status(0, "Turn bonus: Score 20 Snake 2", 4)
+					Else
+						Status(0, "Turn bonus: Snake 2", 4)
+					EndIf
 				Case 4
 					$g_gChange += 0
-					$g_iScore += 5
-					Status(0, "Turn bonus 5", 4)
+					If $LS_SnakeLenLast = $g_SnakeMax Then
+						$g_iScore += 5
+						Status(0, "Turn bonus: Score 5", 4)
+					Else
+						Status(0, "", 0)
+					EndIf
 				Case Else
 					Status(0, "", 0)
 
 			EndSwitch
+			$ls_HungerFug = 3 - Int($LS_SnakeLenLast / 20)
+			If $ls_HungerFug < 1 Then
+				$ls_HungerFug = 0
+			EndIf
 
 			$g_Turns = 0
 			$g_HungeryLast = 0
@@ -816,21 +834,17 @@ Func Extra()
 						RemoveSnakeExtra() ;same size
 				EndSwitch
 			EndIf
-			If $g_Turns > 3 Then
-				dataout("Hungery", $g_Turns)
-				dataout($g_HungeryLast, $HungerCnt)
-
+			If $g_Turns >= 3 Then
 				If $g_HungeryLast < $g_Turns Then
 					$g_HungeryLast = $g_Turns
 					$HungerCnt += 1
 
-					$a = 4 - Int($LS_SnakeLenLast / 30)
-					If $a < 1 Then
-						$a = 1
-					EndIf
-
-					If $HungerCnt > $a Then
-						Status(2, "Hungery -  Snake shorter -- test " & $a, 3)
+					If $HungerCnt > $ls_HungerFug Then
+						Status(2, "Hungery -  Snake shorter -- test " & $ls_HungerFug, 3)
+						$ls_HungerFug -= 1
+						If $ls_HungerFug < 0 Then
+							$ls_HungerFug = 0
+						EndIf
 						$HungerCnt = 0
 						$g_gChange -= 1
 					EndIf
@@ -844,7 +858,6 @@ Func Extra()
 	If $a > $g_SnakeMax Then
 		$g_SnakeMax = $a
 	EndIf
-
 	If $LS_SnakeLenLast <> $a Then
 		$LS_SnakeLenLast = $a
 		$g_GameScore = $g_iScore + $g_ScoreFood + $g_SnakeMax
@@ -857,7 +870,7 @@ Func Extra()
 
 EndFunc   ;==>Extra
 #CS INFO
-	305018 V30 8/18/2019 11:15:59 PM V29 8/18/2019 11:56:18 AM V28 8/11/2019 11:35:36 PM V27 8/11/2019 11:19:15 PM
+	332434 V31 8/20/2019 10:24:30 AM V30 8/18/2019 11:15:59 PM V29 8/18/2019 11:56:18 AM V28 8/11/2019 11:35:36 PM
 #CE
 
 Func Normal()
@@ -2105,7 +2118,7 @@ Func ChooseColor()
 	EndIf
 EndFunc   ;==>ChooseColor
 #CS INFO
-	284931 V4 8/18/2019 11:15:59 PM V3 8/18/2019 11:56:18 AM V2 8/16/2019 10:06:14 PM V1 8/16/2019 8:51:46 AM
+	284739 V5 8/20/2019 10:24:30 AM V4 8/18/2019 11:15:59 PM V3 8/18/2019 11:56:18 AM V2 8/16/2019 10:06:14 PM
 #CE
 
 ;Main
@@ -2113,4 +2126,4 @@ Main()
 
 Exit
 
-;~T ScriptFunc.exe V0.54a 15 May 2019 - 8/18/2019 11:15:59 PM
+;~T ScriptFunc.exe V0.54a 15 May 2019 - 8/20/2019 10:24:30 AM
