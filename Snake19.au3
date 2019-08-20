@@ -5,7 +5,7 @@ AutoItSetOption("MustDeclareVars", 1)
 ;Global Static $MESSAGE =  False   ;Pause will still work in script  No DataOut
 
 ; Must be Declared before _Prf_startup
-Global $ver = "0.77 20 Aug 2019 Playing with settings"
+Global $ver = "0.78 20 Aug 2019 Hungery better"
 Global $ini_ver = "6" ;Screen size change
 ;"5" ;12 Aug 2019 Revert to 0.63
 ;"4" ;24 Jul 2019 8 to 10
@@ -18,7 +18,7 @@ Global $ini_ver = "6" ;Screen size change
 #include "R:\!Autoit\Blank\_prf_startup.au3"
 
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
-#AutoIt3Wrapper_Res_Fileversion=0.0.7.7
+#AutoIt3Wrapper_Res_Fileversion=0.0.7.8
 #AutoIt3Wrapper_Icon=R:\!Autoit\Ico\prf.ico
 #AutoIt3Wrapper_Res_Description=Another snake game
 #AutoIt3Wrapper_Res_LegalCopyright=© Phillip Forrestal 2019
@@ -78,7 +78,8 @@ Global $ini_ver = "6" ;Screen size change
 	Version
 	Problem: 0.58 left some testing in just in case  X & Y 3 & 4
 
-	0.78 20 Aug 2019 Extra - Wall
+	0.79 20 Aug 2019 Extra - Wall
+	0.78 20 Aug 2019 Hungery better
 	0.77 20 Aug 2019 Playing with settings
 	0.76 18 Aug 2019 Fix Setting Size - Color
 	0.75 18 Aug 2019 Extra - Hunger
@@ -834,13 +835,13 @@ Func Extra()
 						RemoveSnakeExtra() ;same size
 				EndSwitch
 			EndIf
-			If $g_Turns >= 3 Then
+			If $g_Turns > 4 Then
 				If $g_HungeryLast < $g_Turns Then
 					$g_HungeryLast = $g_Turns
 					$HungerCnt += 1
 
 					If $HungerCnt > $ls_HungerFug Then
-						Status(2, "Hungery -  Snake shorter -- test " & $ls_HungerFug, 3)
+						Status(2, "Hungery -  Snake shorter -- test " & $ls_HungerFug & " " & $g_Turns, 3)
 						$ls_HungerFug -= 1
 						If $ls_HungerFug < 0 Then
 							$ls_HungerFug = 0
@@ -870,7 +871,7 @@ Func Extra()
 
 EndFunc   ;==>Extra
 #CS INFO
-	332434 V31 8/20/2019 10:24:30 AM V30 8/18/2019 11:15:59 PM V29 8/18/2019 11:56:18 AM V28 8/11/2019 11:35:36 PM
+	333292 V32 8/20/2019 5:46:24 PM V31 8/20/2019 10:24:30 AM V30 8/18/2019 11:15:59 PM V29 8/18/2019 11:56:18 AM
 #CE
 
 Func Normal()
@@ -1696,7 +1697,7 @@ Func CheckJpg()
 	CheckColorJpg("Snake", 0xfc8c04)
 	CheckColorJpg("Edge", 0x989898)
 	CheckColorJpg("Empty", 0x000000)
-	CheckColorJpg("Head", 0xFFFFFF)
+	CheckColorJpg("Head", 0xFFFF00)
 
 	CheckColorJpg("Dead", 0xA42C2C)
 	CheckColorJpg("Poop", 0x9C5404)
@@ -1704,7 +1705,7 @@ Func CheckJpg()
 
 EndFunc   ;==>CheckJpg
 #CS INFO
-	19873 V3 8/16/2019 8:51:46 AM V2 7/14/2019 10:10:20 PM V1 7/14/2019 10:20:53 AM
+	19829 V4 8/20/2019 5:46:24 PM V3 8/16/2019 8:51:46 AM V2 7/14/2019 10:10:20 PM V1 7/14/2019 10:20:53 AM
 #CE
 
 ;Check to see if color files exist, if not create them.
@@ -2026,7 +2027,7 @@ Func ChooseColor()
 			Case $a[$x][0] = "Head"
 				$y = 3
 				$r_what[$y][1] = $a[$x][0]
-				$r_what[$y][2] = 0xFFFFFF
+				$r_what[$y][2] = 0xFFFF00
 				$r_what[$y][3] = $a[$x][1]
 				$r_what[$y][4] = $a[$x][1]
 			Case $a[$x][0] = "Snake"
@@ -2118,7 +2119,7 @@ Func ChooseColor()
 	EndIf
 EndFunc   ;==>ChooseColor
 #CS INFO
-	284739 V5 8/20/2019 10:24:30 AM V4 8/18/2019 11:15:59 PM V3 8/18/2019 11:56:18 AM V2 8/16/2019 10:06:14 PM
+	284695 V6 8/20/2019 5:46:24 PM V5 8/20/2019 10:24:30 AM V4 8/18/2019 11:15:59 PM V3 8/18/2019 11:56:18 AM
 #CE
 
 ;Main
@@ -2126,4 +2127,4 @@ Main()
 
 Exit
 
-;~T ScriptFunc.exe V0.54a 15 May 2019 - 8/20/2019 10:24:30 AM
+;~T ScriptFunc.exe V0.54a 15 May 2019 - 8/20/2019 5:46:24 PM
