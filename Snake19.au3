@@ -5,7 +5,7 @@ AutoItSetOption("MustDeclareVars", 1)
 ;Global Static $MESSAGE =  False   ;Pause will still work in script  No DataOut
 
 ; Must be Declared before _Prf_startup
-Global $ver = "0.78 20 Aug 2019 Hungery better"
+Global $ver = "0.79 21 Aug 2019 Extra - Wall"
 Global $ini_ver = "6" ;Screen size change
 ;"5" ;12 Aug 2019 Revert to 0.63
 ;"4" ;24 Jul 2019 8 to 10
@@ -18,7 +18,7 @@ Global $ini_ver = "6" ;Screen size change
 #include "R:\!Autoit\Blank\_prf_startup.au3"
 
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
-#AutoIt3Wrapper_Res_Fileversion=0.0.7.8
+#AutoIt3Wrapper_Res_Fileversion=0.0.7.9
 #AutoIt3Wrapper_Icon=R:\!Autoit\Ico\prf.ico
 #AutoIt3Wrapper_Res_Description=Another snake game
 #AutoIt3Wrapper_Res_LegalCopyright=© Phillip Forrestal 2019
@@ -78,7 +78,7 @@ Global $ini_ver = "6" ;Screen size change
 	Version
 	Problem: 0.58 left some testing in just in case  X & Y 3 & 4
 
-	0.79 20 Aug 2019 Extra - Wall
+	0.79 21 Aug 2019 Extra - Wall
 	0.78 20 Aug 2019 Hungery better
 	0.77 20 Aug 2019 Playing with settings
 	0.76 18 Aug 2019 Fix Setting Size - Color
@@ -714,18 +714,21 @@ Func Extra()
 
 		Case $WALL
 			DataOut("WALL")
-			pause("Walll")
 			; Check  prev to be the same  last location
 			DataOut("Eat wall Double back on self")
 
-			$flag = DoubleBackWall()
-			If $flag Then
-				DataOut("Double back WALL")
-				Status(2, "Double back WALL", 3)
-			Else
-				Status(0, "Ate Wall", 1)
-				$g_endgame = True
-				Return
+			$flag = WallTrue()
+			If Not $flag Then
+				$flag = DoubleBackWall()
+				If $flag Then
+					DataOut("Double back WALL")
+					Status(2, "Double back WALL, Lost 2", 3)
+					$g_gChange -= 2
+				Else
+					Status(0, "Ate Wall", 1)
+					$g_endgame = True
+					Return
+				EndIf
 			EndIf
 
 		Case $SNAKE
@@ -735,7 +738,8 @@ Func Extra()
 				DataOut("Eat me Double back on self")
 				$flag = DoubleBack($g_dirX, $g_dirY)
 				If $flag Then
-					Status(2, "Double back on self", 3)
+					Status(2, "Double back on self, Lost 2", 3)
+					$g_gChange -= 2
 				Else
 					Status(0, "Ate self", 1)
 					$g_endgame = True
@@ -871,7 +875,7 @@ Func Extra()
 
 EndFunc   ;==>Extra
 #CS INFO
-	333292 V32 8/20/2019 5:46:24 PM V31 8/20/2019 10:24:30 AM V30 8/18/2019 11:15:59 PM V29 8/18/2019 11:56:18 AM
+	338450 V33 8/21/2019 3:27:01 AM V32 8/20/2019 5:46:24 PM V31 8/20/2019 10:24:30 AM V30 8/18/2019 11:15:59 PM
 #CE
 
 Func Normal()
@@ -2122,9 +2126,48 @@ EndFunc   ;==>ChooseColor
 	284695 V6 8/20/2019 5:46:24 PM V5 8/20/2019 10:24:30 AM V4 8/18/2019 11:15:59 PM V3 8/18/2019 11:56:18 AM
 #CE
 
+Func WallTrue() ;0.79
+
+	;	$g_dirX, $g_dirY
+	Local $a, $flag, $x, $y
+	;1 Keep direction
+	;2 other side.  Check to see if free
+	;Global $g_sx = 40 ;50
+	;Global $g_sy = 30 ;40
+
+	$x = $x_new
+	$y = $y_new
+
+	Select
+		Case $x = 1
+			$x = $g_sx
+		Case $y = 1
+			$y = $g_sy
+		Case $x = $g_sx
+			$x = 1
+		Case $y = $g_sy
+			$y = 1
+	EndSelect
+
+	$flag = False
+	If $Map[$what][$x][$y] = $EMPTY Then
+		$flag = True
+		Status(2, "Pass threw WALL: Lose 2", 3)
+		$g_gChange -= 2
+		PrevNext($x, $y)
+		RemoveSnakeExtra() ;Same size
+	EndIf
+
+	Return $flag
+
+EndFunc   ;==>WallTrue
+#CS INFO
+	35628 V1 8/21/2019 3:27:01 AM
+#CE
+
 ;Main
 Main()
 
 Exit
 
-;~T ScriptFunc.exe V0.54a 15 May 2019 - 8/20/2019 5:46:24 PM
+;~T ScriptFunc.exe V0.54a 15 May 2019 - 8/21/2019 3:27:01 AM
