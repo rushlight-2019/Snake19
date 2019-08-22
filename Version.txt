@@ -1,5 +1,7 @@
 	Problem: 0.58 left some testing in just in case  X & Y 3 & 4
 
+	0.83 22 Aug 19 Speed
+    0.82 22 Aug 2019 Regenerate Colors
 	0.81 21 Aug 2018 Extra  Poop better
 	0.80 21 Aug 2019 - Poop back, ok works
 

@@ -5,7 +5,7 @@ AutoItSetOption("MustDeclareVars", 1)
 ;Global Static $MESSAGE =  False   ;Pause will still work in script  No DataOut
 
 ; Must be Declared before _Prf_startup
-Global $ver = "0.81 21 Aug 2019 Poop better"
+Global $ver = "0.83 22 Aug 2019 Speed"
 Global $ini_ver = "6" ;Screen size change
 ;"5" ;12 Aug 2019 Revert to 0.63
 ;"4" ;24 Jul 2019 8 to 10
@@ -18,7 +18,7 @@ Global $ini_ver = "6" ;Screen size change
 #include "R:\!Autoit\Blank\_prf_startup.au3"
 
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
-#AutoIt3Wrapper_Res_Fileversion=0.0.8.1
+#AutoIt3Wrapper_Res_Fileversion=0.0.8.3
 #AutoIt3Wrapper_Icon=R:\!Autoit\Ico\prf.ico
 #AutoIt3Wrapper_Res_Description=Another snake game
 #AutoIt3Wrapper_Res_LegalCopyright=© Phillip Forrestal 2019
@@ -77,8 +77,8 @@ Global $ini_ver = "6" ;Screen size change
 	Version
 	Problem: 0.58 left some testing in just in case  X & Y 3 & 4
 
-Speed
-0.82 22 Aug 19 Regenerate Colors.
+	0.83 22 Aug 19 Speed
+	0.82 22 Aug 19 Regenerate Colors
 	0.81 21 Aug 2019 Extra  Poop better
 	0.80 21 Aug 2019 Extra Poop back, fix location of food
 	0.79 21 Aug 2019 Extra - Wall
@@ -236,6 +236,7 @@ Global $g_ctrlBoard = -1
 Global $g_Size = 22 ; max?20 ;min = 10
 Global $g_sizeDef = $g_Size
 Global $g_Font = 24
+Global $g_hTick
 
 ReadIni()
 
@@ -258,8 +259,6 @@ Global $x_end
 Global $y_end
 
 Global $g_foodCnt = 1
-
-Global $g_hTick
 
 Global $g_Status[4]
 Global $g_StatusText[4]
@@ -349,6 +348,9 @@ Global $g_poop[$s_PoopSize][4] ;0 flag, 1 x, 2 y, 3 cnt down
 ;0 not used
 ;1 Waiting to be empty
 ;2 show
+
+;0.82
+Global $g_TickTime = 150
 
 ; Main is call at end
 Func Main()
@@ -658,7 +660,7 @@ Func Tick() ;
 	While 1
 		$fdiff = TimerDiff($g_hTick)
 		;If $fdiff > 1000 then ;150 Then ;150
-		If $fdiff > 150 Then ;150
+		If $fdiff > $g_TickTime Then ;150
 			ExitLoop
 		EndIf
 	WEnd
@@ -678,7 +680,7 @@ Func Tick() ;
 	$g_hTick = TimerInit()
 EndFunc   ;==>Tick
 #CS INFO
-	69726 V14 7/14/2019 10:20:53 AM V13 7/13/2019 7:20:00 PM V12 7/13/2019 3:59:17 PM V11 7/9/2019 1:03:14 AM
+	70604 V15 8/22/2019 6:28:51 PM V14 7/14/2019 10:20:53 AM V13 7/13/2019 7:20:00 PM V12 7/13/2019 3:59:17 PM
 #CE
 
 ; $g_iscore is extra + length  ~~
@@ -732,7 +734,6 @@ Func Extra()
 			PrevNext($x_new + $g_dirX, $y_new + $g_dirY) ;New value
 			Status(3, "Ate  snake POOP  Yuck! Lost " & $MaxLost & " cells of snake", 1)
 			PoopAdd($x_new + $g_dirX, $y_new + $g_dirY, $s_PoopSize)
-			Pause("Poop and Poop")
 
 		Case $WALL
 			DataOut("WALL")
@@ -914,7 +915,7 @@ Func Extra()
 
 EndFunc   ;==>Extra
 #CS INFO
-	378384 V35 8/21/2019 10:30:33 PM V34 8/21/2019 10:55:18 AM V33 8/21/2019 3:27:01 AM V32 8/20/2019 5:46:24 PM
+	376590 V36 8/22/2019 8:37:33 AM V35 8/21/2019 10:30:33 PM V34 8/21/2019 10:55:18 AM V33 8/21/2019 3:27:01 AM
 #CE
 
 Func Normal()
@@ -1705,23 +1706,6 @@ EndFunc   ;==>SayClearBoard
 #CE
 
 ;Check to see if color files exist, if not create them.
-Func CheckJpg()
-
-	CheckColorJpg("Snake", 0xfc8c04)
-	CheckColorJpg("Edge", 0x989898)
-	CheckColorJpg("Empty", 0x000000)
-	CheckColorJpg("Head", 0xFFFF00)
-
-	CheckColorJpg("Dead", 0xA42C2C)
-	CheckColorJpg("Poop", 0x9C5404)
-	CheckColorJpg("Food", 0x20CC1C)
-
-EndFunc   ;==>CheckJpg
-#CS INFO
-	19829 V4 8/20/2019 5:46:24 PM V3 8/16/2019 8:51:46 AM V2 7/14/2019 10:10:20 PM V1 7/14/2019 10:20:53 AM
-#CE
-
-;Check to see if color files exist, if not create them.
 ;Does a sum check to make sure they haven't change
 ;Might remove sum check.
 Func CheckColorJpg($filename, $color) ; $color is only the default color if INI color then use it.
@@ -1755,7 +1739,8 @@ Func CreateColorJpg($filename, $color)
 	Local $tRECT
 	Local $hGUI
 
-	$hGUI = GUICreate("", 100, 100)
+	;$hGUI = GUICreate("", 100, 100)
+	$hGUI = GUICreate("", 100, 100, -1, -1, $DS_SETFOREGROUND)
 	GUISetState(@SW_SHOW, $hGUI)
 
 	; create, sumchk, store in ini Color Filename
@@ -1773,7 +1758,7 @@ Func CreateColorJpg($filename, $color)
 
 EndFunc   ;==>CreateColorJpg
 #CS INFO
-	40501 V4 8/18/2019 11:15:59 PM V3 8/16/2019 8:51:46 AM V2 7/14/2019 10:10:20 PM V1 7/14/2019 10:20:53 AM
+	43943 V5 8/22/2019 8:37:33 AM V4 8/18/2019 11:15:59 PM V3 8/16/2019 8:51:46 AM V2 7/14/2019 10:10:20 PM
 #CE
 
 Func StartForm()
@@ -1893,7 +1878,7 @@ Func Settings()
 	GUICtrlSetFont(-1, 14, 400, 0, "MS Sans Serif")
 	Local $b_ScreenSize = GUICtrlCreateButton("Screen Size", 32, 48, 100, 40)
 	Local $b_Color = GUICtrlCreateButton("Colors", 248, 48, 100, 40)
-	;	Local $Button3 = GUICtrlCreateButton("Button3", 432, 40, 100, 40)
+	Local $b_speed = GUICtrlCreateButton("Speed", 432, 40, 100, 40)
 	GUISetState(@SW_SHOW)
 
 	While 1
@@ -1907,13 +1892,15 @@ Func Settings()
 				ScreenSize()
 			Case $b_Color
 				ChooseColor()
+			Case $b_speed
+				Speed()
 		EndSwitch
 	WEnd
 
 	GUIDelete($Setting)
 EndFunc   ;==>Settings
 #CS INFO
-	47080 V2 8/16/2019 8:51:46 AM V1 8/12/2019 11:06:11 AM
+	48582 V3 8/22/2019 6:28:51 PM V2 8/16/2019 8:51:46 AM V1 8/12/2019 11:06:11 AM
 #CE
 
 Func ScreenSize()
@@ -1993,11 +1980,12 @@ Func ChooseColor()
 	Local $r_what[8][5]
 	Local $Form1
 	Local $restart = False
+	Local $hGUI
 
 	$Form1 = GUICreate("Colors", 150, 600)
 	GUISetState(@SW_SHOW)
 
-	Local $Group1 = GUIStartGroup()
+	GUIStartGroup()
 
 	$r_what[1][0] = GUICtrlCreateRadio("Background", 40, 20, 113, 17)
 	$r_what[2][0] = GUICtrlCreateRadio("Edge", 40, 40, 113, 17)
@@ -2018,6 +2006,7 @@ Func ChooseColor()
 	GUICtrlSetFont(-1, 10, 900, 0, "Arial")
 
 	Local $b_save = GUICtrlCreateButton(" Save ", 40, 530) ;, 50, 50)
+	Local $b_all = GUICtrlCreateButton("Regenerate ALL", 40, 560) ;, 50, 50)
 
 	GUISetState(@SW_SHOW)
 
@@ -2118,6 +2107,18 @@ Func ChooseColor()
 					$restart = True
 				EndIf
 
+			Case $b_all
+				Local $hGUI = GUICreate("", 100, 100, -1, -1, $DS_SETFOREGROUND, -1, $Form1)
+				GUISetState(@SW_SHOW, $hGUI)
+				For $x = 1 To 7
+
+					GUISetBkColor($r_what[$x][3], $hGUI)
+					Sleep(500)
+					_ScreenCapture_CaptureWnd($s_data & "\" & $r_what[$x][1] & ".jpg", $hGUI, 30, 30, 30 + 25, 30 + 25, False)
+					$restart = True
+				Next
+				GUIDelete($hGUI)
+
 		EndSwitch
 	WEnd
 	GUIDelete($Form1)
@@ -2132,7 +2133,7 @@ Func ChooseColor()
 	EndIf
 EndFunc   ;==>ChooseColor
 #CS INFO
-	284695 V6 8/20/2019 5:46:24 PM V5 8/20/2019 10:24:30 AM V4 8/18/2019 11:15:59 PM V3 8/18/2019 11:56:18 AM
+	311670 V7 8/22/2019 8:37:33 AM V6 8/20/2019 5:46:24 PM V5 8/20/2019 10:24:30 AM V4 8/18/2019 11:15:59 PM
 #CE
 
 Func WallTrue() ;0.79
@@ -2230,9 +2231,107 @@ EndFunc   ;==>PoopShow
 	23167 V2 8/21/2019 10:30:33 PM V1 8/21/2019 10:55:18 AM
 #CE
 
+;Check to see if color files exist, if not create them.
+Func CheckJpg()
+
+	CheckColorJpg("Snake", 0xfc8c04)
+	CheckColorJpg("Edge", 0x989898)
+	CheckColorJpg("Empty", 0x000000)
+	CheckColorJpg("Head", 0xFFFF00)
+
+	CheckColorJpg("Dead", 0xA42C2C)
+	CheckColorJpg("Poop", 0x9C5404)
+	CheckColorJpg("Food", 0x20CC1C)
+
+EndFunc   ;==>CheckJpg
+#CS INFO
+	19829 V4 8/20/2019 5:46:24 PM V3 8/16/2019 8:51:46 AM V2 7/14/2019 10:10:20 PM V1 7/14/2019 10:20:53 AM
+#CE
+
+Func Speed()
+	Local $last
+	Local $GUI, $Input, $x, $loc
+	Local $bSlower, $bFaster, $bDefault
+	Local $bar[11]
+	;Local $nMsg
+
+	$GUI = GUICreate("Test Script", 300, 200)
+	GUICtrlCreateLabel("ms/cycle", 125, 25, 80, 25)
+	GUICtrlSetFont(-1, 10, 900, 0, "Arial")
+	$Input = GUICtrlCreateInput("Input1", 130, 45, 25, 25)
+	GUICtrlSetFont(-1, 10, 700, 0, "Arial")
+
+	$bFaster = GUICtrlCreateButton("Faster", 20, 128, 60, 30)
+	$bDefault = GUICtrlCreateButton("Default", 120, 128, 60, 30)
+	$bSlower = GUICtrlCreateButton("Slower", 220, 128, 60, 30)
+	GUISetState(@SW_SHOW)
+
+	$last = $g_TickTime
+	$loc = 0
+	GUICtrlSetData($Input, $last)
+	For $x = 0 To 10
+		$bar[$x] = GUICtrlCreatePic($cEMPTY, $x * $g_Size + 30, 80, $g_Size, $g_Size)
+	Next
+	GUISetState(@SW_SHOW, $GUI)
+
+	$g_hTick = TimerInit()
+
+	While 1
+		TickSpeed($last)
+		GUICtrlSetImage($bar[$loc], $cEMPTY)
+		$loc += 1
+		If $loc > 10 Then
+			$loc = 0
+		EndIf
+		GUICtrlSetImage($bar[$loc], $cSNAKE)
+
+		Switch GUIGetMsg()
+			Case $GUI_EVENT_CLOSE
+				ExitLoop
+			Case $bDefault
+				$last = 150
+				GUICtrlSetData($Input, $last)
+			Case $bFaster
+				$last -= 10
+				GUICtrlSetData($Input, $last)
+			Case $bSlower
+				$last += 10
+				GUICtrlSetData($Input, $last)
+			Case $Input
+				$last = GUICtrlRead($Input)
+
+		EndSwitch
+		Do
+		Until GUIGetMsg() = 0
+
+	WEnd
+	GUIDelete($GUI)
+	$g_TickTime = $last
+
+EndFunc   ;==>Speed
+#CS INFO
+	90722 V1 8/22/2019 6:28:51 PM
+#CE
+
+Func TickSpeed($speed) ;
+	Local $fdiff
+
+	While 1
+		$fdiff = TimerDiff($g_hTick)
+		If $fdiff > $speed Then
+			ExitLoop
+		EndIf
+	WEnd
+
+	$g_hTick = TimerInit()
+EndFunc   ;==>TickSpeed
+#CS INFO
+	12887 V1 8/22/2019 6:28:51 PM
+#CE
+
 ;Main
 Main()
 
 Exit
 
-;~T ScriptFunc.exe V0.54a 15 May 2019 - 8/21/2019 10:30:33 PM
+;~T ScriptFunc.exe V0.54a 15 May 2019 - 8/22/2019 6:28:51 PM
