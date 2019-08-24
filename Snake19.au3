@@ -5,8 +5,9 @@ AutoItSetOption("MustDeclareVars", 1)
 ;Global Static $MESSAGE =  False   ;Pause will still work in script  No DataOut
 
 ; Must be Declared before _Prf_startup
-Global $ver = "0.83 22 Aug 2019 Speed"
-Global $ini_ver = "6" ;Screen size change
+Global $ver = "0.84 24 Aug 2019 Changing poop with food"
+Global $ini_ver = "7" ;Change poop
+;"6" Screen size change
 ;"5" ;12 Aug 2019 Revert to 0.63
 ;"4" ;24 Jul 2019 8 to 10
 ;"3" ;15 Jul 2019 Timing changes
@@ -18,7 +19,7 @@ Global $ini_ver = "6" ;Screen size change
 #include "R:\!Autoit\Blank\_prf_startup.au3"
 
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
-#AutoIt3Wrapper_Res_Fileversion=0.0.8.3
+#AutoIt3Wrapper_Res_Fileversion=0.0.8.4
 #AutoIt3Wrapper_Icon=R:\!Autoit\Ico\prf.ico
 #AutoIt3Wrapper_Res_Description=Another snake game
 #AutoIt3Wrapper_Res_LegalCopyright=© Phillip Forrestal 2019
@@ -77,8 +78,9 @@ Global $ini_ver = "6" ;Screen size change
 	Version
 	Problem: 0.58 left some testing in just in case  X & Y 3 & 4
 
-	0.83 22 Aug 19 Speed
-	0.82 22 Aug 19 Regenerate Colors
+	0.84 24 Aug 2019 Changing poop with food
+	0.83 22 Aug 2019 Speed
+	0.82 22 Aug 2019 Regenerate Colors
 	0.81 21 Aug 2019 Extra  Poop better
 	0.80 21 Aug 2019 Extra Poop back, fix location of food
 	0.79 21 Aug 2019 Extra - Wall
@@ -352,6 +354,9 @@ Global $g_poop[$s_PoopSize][4] ;0 flag, 1 x, 2 y, 3 cnt down
 ;0.82
 Global $g_TickTime = 150
 
+;0.84
+Global $g_pooprnd
+
 ; Main is call at end
 Func Main()
 	Local $a
@@ -522,7 +527,8 @@ Func Game()
 	;0.40
 	$HungerCnt = 0
 
-	;0.80
+	;0.84
+	$g_pooprnd = $s_PoopSize / 4 ;  no poop for first few foods
 
 	Local $aAccelKey2[][] = [["{RIGHT}", $L_idRight], ["{LEFT}", $L_idLeft], ["{DOWN}", $L_idDown], ["{UP}", $L_idUp], ["{ESC}", $L_idEsc]]
 	GUISetAccelerators($aAccelKey2, $g_ctrlBoard)
@@ -530,9 +536,9 @@ Func Game()
 
 	Switch $g_GameWhich
 		Case 1 ;extra
-			$g_gChange = 2 ;Start with 5 so snake will not die at start
+			$g_gChange = 2 ;Start with X so snake will not die at start
 			If $testing Then
-				$g_gChange = 25 ;Start with 5 so snake will not die at start
+				$g_gChange = 5 ;Start with Y so snake will not die at start
 			EndIf
 			$g_Turns = -1 ; The way it start with 1 turn on start. To fix start with +1
 			$g_HungeryLast = $g_Turns
@@ -618,7 +624,7 @@ Func Game()
 
 EndFunc   ;==>Game
 #CS INFO
-	318951 V46 8/21/2019 10:55:18 AM V45 8/18/2019 11:56:18 AM V44 8/12/2019 11:06:11 AM V43 8/11/2019 11:35:36 PM
+	323677 V47 8/24/2019 6:38:07 PM V46 8/21/2019 10:55:18 AM V45 8/18/2019 11:56:18 AM V44 8/12/2019 11:06:11 AM
 #CE
 
 Func Tick() ;
@@ -781,10 +787,12 @@ Func Extra()
 
 		Case $FOOD
 			;$Map[$what][$x_new + $g_dirX][$y_new + $g_dirY]
+			PoopRemove()
 
-			If Random(0, 1, 1) = 0 Then
+			$g_pooprnd += 1
+			If Random(0, $g_pooprnd, 1) > 6 Then
 				PoopAdd($x_new + $g_dirX, $y_new + $g_dirY)
-				Dataout("Test Poop add with food")
+				$g_pooprnd = Ceiling($LS_SnakeLenLast / 10) + 5
 			EndIf
 
 			$g_ScoreFood += 1
@@ -838,12 +846,12 @@ Func Extra()
 		Case $FOOD2 ;Food from Food from 0
 			;$Map[$what][$x_new + $g_dirX][$y_new + $g_dirY]
 			$g_ScoreFood += 1
-			$g_gChange += 2
+			$g_gChange += 5
 
 			PrevNext($x_new + $g_dirX, $y_new + $g_dirY) ;New value
 			RemoveSnakeExtra() ;only empty cell change len
 			$g_iScore += 10
-			Status(0, "Bonus Food: Score 10, Snake 2", 4)
+			Status(0, "Bonus Food: Score 10, Snake 5", 4)
 
 		Case $EMPTY
 			PrevNext($x_new + $g_dirX, $y_new + $g_dirY) ;New value
@@ -915,7 +923,7 @@ Func Extra()
 
 EndFunc   ;==>Extra
 #CS INFO
-	376590 V36 8/22/2019 8:37:33 AM V35 8/21/2019 10:30:33 PM V34 8/21/2019 10:55:18 AM V33 8/21/2019 3:27:01 AM
+	380530 V37 8/24/2019 6:38:07 PM V36 8/22/2019 8:37:33 AM V35 8/21/2019 10:30:33 PM V34 8/21/2019 10:55:18 AM
 #CE
 
 Func Normal()
@@ -2175,11 +2183,11 @@ EndFunc   ;==>WallTrue
 	35628 V1 8/21/2019 3:27:01 AM
 #CE
 
-Func PoopAdd($x, $y, $delay = $s_PoopSize / 2)
+Func PoopRemove()
 	For $Z = 0 To $s_PoopSize - 1
 		If $g_poop[$Z][0] = 2 Then
 			If $Map[$what][$g_poop[$Z][1]][$g_poop[$Z][2]] = $POOP Then
-				If $g_poop[$Z][3] = 0 Then
+				If $g_poop[$Z][3] = 0 Then ;delay = 0
 					$g_poop[$Z][0] = 0
 					If $Z = 0 Then
 						$Map[$what][$g_poop[$Z][1]][$g_poop[$Z][2]] = $FOOD2
@@ -2189,26 +2197,31 @@ Func PoopAdd($x, $y, $delay = $s_PoopSize / 2)
 						GUICtrlSetImage($Map[$ctrl][$g_poop[$Z][1]][$g_poop[$Z][2]], $cEMPTY)
 					EndIf
 				Else
-					$g_poop[$Z][3] -= 1
+					$g_poop[$Z][3] -= 1 ;delay
 				EndIf
 			EndIf
 		EndIf
 	Next
+EndFunc   ;==>PoopRemove
+#CS INFO
+	41934 V1 8/24/2019 6:38:07 PM
+#CE
 
+Func PoopAdd($x, $y, $delay = $s_PoopSize / 2)
 	For $Z = 0 To $s_PoopSize - 1
 		If $g_poop[$Z][0] = 0 Then
 			If $Map[$what][$x][$y] <> $POOP Then
 				$g_poop[$Z][0] = 1
 				$g_poop[$Z][1] = $x
 				$g_poop[$Z][2] = $y
-				$g_poop[$Z][3] = $delay
+				$g_poop[$Z][3] = $delay + Random(0, 5, 1)
 				Return
 			EndIf
 		EndIf
 	Next
 EndFunc   ;==>PoopAdd
 #CS INFO
-	56662 V2 8/21/2019 10:30:33 PM V1 8/21/2019 10:55:18 AM
+	20447 V3 8/24/2019 6:38:07 PM V2 8/21/2019 10:30:33 PM V1 8/21/2019 10:55:18 AM
 #CE
 
 Func PoopShow($x, $y)
@@ -2219,7 +2232,6 @@ Func PoopShow($x, $y)
 
 				$Map[$what][$x][$y] = $POOP
 				GUICtrlSetImage($Map[$ctrl][$x][$y], $cPOOP)
-				Status(3, "Poop " & $Z + 1, 4)
 				Return False
 			EndIf
 		EndIf
@@ -2228,7 +2240,7 @@ Func PoopShow($x, $y)
 	Return True
 EndFunc   ;==>PoopShow
 #CS INFO
-	23167 V2 8/21/2019 10:30:33 PM V1 8/21/2019 10:55:18 AM
+	21513 V3 8/24/2019 6:38:07 PM V2 8/21/2019 10:30:33 PM V1 8/21/2019 10:55:18 AM
 #CE
 
 ;Check to see if color files exist, if not create them.
@@ -2334,4 +2346,4 @@ Main()
 
 Exit
 
-;~T ScriptFunc.exe V0.54a 15 May 2019 - 8/22/2019 6:28:51 PM
+;~T ScriptFunc.exe V0.54a 15 May 2019 - 8/24/2019 6:38:07 PM
