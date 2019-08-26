@@ -5,7 +5,7 @@ AutoItSetOption("MustDeclareVars", 1)
 ;Global Static $MESSAGE =  False   ;Pause will still work in script  No DataOut
 
 ; Must be Declared before _Prf_startup
-Global $ver = "0.84 24 Aug 2019 Changing poop with food"
+Global $ver = "0.85 25 Aug 2019 FOOD2 should act like FOOD, fix Normal lock up"
 Global $ini_ver = "7" ;Change poop
 ;"6" Screen size change
 ;"5" ;12 Aug 2019 Revert to 0.63
@@ -19,7 +19,7 @@ Global $ini_ver = "7" ;Change poop
 #include "R:\!Autoit\Blank\_prf_startup.au3"
 
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
-#AutoIt3Wrapper_Res_Fileversion=0.0.8.4
+#AutoIt3Wrapper_Res_Fileversion=0.0.8.5
 #AutoIt3Wrapper_Icon=R:\!Autoit\Ico\prf.ico
 #AutoIt3Wrapper_Res_Description=Another snake game
 #AutoIt3Wrapper_Res_LegalCopyright=© Phillip Forrestal 2019
@@ -78,6 +78,7 @@ Global $ini_ver = "7" ;Change poop
 	Version
 	Problem: 0.58 left some testing in just in case  X & Y 3 & 4
 
+	0.85 25 Aug 2019 FOOD2 should act like FOOD, fix Normal lock up
 	0.84 24 Aug 2019 Changing poop with food
 	0.83 22 Aug 2019 Speed
 	0.82 22 Aug 2019 Regenerate Colors
@@ -513,7 +514,6 @@ Func Game()
 	$BounceWall = True
 
 	;Default before start
-	DataOut("New Game")
 	$g_turnLast = 0
 	$g_ScoreTurn = 0
 	$g_ScoreFood = 0
@@ -597,7 +597,7 @@ Func Game()
 				$g_turnLast = $g_turnNo
 				$g_ScoreTurn += 1
 				$g_Turns += 1
-				;Dataout("Turns", $g_Turns)
+
 			EndIf
 
 		Else
@@ -612,6 +612,7 @@ Func Game()
 			Case 1
 				Extra()
 			Case 0
+
 				Normal()
 		EndSwitch
 
@@ -620,11 +621,9 @@ Func Game()
 	GUISetAccelerators(1, $g_ctrlBoard) ; Turn off Accelerator
 	UpDateHiScore()
 
-	DataOut("Traveled", $g_SnakeCount)
-
 EndFunc   ;==>Game
 #CS INFO
-	323677 V47 8/24/2019 6:38:07 PM V46 8/21/2019 10:55:18 AM V45 8/18/2019 11:56:18 AM V44 8/12/2019 11:06:11 AM
+	316915 V48 8/25/2019 6:50:13 PM V47 8/24/2019 6:38:07 PM V46 8/21/2019 10:55:18 AM V45 8/18/2019 11:56:18 AM
 #CE
 
 Func Tick() ;
@@ -660,7 +659,7 @@ Func Tick() ;
 		Next
 
 		$g_tc = String(Int(($fdiff / 100)))
-		DataOut("Tick", $fdiff / 100)
+
 	EndIf
 
 	While 1
@@ -686,7 +685,7 @@ Func Tick() ;
 	$g_hTick = TimerInit()
 EndFunc   ;==>Tick
 #CS INFO
-	70604 V15 8/22/2019 6:28:51 PM V14 7/14/2019 10:20:53 AM V13 7/13/2019 7:20:00 PM V12 7/13/2019 3:59:17 PM
+	68587 V16 8/25/2019 6:50:13 PM V15 8/22/2019 6:28:51 PM V14 7/14/2019 10:20:53 AM V13 7/13/2019 7:20:00 PM
 #CE
 
 ; $g_iscore is extra + length  ~~
@@ -697,21 +696,18 @@ Func Extra()
 	Local $flag
 
 	If $g_Ouch > 0 Then
-		DataOut("OUCH", $g_Ouch)
-		pause("Ouch", $g_Ouch)
+		;DataOut("OUCH", $g_Ouch)
+		;pause("Ouch", $g_Ouch)
 		$g_Ouch -= 1
 	EndIf
 
 	;EXTRA
 	Switch $Map[$what][$x_new + $g_dirX][$y_new + $g_dirY]
 		Case $DEAD
-			DataOut("OUCH", $g_Ouch)
 			If $g_Ouch > 0 Then
 				$flag = DoubleBackWall()
 				If $flag Then
-					DataOut("Double back DEAD")
 					Status(2, "Double back DEAD", 3)
-
 				Else
 					Status(0, "Ate too much dead snake or poop", 1)
 					$g_endgame = True
@@ -742,15 +738,10 @@ Func Extra()
 			PoopAdd($x_new + $g_dirX, $y_new + $g_dirY, $s_PoopSize)
 
 		Case $WALL
-			DataOut("WALL")
-			; Check  prev to be the same  last location
-			DataOut("Eat wall Double back on self")
-
 			$flag = WallTrue()
 			If Not $flag Then
 				$flag = DoubleBackWall()
 				If $flag Then
-					DataOut("Double back WALL")
 					Status(2, "Double back WALL, Lost 2", 3)
 					$g_gChange -= 2
 				Else
@@ -764,7 +755,6 @@ Func Extra()
 
 			; Check  prev to be the same  last location
 			If $Map[$prX][$x_new][$y_new] = $x_new + $g_dirX And $Map[$prY][$x_new][$y_new] = $y_new + $g_dirY Then ; Double back
-				DataOut("Eat me Double back on self")
 				$flag = DoubleBack($g_dirX, $g_dirY)
 				If $flag Then
 					Status(2, "Double back on self, Lost 2", 3)
@@ -796,7 +786,6 @@ Func Extra()
 			EndIf
 
 			$g_ScoreFood += 1
-			;dataout("Food", $g_Turns)
 			$HungerCnt = 0
 			$g_gChange += 1
 
@@ -813,9 +802,9 @@ Func Extra()
 					$g_gChange += 1
 					If $LS_SnakeLenLast = $g_SnakeMax Then
 						$g_iScore += 20
-						Status(0, "Turn bonus: Score 20 Snake 2", 4)
+						Status(0, "Turn bonus: Score 20 Snake 1", 4)
 					Else
-						Status(0, "Turn bonus: Snake 2", 4)
+						Status(0, "Turn bonus: Snake 1", 4)
 					EndIf
 				Case 4
 					$g_gChange += 0
@@ -852,6 +841,11 @@ Func Extra()
 			RemoveSnakeExtra() ;only empty cell change len
 			$g_iScore += 10
 			Status(0, "Bonus Food: Score 10, Snake 5", 4)
+
+			$g_Turns = 0
+			$g_HungeryLast = 0
+			$HungerCnt = 0
+			$ls_HungerFug = 0
 
 		Case $EMPTY
 			PrevNext($x_new + $g_dirX, $y_new + $g_dirY) ;New value
@@ -923,7 +917,7 @@ Func Extra()
 
 EndFunc   ;==>Extra
 #CS INFO
-	380530 V37 8/24/2019 6:38:07 PM V36 8/22/2019 8:37:33 AM V35 8/21/2019 10:30:33 PM V34 8/21/2019 10:55:18 AM
+	366415 V39 8/25/2019 6:50:13 PM V38 8/25/2019 12:01:59 AM V37 8/24/2019 6:38:07 PM V36 8/22/2019 8:37:33 AM
 #CE
 
 Func Normal()
@@ -1001,17 +995,6 @@ EndFunc   ;==>Normal
 Func StartDead($inX, $inY)
 	Local $x, $y
 
-	;Global $g_bdPrev[4] ;Cycle, CycleStr , X, Y Pre 2,3
-	;Global $g_bdNext[4] ;Cycle, CycleStr , X, Y Nx 4,5
-	;Global $g_bdEnd[4] ;Cycle, CycleStr,  X, Y
-
-	;.0.28 Do First
-	; Here to old tail
-	;Check to see if active, if Active snake dies because it ate itself twice.  Return False
-	;If $g_bdPrev[$s_bdCycle] <> -1 Then
-	;	Return False
-	;EndIf
-
 	;Blood start with previous cross location so Zero out next location  And this location RED
 	$x = $Map[$prX][$inX][$inY]
 	$y = $Map[$prY][$inX][$inY]
@@ -1021,13 +1004,6 @@ Func StartDead($inX, $inY)
 	$Map[$nxY][$x][$y] = 0
 
 	ConvDead($x, $y)
-
-	;	$Map[$what][$x][$y] = $DEAD
-	;	GUICtrlSetImage($Map[$ctrl][$x][$y], $cDEAD)
-
-	;-----------------------------end prev
-	;-------------------------start old tail
-	;This one will be the new end.  The old end will be bdStart2
 
 	$x = $x_end
 	$y = $y_end
@@ -1039,22 +1015,6 @@ Func StartDead($inX, $inY)
 
 	;Add blood to old tail
 	Status(3, "Ate Live snake OUCH OUCH", 1)
-	;ConvDead($x, $y, True)
-
-	;	$Map[$what][$x][$y] = $DEAD
-	;	GUICtrlSetImage($Map[$ctrl][$x][$y], $cDEAD)
-
-	;--------------------end old tail
-
-	;	ShowRow($x, $y)
-	;	pause()
-
-	;	ShowRow($x, $y)
-
-	;$g_bdEnd[$s_bdX] = $x ;
-	;$g_bdEnd[$s_bdY] = $y
-
-	;pause()
 
 	;Blood 2nd with next cross location so Zero out prv location  And this location RED
 	;This one will be the new end.  The old end will be bdStart2
@@ -1064,17 +1024,13 @@ Func StartDead($inX, $inY)
 	$Map[$prX][$x][$y] = 0
 	$Map[$prY][$x][$y] = 0
 
-	;$Map[$what][$x][$y] = $DEAD
-	;GUICtrlSetImage($Map[$ctrl][$x][$y], $cDEAD)
-
-	;ShowRow($x, $y)
 	$x_end = $x
 	$y_end = $y
 
 	Return True
 EndFunc   ;==>StartDead
 #CS INFO
-	122037 V13 8/2/2019 8:56:18 PM V12 7/18/2019 11:32:28 PM V11 7/14/2019 10:20:53 AM V10 7/13/2019 7:20:00 PM
+	57982 V14 8/25/2019 6:50:13 PM V13 8/2/2019 8:56:18 PM V12 7/18/2019 11:32:28 PM V11 7/14/2019 10:20:53 AM
 #CE
 
 Func ConvDead($x, $y, $useNext = False) ; start map location
@@ -1093,7 +1049,6 @@ Func ConvDead($x, $y, $useNext = False) ; start map location
 
 		If $useNext Then
 			Status(2, "ConvDead from End", 3)
-			DataOut("ConvDead from End")
 			$x = $Map[$nxX][$tx][$ty]
 			$y = $Map[$nxY][$tx][$ty]
 		Else
@@ -1105,7 +1060,7 @@ Func ConvDead($x, $y, $useNext = False) ; start map location
 
 EndFunc   ;==>ConvDead
 #CS INFO
-	36891 V5 7/9/2019 1:03:14 AM V4 7/6/2019 6:24:29 PM V3 7/5/2019 4:03:49 PM V2 7/3/2019 6:50:03 PM
+	34565 V6 8/25/2019 6:50:13 PM V5 7/9/2019 1:03:14 AM V4 7/6/2019 6:24:29 PM V3 7/5/2019 4:03:49 PM
 #CE
 
 Func ShowRow($x, $y)
@@ -1125,7 +1080,6 @@ EndFunc   ;==>ShowRow
 
 Func Status($status, $string, $color)
 	Local $c
-	;DataOut($status, $string)
 
 	If $status = 0 Then
 		$g_Status0Off = 25
@@ -1145,17 +1099,17 @@ Func Status($status, $string, $color)
 			$c = 0xff69b4
 		Case 2 ;White
 			$c = 0xffffff
+		Case 3 ; yellow
+			$c = 0xffff00
 		Case 4 ;pale green
 			$c = 0x90EE90
-		Case 3
-			$c = 0xffff00
 
 	EndSwitch
 	GUICtrlSetBkColor($g_Status[$status], $c)
 	GUICtrlSetBkColor($g_StatusText[$status], $c)
 EndFunc   ;==>Status
 #CS INFO
-	40276 V8 7/14/2019 10:20:53 AM V7 7/13/2019 3:59:17 PM V6 7/9/2019 1:03:14 AM V5 6/9/2019 5:40:22 PM
+	38718 V10 8/25/2019 6:50:13 PM V9 8/25/2019 9:54:57 AM V8 7/14/2019 10:20:53 AM V7 7/13/2019 3:59:17 PM
 #CE
 
 Func StartSnake()
@@ -1249,7 +1203,6 @@ Func DoubleBack($dirx, $diry)
 	Local $a, $flag
 	;new+dir  is one back.
 	; Find which X or Y which is the same, then random _+ one on there
-	;DataOut($dirx, $diry)
 	If $dirx = 0 Then
 		$a = Random(0, 1, 1)
 		If $a = 0 Then
@@ -1266,6 +1219,7 @@ Func DoubleBack($dirx, $diry)
 		EndIf
 		If $flag Then
 			PrevNext($x_new + $a, $y_new + $diry)
+			RemoveSnakeExtra() ;Same size
 		EndIf
 	Else ;$diry =0
 		$a = Random(0, 1, 1)
@@ -1283,6 +1237,7 @@ Func DoubleBack($dirx, $diry)
 		EndIf
 		If $flag Then
 			PrevNext($x_new + $dirx, $y_new + $a)
+			RemoveSnakeExtra() ;Same size
 		EndIf
 
 	EndIf
@@ -1290,7 +1245,7 @@ Func DoubleBack($dirx, $diry)
 
 EndFunc   ;==>DoubleBack
 #CS INFO
-	54295 V2 6/20/2019 9:30:52 PM V1 6/9/2019 1:07:49 PM
+	57688 V3 8/25/2019 6:50:13 PM V2 6/20/2019 9:30:52 PM V1 6/9/2019 1:07:49 PM
 #CE
 
 Func PrevNext($x, $y) ;New value
@@ -1399,36 +1354,42 @@ Func AddFood($start = False)
 	EndIf
 	If $g_GameWhich = 0 Then ; 0 Normal, 1 Mine
 
-		Local $area = 10
-		Local $len, $x1, $y1, $mid, $len2
+		Local $len, $x1, $y1, $mid, $len2, $x2, $y2
 
 		$len = ($Map[$num][$x_new][$y_new] - $Map[$num][$x_end][$y_end])
-		If $len < $area Then
-			$len = $area
-		EndIf
-		$len2 = $len / 2
-		If $len > $g_sx - 2 Then
-			$x = $g_sx - 1
-			$x1 = 2
-		Else
-			$mid = Int($g_sx / 2)
-			$x = $mid + $len2
-			$x1 = $mid - $len2
-		EndIf
+		If $len < 50 Then
+			If $len < 10 Then
+				$len = 10
+			EndIf
+			$len2 = Int($len / 2)
+			If $len > $g_sx - 2 Then
+				$x2 = $g_sx - 1
+				$x1 = 2
+			Else
+				$mid = Int($g_sx / 2)
+				$x2 = $mid + $len2
+				$x1 = $mid - $len2
+			EndIf
 
-		If $len > $g_sy - 2 Then
-			$y = $g_sy - 1
-			$y1 = 2
-		Else
-			$mid = Int($g_sy / 2)
-			$y = $mid + $len2
-			$y1 = $mid - $len2
-		EndIf
+			If $len > $g_sy - 2 Then
+				$y2 = $g_sy - 1
+				$y1 = 2
+			Else
+				$mid = Int($g_sy / 2)
+				$y2 = $mid + $len2
+				$y1 = $mid - $len2
+			EndIf
 
-		Do
-			$x = Int(Random($x1, $x))
-			$y = Int(Random($y1, $y))
-		Until $Map[$what][$x][$y] = $EMPTY
+			Do
+				$x = Int(Random($x1, $x2))
+				$y = Int(Random($y1, $y2))
+			Until $Map[$what][$x][$y] = $EMPTY
+		Else
+			Do
+				$x = Int(Random(1, $g_sx))
+				$y = Int(Random(1, $g_sy))
+			Until $Map[$what][$x][$y] = $EMPTY
+		EndIf
 	Else
 		Do
 			$x = Int(Random(1, $g_sx))
@@ -1441,7 +1402,7 @@ Func AddFood($start = False)
 
 EndFunc   ;==>AddFood
 #CS INFO
-	74737 V10 6/28/2019 7:37:37 PM V9 6/24/2019 11:22:57 PM V8 6/22/2019 7:09:09 PM V7 6/3/2019 1:09:45 AM
+	82623 V11 8/25/2019 6:50:13 PM V10 6/28/2019 7:37:37 PM V9 6/24/2019 11:22:57 PM V8 6/22/2019 7:09:09 PM
 #CE
 
 Func ClearBoard()
@@ -1812,13 +1773,12 @@ Func StartForm()
 	$b_setting = GUICtrlCreateButton("Setting", 100, 550, 75, 35) ;~~
 	;GUICtrlCreateButton("?????", 400, 550, 75, 35) ;~~
 	$b_start = GUICtrlCreateButton("GO", 270, 550, 100, 35)
-	;$Checkbox1 = GUICtrlCreateCheckbox("Testing", 1, 555)
 
 	Local $Edit1 = GUICtrlCreateEdit("", 20, $b, 550, 230, $ES_READONLY)
 	GUICtrlSetFont($Edit1, 10, 400, 0, "Arial")
 	GUICtrlSetData($Edit1, "Press ESC to quit." & @CRLF, 1)
 	GUICtrlSetData($Edit1, @CRLF, 1)
-	GUICtrlSetData($Edit1, "If you lose Focus the game will PAUSE" & @CRLF, 1)
+	GUICtrlSetData($Edit1, "If you lose Focus or Minimize the game, it will PAUSE" & @CRLF, 1)
 	GUICtrlSetData($Edit1, @CRLF, 1)
 
 	GUICtrlSetData($Edit1, "Normal" & @CRLF, 1)
@@ -1826,12 +1786,12 @@ Func StartForm()
 	GUICtrlSetData($Edit1, @CRLF, 1)
 
 	GUICtrlSetData($Edit1, "Extra:" & @CRLF, 1)
-	GUICtrlSetData($Edit1, "  Food increase snake by 1" & @CRLF, 1)
+	GUICtrlSetData($Edit1, "  Food increase Snake by 1.  A special food will get you more." & @CRLF, 1)
 	GUICtrlSetData($Edit1, @CRLF, 1)
-	GUICtrlSetData($Edit1, "Bonus:" & @CRLF, 1)
-	GUICtrlSetData($Edit1, " Snake does not like to turn so, so few turns and Food increase snake & score" & @CRLF, 1)
-	GUICtrlSetData($Edit1, " Snake can 'double back' on self or wall, most of the times." & @CRLF, 1)
-	GUICtrlSetData($Edit1, " Snake does not like to travel far for next meal. Snake does get shorter", 1)
+	GUICtrlSetData($Edit1, "Extra Bonus:" & @CRLF, 1)
+	GUICtrlSetData($Edit1, " Snake can 'double back' on self. Pass threw Wall to other side. But loose 2 cells." & @CRLF, 1)
+	GUICtrlSetData($Edit1, " Snake does not like to Turn so, so few turns and Food increase snake & score" & @CRLF, 1)
+	GUICtrlSetData($Edit1, "  Too many turns Snake gets shorter", 1)
 
 	GUISetState(@SW_SHOW)
 
@@ -1864,18 +1824,13 @@ Func StartForm()
 				$g_GameWhich = 1
 				NormalExtra()
 
-				;Case $Checkbox1 ;debug
-
-				;$TESTING = BitAND(GUICtrlRead($Checkbox1), $GUI_CHECKED) = $GUI_CHECKED
-				;DataOut($TESTING)
-
 		EndSwitch
 	WEnd
 	pause()
 
 EndFunc   ;==>StartForm
 #CS INFO
-	206603 V28 8/18/2019 11:56:18 AM V27 8/16/2019 8:51:46 AM V26 8/12/2019 11:06:11 AM V25 8/11/2019 11:35:36 PM
+	197365 V29 8/25/2019 6:50:13 PM V28 8/18/2019 11:56:18 AM V27 8/16/2019 8:51:46 AM V26 8/12/2019 11:06:11 AM
 #CE
 
 Func Settings()
@@ -1919,9 +1874,6 @@ Func ScreenSize()
 	$mathW = Int(@DesktopWidth / $g_boardx) - 1
 	$mathH = Int((@DesktopHeight - ($g_Font * 2)) / $g_boardy) - 1
 
-	dataout($g_boardx, ($g_boardy + ($g_Font * 2)))
-	dataout($mathW, $mathH)
-
 	If $mathW > $mathH Then
 		$Math = $mathH
 	Else
@@ -1962,7 +1914,7 @@ Func ScreenSize()
 	EndSelect
 EndFunc   ;==>ScreenSize
 #CS INFO
-	87726 V3 8/18/2019 11:15:59 PM V2 8/16/2019 8:51:46 AM V1 8/12/2019 11:06:11 AM
+	82198 V4 8/25/2019 6:50:13 PM V3 8/18/2019 11:15:59 PM V2 8/16/2019 8:51:46 AM V1 8/12/2019 11:06:11 AM
 #CE
 
 ; Read INI setting
@@ -2025,7 +1977,7 @@ Func ChooseColor()
 			Case $a[$x][0] = "Empty"
 				$y = 1
 				$r_what[$y][1] = $a[$x][0]
-				$r_what[$y][2] = 0x000000
+				$r_what[$y][2] = 0x000080
 				$r_what[$y][3] = $a[$x][1]
 				$r_what[$y][4] = $a[$x][1]
 			Case $a[$x][0] = "Edge"
@@ -2141,7 +2093,7 @@ Func ChooseColor()
 	EndIf
 EndFunc   ;==>ChooseColor
 #CS INFO
-	311670 V7 8/22/2019 8:37:33 AM V6 8/20/2019 5:46:24 PM V5 8/20/2019 10:24:30 AM V4 8/18/2019 11:15:59 PM
+	311678 V8 8/25/2019 6:50:13 PM V7 8/22/2019 8:37:33 AM V6 8/20/2019 5:46:24 PM V5 8/20/2019 10:24:30 AM
 #CE
 
 Func WallTrue() ;0.79
@@ -2199,12 +2151,16 @@ Func PoopRemove()
 				Else
 					$g_poop[$Z][3] -= 1 ;delay
 				EndIf
+			Else ; Not Poop, clear this point if not snake
+				If $Map[$what][$g_poop[$Z][1]][$g_poop[$Z][2]] <> $SNAKE Then
+					$g_poop[$Z][0] = 0
+				EndIf
 			EndIf
 		EndIf
 	Next
 EndFunc   ;==>PoopRemove
 #CS INFO
-	41934 V1 8/24/2019 6:38:07 PM
+	52416 V3 8/25/2019 6:50:13 PM V2 8/25/2019 9:54:57 AM V1 8/24/2019 6:38:07 PM
 #CE
 
 Func PoopAdd($x, $y, $delay = $s_PoopSize / 2)
@@ -2215,13 +2171,14 @@ Func PoopAdd($x, $y, $delay = $s_PoopSize / 2)
 				$g_poop[$Z][1] = $x
 				$g_poop[$Z][2] = $y
 				$g_poop[$Z][3] = $delay + Random(0, 5, 1)
+				;Status(3, "Add Poop " & $Z, 2)
 				Return
 			EndIf
 		EndIf
 	Next
 EndFunc   ;==>PoopAdd
 #CS INFO
-	20447 V3 8/24/2019 6:38:07 PM V2 8/21/2019 10:30:33 PM V1 8/21/2019 10:55:18 AM
+	22331 V4 8/25/2019 6:50:13 PM V3 8/24/2019 6:38:07 PM V2 8/21/2019 10:30:33 PM V1 8/21/2019 10:55:18 AM
 #CE
 
 Func PoopShow($x, $y)
@@ -2229,9 +2186,10 @@ Func PoopShow($x, $y)
 		If $g_poop[$Z][0] = 1 Then
 			If $g_poop[$Z][1] = $x And $g_poop[$Z][2] = $y Then
 				$g_poop[$Z][0] = 2
-
+				;Status(3, "Show Poop " & $Z, 2)
 				$Map[$what][$x][$y] = $POOP
 				GUICtrlSetImage($Map[$ctrl][$x][$y], $cPOOP)
+
 				Return False
 			EndIf
 		EndIf
@@ -2240,7 +2198,7 @@ Func PoopShow($x, $y)
 	Return True
 EndFunc   ;==>PoopShow
 #CS INFO
-	21513 V3 8/24/2019 6:38:07 PM V2 8/21/2019 10:30:33 PM V1 8/21/2019 10:55:18 AM
+	23549 V4 8/25/2019 6:50:13 PM V3 8/24/2019 6:38:07 PM V2 8/21/2019 10:30:33 PM V1 8/21/2019 10:55:18 AM
 #CE
 
 ;Check to see if color files exist, if not create them.
@@ -2248,7 +2206,7 @@ Func CheckJpg()
 
 	CheckColorJpg("Snake", 0xfc8c04)
 	CheckColorJpg("Edge", 0x989898)
-	CheckColorJpg("Empty", 0x000000)
+	CheckColorJpg("Empty", 0x000080)
 	CheckColorJpg("Head", 0xFFFF00)
 
 	CheckColorJpg("Dead", 0xA42C2C)
@@ -2257,7 +2215,7 @@ Func CheckJpg()
 
 EndFunc   ;==>CheckJpg
 #CS INFO
-	19829 V4 8/20/2019 5:46:24 PM V3 8/16/2019 8:51:46 AM V2 7/14/2019 10:10:20 PM V1 7/14/2019 10:20:53 AM
+	19837 V5 8/25/2019 6:50:13 PM V4 8/20/2019 5:46:24 PM V3 8/16/2019 8:51:46 AM V2 7/14/2019 10:10:20 PM
 #CE
 
 Func Speed()
@@ -2346,4 +2304,4 @@ Main()
 
 Exit
 
-;~T ScriptFunc.exe V0.54a 15 May 2019 - 8/24/2019 6:38:07 PM
+;~T ScriptFunc.exe V0.54a 15 May 2019 - 8/25/2019 6:50:13 PM
