@@ -5,7 +5,7 @@ AutoItSetOption("MustDeclareVars", 1)
 ;Global Static $MESSAGE =  False   ;Pause will still work in script  No DataOut
 
 ; Must be Declared before _Prf_startup
-Global $ver = "0.85 25 Aug 2019 FOOD2 should act like FOOD, fix Normal lock up"
+Global $ver = "0.86 26 Aug 2019 Speed saved to INI, alinement of buttons, fix no food on edge"
 Global $ini_ver = "7" ;Change poop
 ;"6" Screen size change
 ;"5" ;12 Aug 2019 Revert to 0.63
@@ -19,7 +19,7 @@ Global $ini_ver = "7" ;Change poop
 #include "R:\!Autoit\Blank\_prf_startup.au3"
 
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
-#AutoIt3Wrapper_Res_Fileversion=0.0.8.5
+#AutoIt3Wrapper_Res_Fileversion=0.0.8.6
 #AutoIt3Wrapper_Icon=R:\!Autoit\Ico\prf.ico
 #AutoIt3Wrapper_Res_Description=Another snake game
 #AutoIt3Wrapper_Res_LegalCopyright=© Phillip Forrestal 2019
@@ -71,13 +71,9 @@ Global $ini_ver = "7" ;Change poop
 
 	to do
 
-	Remove things I won't do but left in code
-
-	Setting: Speed.
-
 	Version
-	Problem: 0.58 left some testing in just in case  X & Y 3 & 4
 
+	0.86 26 Aug 2019 Speed saved to INI, alinement of buttons, fix no food on edge
 	0.85 25 Aug 2019 FOOD2 should act like FOOD, fix Normal lock up
 	0.84 24 Aug 2019 Changing poop with food
 	0.83 22 Aug 2019 Speed
@@ -269,7 +265,6 @@ Global $g_StatusOff = 2
 
 Global $g_aHiScore[12][6] ; data load by INI.  10 =  score,  date, len.food, turns, Max
 Global $g_iScore
-Global $g_cSetting ;ini
 
 Global $g_GameWhich = 1 ; 0 Norma, 1 Mine
 Global $g_HiScoreWho ;ctrl
@@ -303,6 +298,7 @@ Global $g_bdEnd ;Cycle
 $g_bdEnd = $M1
 
 ;.31
+$ver = StringStripWS($ver, 7)
 Global $g_Focus = "Snake19 - " & $ver
 
 ;0.32  Taking types out of game loop put into function
@@ -322,8 +318,6 @@ Global $g_dirY
 Global $g_GameScore = 0
 
 ;0.34
-Global $g_Health = 100
-
 Global $timing[100]
 Global $timingCnt = -0
 
@@ -353,7 +347,7 @@ Global $g_poop[$s_PoopSize][4] ;0 flag, 1 x, 2 y, 3 cnt down
 ;2 show
 
 ;0.82
-Global $g_TickTime = 150
+Global $g_TickTime
 
 ;0.84
 Global $g_pooprnd
@@ -373,15 +367,8 @@ Func Main()
 	EndIf
 	IniWrite($s_ini, "Program", "Version", $ver)
 
-	;	If False Then
-	;		pause(@AppDataDir)
-	;		pause()
-	;		pause(@LocalAppDataDir)
-	;		pause(@ProgramsDir)
-	;		pause(@UserProfileDir)
-	;		pause(@StartMenuDir)
-	;		pause(@DesktopCommonDir)
-	;	EndIf
+	;0.86
+	$g_TickTime = IniRead($s_ini, "General", "Speed", 150)
 
 	;Check to see if color files exist, if not create them.
 	CheckJpg()
@@ -410,7 +397,7 @@ Func Main()
 
 EndFunc   ;==>Main
 #CS INFO
-	91769 V28 8/16/2019 10:06:14 PM V27 8/16/2019 8:51:46 AM V26 8/2/2019 8:56:18 PM V25 7/14/2019 10:10:20 PM
+	81454 V29 8/26/2019 10:02:39 AM V28 8/16/2019 10:06:14 PM V27 8/16/2019 8:51:46 AM V26 8/2/2019 8:56:18 PM
 #CE
 
 Func Game()
@@ -485,18 +472,8 @@ Func Game()
 	$g_dirX = 0
 	$g_dirY = 0
 
-	If False Then ;$TESTING Then
-		Status(1, "  1", 1)
-		Sleep(500)
-		Status(1, " 2", 2)
-		Sleep(500)
-		Status(1, " 3", 3)
-		Sleep(500)
-		Status(1, " 4", 4)
-		Sleep(500)
-	EndIf
-	Status(1, "", 0)
 	Status(0, "", 0)
+	Status(1, "", 0)
 	Status(2, "", 0)
 	Status(3, "", 0)
 
@@ -537,9 +514,6 @@ Func Game()
 	Switch $g_GameWhich
 		Case 1 ;extra
 			$g_gChange = 2 ;Start with X so snake will not die at start
-			If $testing Then
-				$g_gChange = 5 ;Start with Y so snake will not die at start
-			EndIf
 			$g_Turns = -1 ; The way it start with 1 turn on start. To fix start with +1
 			$g_HungeryLast = $g_Turns
 			$HungerCnt = 0
@@ -623,7 +597,7 @@ Func Game()
 
 EndFunc   ;==>Game
 #CS INFO
-	316915 V48 8/25/2019 6:50:13 PM V47 8/24/2019 6:38:07 PM V46 8/21/2019 10:55:18 AM V45 8/18/2019 11:56:18 AM
+	300705 V49 8/26/2019 10:02:39 AM V48 8/25/2019 6:50:13 PM V47 8/24/2019 6:38:07 PM V46 8/21/2019 10:55:18 AM
 #CE
 
 Func Tick() ;
@@ -840,7 +814,7 @@ Func Extra()
 			PrevNext($x_new + $g_dirX, $y_new + $g_dirY) ;New value
 			RemoveSnakeExtra() ;only empty cell change len
 			$g_iScore += 10
-			Status(0, "Bonus Food: Score 10, Snake 5", 4)
+			Status(0, "Poop Bonus Food: Score 10, Snake 5", 4)
 
 			$g_Turns = 0
 			$g_HungeryLast = 0
@@ -917,7 +891,7 @@ Func Extra()
 
 EndFunc   ;==>Extra
 #CS INFO
-	366415 V39 8/25/2019 6:50:13 PM V38 8/25/2019 12:01:59 AM V37 8/24/2019 6:38:07 PM V36 8/22/2019 8:37:33 AM
+	366829 V40 8/26/2019 10:02:39 AM V39 8/25/2019 6:50:13 PM V38 8/25/2019 12:01:59 AM V37 8/24/2019 6:38:07 PM
 #CE
 
 Func Normal()
@@ -1281,15 +1255,6 @@ Func RemoveSnakeExtra($inputflag = False) ; at end
 
 	$flag = False
 
-	If $TESTING Then
-		If $x = 0 Or $y = 0 Then
-
-			Pause("Null X & Y 3:", $Map[$what][0][0])
-			Pause($x, $y)
-
-		EndIf
-	EndIf
-
 	If PoopShow($x, $y) Then
 		$Map[$what][$x][$y] = $EMPTY
 		GUICtrlSetImage($Map[$ctrl][$x][$y], $cEMPTY)
@@ -1308,7 +1273,7 @@ Func RemoveSnakeExtra($inputflag = False) ; at end
 
 EndFunc   ;==>RemoveSnakeExtra
 #CS INFO
-	41867 V20 8/21/2019 10:55:18 AM V19 8/18/2019 11:15:59 PM V18 7/13/2019 7:20:00 PM V17 7/13/2019 3:59:17 PM
+	34681 V21 8/26/2019 10:02:39 AM V20 8/21/2019 10:55:18 AM V19 8/18/2019 11:15:59 PM V18 7/13/2019 7:20:00 PM
 #CE
 
 Func RemoveSnakeNormal() ; at end
@@ -1316,14 +1281,6 @@ Func RemoveSnakeNormal() ; at end
 
 	$x = $x_end
 	$y = $y_end
-	If $TESTING Then
-		If $x = 0 Or $y = 0 Then
-
-			Pause("Null X & Y 4:", $Map[$what][0][0])
-			Pause($x, $y)
-
-		EndIf
-	EndIf
 
 	$Map[$what][$x][$y] = $EMPTY
 	GUICtrlSetImage($Map[$ctrl][$x][$y], $cEMPTY)
@@ -1333,7 +1290,7 @@ Func RemoveSnakeNormal() ; at end
 
 EndFunc   ;==>RemoveSnakeNormal
 #CS INFO
-	25268 V10 7/13/2019 3:59:17 PM V9 6/24/2019 11:22:57 PM V8 6/22/2019 7:09:09 PM V7 6/6/2019 11:09:42 PM
+	18081 V11 8/26/2019 10:02:39 AM V10 7/13/2019 3:59:17 PM V9 6/24/2019 11:22:57 PM V8 6/22/2019 7:09:09 PM
 #CE
 
 Func AddFood($start = False)
@@ -1381,19 +1338,19 @@ Func AddFood($start = False)
 			EndIf
 
 			Do
-				$x = Int(Random($x1, $x2))
-				$y = Int(Random($y1, $y2))
+				$x = Random($x1, $x2, 1)
+				$y = Random($y1, $y2, 1)
 			Until $Map[$what][$x][$y] = $EMPTY
 		Else
 			Do
-				$x = Int(Random(1, $g_sx))
-				$y = Int(Random(1, $g_sy))
+				$x = Random(1, $g_sx, 1)
+				$y = Random(1, $g_sy, 1)
 			Until $Map[$what][$x][$y] = $EMPTY
 		EndIf
 	Else
 		Do
-			$x = Int(Random(1, $g_sx))
-			$y = Int(Random(1, $g_sy))
+			$x = Random(1, $g_sx, 1)
+			$y = Random(1, $g_sy, 1)
 		Until $Map[$what][$x][$y] = $EMPTY
 	EndIf
 
@@ -1402,7 +1359,7 @@ Func AddFood($start = False)
 
 EndFunc   ;==>AddFood
 #CS INFO
-	82623 V11 8/25/2019 6:50:13 PM V10 6/28/2019 7:37:37 PM V9 6/24/2019 11:22:57 PM V8 6/22/2019 7:09:09 PM
+	80901 V12 8/26/2019 10:02:39 AM V11 8/25/2019 6:50:13 PM V10 6/28/2019 7:37:37 PM V9 6/24/2019 11:22:57 PM
 #CE
 
 Func ClearBoard()
@@ -1836,12 +1793,14 @@ EndFunc   ;==>StartForm
 Func Settings()
 	Local $Setting, $y
 
-	$Setting = GUICreate("Change Setting", 615, 125, 577, 345)
-	GUICtrlCreateLabel("Settings ", 296, 8, 75, 28)
-	GUICtrlSetFont(-1, 14, 400, 0, "MS Sans Serif")
-	Local $b_ScreenSize = GUICtrlCreateButton("Screen Size", 32, 48, 100, 40)
-	Local $b_Color = GUICtrlCreateButton("Colors", 248, 48, 100, 40)
-	Local $b_speed = GUICtrlCreateButton("Speed", 432, 40, 100, 40)
+	$Setting = GUICreate("Change Setting", 600, 100)
+	GUICtrlCreateLabel("Settings", 260, 0, 80, 26, $SS_CENTER)
+	GUICtrlSetFont(-1, 14, 800, 0, "Arial")
+
+	Local $b_ScreenSize = GUICtrlCreateButton("Screen Size", 47, 48, 97, 33)
+	Local $b_Color = GUICtrlCreateButton("Colors", 183, 48, 97, 33)
+	Local $b_speed = GUICtrlCreateButton("Speed", 320, 48, 97, 33)
+	Local $b_Adj = GUICtrlCreateButton("Adjust Values", 456, 48, 97, 33)
 	GUISetState(@SW_SHOW)
 
 	While 1
@@ -1863,7 +1822,7 @@ Func Settings()
 	GUIDelete($Setting)
 EndFunc   ;==>Settings
 #CS INFO
-	48582 V3 8/22/2019 6:28:51 PM V2 8/16/2019 8:51:46 AM V1 8/12/2019 11:06:11 AM
+	53234 V4 8/26/2019 10:02:39 AM V3 8/22/2019 6:28:51 PM V2 8/16/2019 8:51:46 AM V1 8/12/2019 11:06:11 AM
 #CE
 
 Func ScreenSize()
@@ -2276,11 +2235,13 @@ Func Speed()
 
 	WEnd
 	GUIDelete($GUI)
-	$g_TickTime = $last
-
+	If $g_TickTime <> $last Then ;no change skip save
+		$g_TickTime = $last
+		IniWrite($s_ini, "General", "Speed", $g_TickTime)
+	EndIf
 EndFunc   ;==>Speed
 #CS INFO
-	90722 V1 8/22/2019 6:28:51 PM
+	99089 V2 8/26/2019 10:02:39 AM V1 8/22/2019 6:28:51 PM
 #CE
 
 Func TickSpeed($speed) ;
@@ -2304,4 +2265,4 @@ Main()
 
 Exit
 
-;~T ScriptFunc.exe V0.54a 15 May 2019 - 8/25/2019 6:50:13 PM
+;~T ScriptFunc.exe V0.54a 15 May 2019 - 8/26/2019 10:02:39 AM

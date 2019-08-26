@@ -1,12 +1,12 @@
 # Snake19
 Another snake game.  I never made a snake game before.  So it is my first, in 40+ years of programming.
 
+Folder Version 0.70 has the replay code and the last executable. Extra fails  Normal works.
+
 It about 98% done. 25 Aug 2019
 
 Version information
-
-Folder Version 0.70 has the replay code and the last executable. Extra fails  Normal works.
-
+	0.86 26 Aug 2019 Speed saved to INI, alinement of buttons, fix no food on edge
 	0.85 25 Aug 2019 FOOD2 should act like FOOD, fix Normal lock up
 	0.84 24 Aug 2019 Changing poop with food
 	0.83 22 Aug 2019 Speed
