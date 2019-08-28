@@ -5,7 +5,7 @@ AutoItSetOption("MustDeclareVars", 1)
 ;Global Static $MESSAGE =  False   ;Pause will still work in script  No DataOut
 
 ; Must be Declared before _Prf_startup
-Global $ver = "0.87 27 Aug 2019 Adjust Values windows"
+Global $ver = "0.88 28 Aug 2019 Aline Color and Speed, fix Color HEX input"
 Global $ini_ver = "7" ;Change poop
 ;"6" Screen size change
 ;"5" ;12 Aug 2019 Revert to 0.63
@@ -19,7 +19,7 @@ Global $ini_ver = "7" ;Change poop
 #include "R:\!Autoit\Blank\_prf_startup.au3"
 
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
-#AutoIt3Wrapper_Res_Fileversion=0.0.8.7
+#AutoIt3Wrapper_Res_Fileversion=0.0.8.8
 #AutoIt3Wrapper_Icon=R:\!Autoit\Ico\prf.ico
 #AutoIt3Wrapper_Res_Description=Another snake game
 #AutoIt3Wrapper_Res_LegalCopyright=© Phillip Forrestal 2019
@@ -72,6 +72,7 @@ Global $ini_ver = "7" ;Change poop
 	to do
 
 	Version
+	0.88 28 Aug 2019 Aline Color and Speed, fix Color HEX input
 	0.87 27 Aug 2019 Adjust Values windows
 	0.86 26 Aug 2019 Speed saved to INI, alinement of buttons, fix no food on edge
 	0.85 25 Aug 2019 FOOD2 should act like FOOD, fix Normal lock up
@@ -1809,7 +1810,6 @@ Func Settings()
 		Local $nMsg = GUIGetMsg()
 		Switch $nMsg
 			Case $GUI_EVENT_CLOSE
-				GUIDelete($Setting)
 				ExitLoop
 			Case $b_ScreenSize
 				ScreenSize()
@@ -1825,7 +1825,7 @@ Func Settings()
 	GUIDelete($Setting)
 EndFunc   ;==>Settings
 #CS INFO
-	55438 V5 8/28/2019 2:01:59 AM V4 8/26/2019 10:02:39 AM V3 8/22/2019 6:28:51 PM V2 8/16/2019 8:51:46 AM
+	53763 V6 8/28/2019 11:39:16 AM V5 8/28/2019 2:01:59 AM V4 8/26/2019 10:02:39 AM V3 8/22/2019 6:28:51 PM
 #CE
 
 Func ScreenSize()
@@ -1919,16 +1919,16 @@ Func ChooseColor()
 
 	GUICtrlCreateLabel("Default Color", 40, 200)
 	Local $b_default = GUICtrlCreateButton("", 40, 220, 50, 50)
-	GUICtrlCreateLabel("Current", 40, 300)
+	GUICtrlCreateLabel("Current Color", 40, 300)
 	Local $b_current = GUICtrlCreateButton("", 40, 320, 50, 50)
-	GUICtrlCreateLabel("Change", 40, 400)
+	GUICtrlCreateLabel("Change Color", 40, 400)
 	Local $b_change = GUICtrlCreateButton("", 40, 420, 50, 50)
 
 	Local $e_value = GUICtrlCreateInput("FFFFFF", 30, 480, 60, 20)
 	GUICtrlSetFont(-1, 10, 900, 0, "Arial")
 
-	Local $b_save = GUICtrlCreateButton(" Save ", 40, 530) ;, 50, 50)
-	Local $b_all = GUICtrlCreateButton("Regenerate ALL", 40, 560) ;, 50, 50)
+	Local $b_save = GUICtrlCreateButton("  Save  ", 40, 510) ;, 50, 50)
+	Local $b_all = GUICtrlCreateButton("  Regenerate ALL  ", 20, 570) ;, 50, 50)
 
 	GUISetState(@SW_SHOW)
 
@@ -2040,6 +2040,10 @@ Func ChooseColor()
 					$restart = True
 				Next
 				GUIDelete($hGUI)
+			Case $e_value
+				$r_what[$Which][4] = Int("0x" & GUICtrlRead($e_value))
+				GUICtrlSetBkColor($b_change, $r_what[$Which][4])
+				GUICtrlSetData($e_value, Hex($r_what[$Which][4], 6))
 
 		EndSwitch
 	WEnd
@@ -2055,7 +2059,7 @@ Func ChooseColor()
 	EndIf
 EndFunc   ;==>ChooseColor
 #CS INFO
-	311678 V8 8/25/2019 6:50:13 PM V7 8/22/2019 8:37:33 AM V6 8/20/2019 5:46:24 PM V5 8/20/2019 10:24:30 AM
+	326609 V9 8/28/2019 11:39:16 AM V8 8/25/2019 6:50:13 PM V7 8/22/2019 8:37:33 AM V6 8/20/2019 5:46:24 PM
 #CE
 
 Func WallTrue() ;0.79
@@ -2184,7 +2188,7 @@ Func Speed()
 	Local $last
 	Local $GUI, $Input, $x, $loc
 	Local $bSlower, $bFaster, $bDefault
-	Local $bar[11]
+	Local $bar[10]
 	;Local $nMsg
 
 	$GUI = GUICreate("Test Script", 300, 200)
@@ -2200,9 +2204,10 @@ Func Speed()
 
 	$last = $g_TickTime
 	$loc = 0
+
 	GUICtrlSetData($Input, $last)
-	For $x = 0 To 10
-		$bar[$x] = GUICtrlCreatePic($cEMPTY, $x * $g_Size + 30, 80, $g_Size, $g_Size)
+	For $x = 0 To 9
+		$bar[$x] = GUICtrlCreatePic($cEMPTY, $x * 30, 80, 30, 30)
 	Next
 	GUISetState(@SW_SHOW, $GUI)
 
@@ -2210,9 +2215,10 @@ Func Speed()
 
 	While 1
 		TickSpeed($last)
+
 		GUICtrlSetImage($bar[$loc], $cEMPTY)
 		$loc += 1
-		If $loc > 10 Then
+		If $loc > 9 Then
 			$loc = 0
 		EndIf
 		GUICtrlSetImage($bar[$loc], $cSNAKE)
@@ -2244,7 +2250,7 @@ Func Speed()
 	EndIf
 EndFunc   ;==>Speed
 #CS INFO
-	99089 V2 8/26/2019 10:02:39 AM V1 8/22/2019 6:28:51 PM
+	97228 V3 8/28/2019 11:39:16 AM V2 8/26/2019 10:02:39 AM V1 8/22/2019 6:28:51 PM
 #CE
 
 Func TickSpeed($speed) ;
@@ -2305,4 +2311,4 @@ Main()
 
 Exit
 
-;~T ScriptFunc.exe V0.54a 15 May 2019 - 8/28/2019 2:01:59 AM
+;~T ScriptFunc.exe V0.54a 15 May 2019 - 8/28/2019 11:39:16 AM

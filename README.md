@@ -6,6 +6,7 @@ Folder Version 0.70 has the replay code and the last executable. Extra fails  No
 It about 98% done. 25 Aug 2019  Playing with values.
 
 Version information
+	0.88 28 Aug 2019 Aline Color and Speed, fix Color HEX input
 	0.87 27 Aug 2019 Create Adjust Values windows
 	0.86 26 Aug 2019 Speed saved to INI, alinement of buttons, fix no food on edge
 	0.85 25 Aug 2019 FOOD2 should act like FOOD, fix Normal lock up
