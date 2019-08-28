@@ -3,9 +3,10 @@ Another snake game.  I never made a snake game before.  So it is my first, in 40
 
 Folder Version 0.70 has the replay code and the last executable. Extra fails  Normal works.
 
-It about 98% done. 25 Aug 2019
+It about 98% done. 25 Aug 2019  Playing with values.
 
 Version information
+	0.87 27 Aug 2019 Create Adjust Values windows
 	0.86 26 Aug 2019 Speed saved to INI, alinement of buttons, fix no food on edge
 	0.85 25 Aug 2019 FOOD2 should act like FOOD, fix Normal lock up
 	0.84 24 Aug 2019 Changing poop with food

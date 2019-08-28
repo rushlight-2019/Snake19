@@ -5,7 +5,7 @@ AutoItSetOption("MustDeclareVars", 1)
 ;Global Static $MESSAGE =  False   ;Pause will still work in script  No DataOut
 
 ; Must be Declared before _Prf_startup
-Global $ver = "0.86 26 Aug 2019 Speed saved to INI, alinement of buttons, fix no food on edge"
+Global $ver = "0.87 27 Aug 2019 Adjust Values windows"
 Global $ini_ver = "7" ;Change poop
 ;"6" Screen size change
 ;"5" ;12 Aug 2019 Revert to 0.63
@@ -19,7 +19,7 @@ Global $ini_ver = "7" ;Change poop
 #include "R:\!Autoit\Blank\_prf_startup.au3"
 
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
-#AutoIt3Wrapper_Res_Fileversion=0.0.8.6
+#AutoIt3Wrapper_Res_Fileversion=0.0.8.7
 #AutoIt3Wrapper_Icon=R:\!Autoit\Ico\prf.ico
 #AutoIt3Wrapper_Res_Description=Another snake game
 #AutoIt3Wrapper_Res_LegalCopyright=© Phillip Forrestal 2019
@@ -72,7 +72,7 @@ Global $ini_ver = "7" ;Change poop
 	to do
 
 	Version
-
+	0.87 27 Aug 2019 Adjust Values windows
 	0.86 26 Aug 2019 Speed saved to INI, alinement of buttons, fix no food on edge
 	0.85 25 Aug 2019 FOOD2 should act like FOOD, fix Normal lock up
 	0.84 24 Aug 2019 Changing poop with food
@@ -195,6 +195,7 @@ Global $ini_ver = "7" ;Change poop
 #include <File.au3>
 #include <ScreenCapture.au3>
 #include <EditConstants.au3>
+#include <ComboConstants.au3>
 
 ;Static
 Static $s_data = @ScriptDir & "\SNAKE19-Data"
@@ -1816,13 +1817,15 @@ Func Settings()
 				ChooseColor()
 			Case $b_speed
 				Speed()
+			Case $b_Adj
+				AdjustValues()
 		EndSwitch
 	WEnd
 
 	GUIDelete($Setting)
 EndFunc   ;==>Settings
 #CS INFO
-	53234 V4 8/26/2019 10:02:39 AM V3 8/22/2019 6:28:51 PM V2 8/16/2019 8:51:46 AM V1 8/12/2019 11:06:11 AM
+	55438 V5 8/28/2019 2:01:59 AM V4 8/26/2019 10:02:39 AM V3 8/22/2019 6:28:51 PM V2 8/16/2019 8:51:46 AM
 #CE
 
 Func ScreenSize()
@@ -2260,9 +2263,46 @@ EndFunc   ;==>TickSpeed
 	12887 V1 8/22/2019 6:28:51 PM
 #CE
 
+Func AdjustValues()
+	Local $Form1_1 = GUICreate("", 601, 153) ; , 991, 302)
+	GUICtrlCreateLabel("Adjust Values", 260, 0, 131, 26, $SS_CENTER)
+	GUICtrlSetFont(-1, 14, 800, 0, "Arial")
+	GUICtrlCreateLabel("+ Some changes will cause the High Scores to be delete.", 124, 32, 398, 22)
+	GUICtrlSetFont(-1, 12, 400, 0, "Arial")
+	GUICtrlCreateLabel("* Other changes will cause the game to restart", 124, 56, 320, 22)
+	GUICtrlSetFont(-1, 12, 400, 0, "Arial")
+	;	Local $b_game = GUICtrlCreateButton("Game", 127, 96, 97, 33)
+	;	Local $b_std = GUICtrlCreateButton("Standard", 263, 96, 97, 33)
+	;	Local $b_extra = GUICtrlCreateButton("Extra", 400, 96, 97, 33)
+	;	GUISetState(@SW_SHOW)
+
+	Local $Label4 = GUICtrlCreateLabel("Game", 43, 88, 145, 17, $SS_CENTER)
+	Local $Label5 = GUICtrlCreateLabel("Normal", 228, 88, 145, 17, $SS_CENTER)
+	Local $Label6 = GUICtrlCreateLabel("Extra", 413, 88, 145, 17, $SS_CENTER)
+
+	Local $Combo1 = GUICtrlCreateCombo("Combo1", 43, 112, 145, 25, BitOR($CBS_DROPDOWN, $CBS_AUTOHSCROLL))
+	Local $Combo2 = GUICtrlCreateCombo("Combo1", 228, 112, 145, 25, BitOR($CBS_DROPDOWN, $CBS_AUTOHSCROLL))
+	Local $Combo3 = GUICtrlCreateCombo("Combo1", 413, 112, 145, 25, BitOR($CBS_DROPDOWN, $CBS_AUTOHSCROLL))
+
+	GUISetState(@SW_SHOW)
+
+	While 1
+
+		Switch GUIGetMsg()
+			Case $GUI_EVENT_CLOSE
+				ExitLoop
+
+		EndSwitch
+	WEnd
+	GUIDelete($Form1_1)
+EndFunc   ;==>AdjustValues
+#CS INFO
+	93194 V1 8/28/2019 2:01:59 AM
+#CE
+
 ;Main
 Main()
 
 Exit
 
-;~T ScriptFunc.exe V0.54a 15 May 2019 - 8/26/2019 10:02:39 AM
+;~T ScriptFunc.exe V0.54a 15 May 2019 - 8/28/2019 2:01:59 AM
