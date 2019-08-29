@@ -16,6 +16,7 @@ Version information
 	0.82 22 Aug 2019 Regenerate Colors
 	0.81 21 Aug 2018 Extra  Poop better
 	0.80 21 Aug 2019 - Poop back, ok works
+	
 
 	0.79 21 Aug 2019 Extra - Wall
 	0.78 20 Aug 2019 Hungery better
