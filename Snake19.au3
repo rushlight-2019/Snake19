@@ -5,7 +5,7 @@ AutoItSetOption("MustDeclareVars", 1)
 ;Global Static $MESSAGE =  False   ;Pause will still work in script  No DataOut
 
 ; Must be Declared before _Prf_startup
-Global $ver = "1.00 29 Aug 2019 Done"
+Global $ver = "1.00a 30 Aug 2019 Done"
 Global $ini_ver = "10" ;Done
 
 ;Global $TESTING = False
@@ -68,6 +68,7 @@ Global $ini_ver = "10" ;Done
 	Version
 
 	Done
+	1.00a 30 Aug 2019 Done Fix text
 	1.00 29 Aug 2019 Done -
 	0.88 28 Aug 2019 Aline Color and Speed, fix Color HEX input
 	0.87 27 Aug 2019 Adjust Values windows
@@ -856,7 +857,7 @@ Func Extra()
 					$HungerCnt += 1
 
 					If $HungerCnt > $ls_HungerFug Then
-						Status(2, "Hungery -  Snake shorter -- test " & $ls_HungerFug & " " & $g_Turns, 3)
+						Status(2, "Hungery -  Snake shorter", 3)
 						$ls_HungerFug -= 1
 						If $ls_HungerFug < 0 Then
 							$ls_HungerFug = 0
@@ -886,7 +887,7 @@ Func Extra()
 
 EndFunc   ;==>Extra
 #CS INFO
-	366829 V40 8/26/2019 10:02:39 AM V39 8/25/2019 6:50:13 PM V38 8/25/2019 12:01:59 AM V37 8/24/2019 6:38:07 PM
+	364074 V41 8/30/2019 2:18:51 PM V40 8/26/2019 10:02:39 AM V39 8/25/2019 6:50:13 PM V38 8/25/2019 12:01:59 AM
 #CE
 
 Func Normal()
@@ -2292,7 +2293,7 @@ Func AdjustValues()
 	GUIDelete($Form1_1)
 EndFunc   ;==>AdjustValues
 #CS INFO
-	93194 V1 8/28/2019 2:01:59 AM
+	77837 V2 8/30/2019 2:18:51 PM V1 8/28/2019 2:01:59 AM
 #CE
 
 ;Main
@@ -2300,4 +2301,4 @@ Main()
 
 Exit
 
-;~T ScriptFunc.exe V0.54a 15 May 2019 - 8/29/2019 8:08:30 AM
+;~T ScriptFunc.exe V0.54a 15 May 2019 - 8/30/2019 2:18:51 PM
