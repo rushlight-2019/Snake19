@@ -5,7 +5,7 @@ AutoItSetOption("MustDeclareVars", 1)
 ;Global Static $MESSAGE =  False   ;Pause will still work in script  No DataOut
 
 ; Must be Declared before _Prf_startup
-Global $ver = "1.00a 30 Aug 2019 Done"
+Global $ver = "1.02 10 Sep 2019 Score 8 not 5"
 Global $ini_ver = "10" ;Done
 
 ;Global $TESTING = False
@@ -13,7 +13,7 @@ Global $ini_ver = "10" ;Done
 #include "R:\!Autoit\Blank\_prf_startup.au3"
 
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
-#AutoIt3Wrapper_Res_Fileversion=1.0.0.0
+#AutoIt3Wrapper_Res_Fileversion=1.0.0.2
 #AutoIt3Wrapper_Icon=R:\!Autoit\Ico\prf.ico
 #AutoIt3Wrapper_Res_Description=Another snake game
 #AutoIt3Wrapper_Res_LegalCopyright=© Phillip Forrestal 2019
@@ -66,13 +66,15 @@ Global $ini_ver = "10" ;Done
 	to do
 
 	Version
+	Board Cell size.
 
+	1.02 10 Sep 2019 Score 8 not 5
+	1.01  10 Sep 2019 Remember last game
 	Done
 	1.00a 30 Aug 2019 Done Fix text
 	1.00 29 Aug 2019 Done -
 	0.88 28 Aug 2019 Aline Color and Speed, fix Color HEX input
 	0.87 27 Aug 2019 Adjust Values windows
-	0.86 26 Aug 2019 Speed saved to INI, alinement of buttons, fix no food on edge
 	0.85 25 Aug 2019 FOOD2 should act like FOOD, fix Normal lock up
 	0.84 24 Aug 2019 Changing poop with food
 	0.83 22 Aug 2019 Speed
@@ -366,6 +368,10 @@ Func Main()
 	;0.86
 	$g_TickTime = IniRead($s_ini, "General", "Speed", 150)
 
+	;1.01
+	$g_GameWhich = IniRead($s_ini, "General", "Game", 1)
+	;IniWrite($s_ini, "General", "Game", $g_GameWhich)
+
 	;Check to see if color files exist, if not create them.
 	CheckJpg()
 
@@ -377,6 +383,10 @@ Func Main()
 		Sleep(500)
 		IniWrite($s_scoreini, "Score", "Version", $ini_ver)
 	ElseIf $a <> $ini_ver Then
+		;1.01
+		$g_GameWhich = IniRead($s_ini, "General", "Game", 1)
+		;IniWrite($s_ini, "General", "Game", $g_GameWhich)
+
 		IniDelete($s_scoreini, "HighScoreExtra")
 		IniDelete($s_scoreini, "HighScoreNormal")
 		IniWrite($s_scoreini, "Score", "Version", $ini_ver)
@@ -393,7 +403,7 @@ Func Main()
 
 EndFunc   ;==>Main
 #CS INFO
-	81454 V29 8/26/2019 10:02:39 AM V28 8/16/2019 10:06:14 PM V27 8/16/2019 8:51:46 AM V26 8/2/2019 8:56:18 PM
+	97676 V30 9/10/2019 4:33:31 PM V29 8/26/2019 10:02:39 AM V28 8/16/2019 10:06:14 PM V27 8/16/2019 8:51:46 AM
 #CE
 
 Func Game()
@@ -408,6 +418,7 @@ Func Game()
 	Local $a, $b
 
 	$NotFirstPass = True
+	IniWrite($s_ini, "General", "Game", $g_GameWhich)
 
 	If $g_ctrlBoard = -1 Then
 
@@ -582,7 +593,6 @@ Func Game()
 			Case 1
 				Extra()
 			Case 0
-
 				Normal()
 		EndSwitch
 
@@ -593,7 +603,7 @@ Func Game()
 
 EndFunc   ;==>Game
 #CS INFO
-	300705 V49 8/26/2019 10:02:39 AM V48 8/25/2019 6:50:13 PM V47 8/24/2019 6:38:07 PM V46 8/21/2019 10:55:18 AM
+	304622 V50 9/10/2019 4:33:31 PM V49 8/26/2019 10:02:39 AM V48 8/25/2019 6:50:13 PM V47 8/24/2019 6:38:07 PM
 #CE
 
 Func Tick() ;
@@ -656,7 +666,7 @@ Func Tick() ;
 EndFunc   ;==>Tick
 #CS INFO
 	68587 V16 8/25/2019 6:50:13 PM V15 8/22/2019 6:28:51 PM V14 7/14/2019 10:20:53 AM V13 7/13/2019 7:20:00 PM
-#CE
+#CE INFO
 
 ; $g_iscore is extra + length  ~~
 Func Extra()
@@ -888,7 +898,7 @@ Func Extra()
 EndFunc   ;==>Extra
 #CS INFO
 	364074 V41 8/30/2019 2:18:51 PM V40 8/26/2019 10:02:39 AM V39 8/25/2019 6:50:13 PM V38 8/25/2019 12:01:59 AM
-#CE
+#CE INFO
 
 Func Normal()
 	Local Static $LS_SnakeLenLast = 0
@@ -960,7 +970,7 @@ Func Normal()
 EndFunc   ;==>Normal
 #CS INFO
 	107983 V9 8/18/2019 11:56:18 AM V8 7/18/2019 11:32:28 PM V7 7/15/2019 9:15:04 AM V6 7/13/2019 7:36:11 PM
-#CE
+#CE INFO
 
 Func StartDead($inX, $inY)
 	Local $x, $y
@@ -1001,7 +1011,7 @@ Func StartDead($inX, $inY)
 EndFunc   ;==>StartDead
 #CS INFO
 	57982 V14 8/25/2019 6:50:13 PM V13 8/2/2019 8:56:18 PM V12 7/18/2019 11:32:28 PM V11 7/14/2019 10:20:53 AM
-#CE
+#CE INFO
 
 Func ConvDead($x, $y, $useNext = False) ; start map location
 	;----------------- convert Snake to Dead until end
@@ -1031,7 +1041,7 @@ Func ConvDead($x, $y, $useNext = False) ; start map location
 EndFunc   ;==>ConvDead
 #CS INFO
 	34565 V6 8/25/2019 6:50:13 PM V5 7/9/2019 1:03:14 AM V4 7/6/2019 6:24:29 PM V3 7/5/2019 4:03:49 PM
-#CE
+#CE INFO
 
 Func ShowRow($x, $y)
 	If $TESTING Then ; Not used in compiled, in case if forget to comment out.
@@ -1046,7 +1056,7 @@ Func ShowRow($x, $y)
 EndFunc   ;==>ShowRow
 #CS INFO
 	15281 V2 6/24/2019 11:22:57 PM V1 6/16/2019 10:16:04 AM
-#CE
+#CE INFO
 
 Func Status($status, $string, $color)
 	Local $c
@@ -1080,7 +1090,7 @@ Func Status($status, $string, $color)
 EndFunc   ;==>Status
 #CS INFO
 	38718 V10 8/25/2019 6:50:13 PM V9 8/25/2019 9:54:57 AM V8 7/14/2019 10:20:53 AM V7 7/13/2019 3:59:17 PM
-#CE
+#CE INFO
 
 Func StartSnake()
 	Local $x, $y
@@ -1107,7 +1117,7 @@ Func StartSnake()
 EndFunc   ;==>StartSnake
 #CS INFO
 	33453 V5 6/22/2019 7:09:09 PM V4 6/6/2019 11:09:42 PM V3 6/3/2019 8:05:25 PM V2 6/3/2019 10:34:22 AM
-#CE
+#CE INFO
 
 ; Dirx& Diry moving to wall not like Double Back which has reserves direction
 ; So they will change, I can't make them Global because I used this name as Local in a number of Function.
@@ -1167,7 +1177,7 @@ Func DoubleBackWall() ;(ByRef $dirx, ByRef $diry) ; ~~
 EndFunc   ;==>DoubleBackWall
 #CS INFO
 	72569 V7 8/18/2019 11:56:18 AM V6 7/5/2019 4:03:49 PM V5 7/4/2019 11:42:05 AM V4 6/27/2019 5:39:48 PM
-#CE
+#CE INFO
 
 Func DoubleBack($dirx, $diry)
 	Local $a, $flag
@@ -1216,7 +1226,7 @@ Func DoubleBack($dirx, $diry)
 EndFunc   ;==>DoubleBack
 #CS INFO
 	57688 V3 8/25/2019 6:50:13 PM V2 6/20/2019 9:30:52 PM V1 6/9/2019 1:07:49 PM
-#CE
+#CE INFO
 
 Func PrevNext($x, $y) ;New value
 	Local $x_prv, $y_prv
@@ -1240,7 +1250,7 @@ Func PrevNext($x, $y) ;New value
 EndFunc   ;==>PrevNext
 #CS INFO
 	39469 V7 8/21/2019 10:55:18 AM V6 7/13/2019 3:59:17 PM V5 7/9/2019 1:03:14 AM V4 6/22/2019 7:09:09 PM
-#CE
+#CE INFO
 
 ;Add poop here
 Func RemoveSnakeExtra($inputflag = False) ; at end
@@ -1270,7 +1280,7 @@ Func RemoveSnakeExtra($inputflag = False) ; at end
 EndFunc   ;==>RemoveSnakeExtra
 #CS INFO
 	34681 V21 8/26/2019 10:02:39 AM V20 8/21/2019 10:55:18 AM V19 8/18/2019 11:15:59 PM V18 7/13/2019 7:20:00 PM
-#CE
+#CE INFO
 
 Func RemoveSnakeNormal() ; at end
 	Local $x, $y
@@ -1287,7 +1297,7 @@ Func RemoveSnakeNormal() ; at end
 EndFunc   ;==>RemoveSnakeNormal
 #CS INFO
 	18081 V11 8/26/2019 10:02:39 AM V10 7/13/2019 3:59:17 PM V9 6/24/2019 11:22:57 PM V8 6/22/2019 7:09:09 PM
-#CE
+#CE INFO
 
 Func AddFood($start = False)
 	Local $x, $y
@@ -1356,7 +1366,7 @@ Func AddFood($start = False)
 EndFunc   ;==>AddFood
 #CS INFO
 	80901 V12 8/26/2019 10:02:39 AM V11 8/25/2019 6:50:13 PM V10 6/28/2019 7:37:37 PM V9 6/24/2019 11:22:57 PM
-#CE
+#CE INFO
 
 Func ClearBoard()
 	Local $var, $NotEmpty
@@ -1386,7 +1396,7 @@ Func ClearBoard()
 EndFunc   ;==>ClearBoard
 #CS INFO
 	38157 V16 8/12/2019 11:06:11 AM V15 7/13/2019 3:59:17 PM V14 7/8/2019 1:00:13 AM V13 7/6/2019 6:24:29 PM
-#CE
+#CE INFO
 
 Func NormalPoop()
 	Local Static $PoopCnt = 100
@@ -1400,7 +1410,7 @@ Func NormalPoop()
 EndFunc   ;==>NormalPoop
 #CS INFO
 	12381 V2 7/8/2019 1:00:13 AM V1 7/3/2019 8:35:19 PM
-#CE
+#CE INFO
 
 Func NormalExtra()
 	If $g_GameWhich = 0 Then ; 0 Normal, 1 Mine
@@ -1413,7 +1423,7 @@ Func NormalExtra()
 EndFunc   ;==>NormalExtra
 #CS INFO
 	16149 V3 8/11/2019 11:35:36 PM V2 8/2/2019 8:56:18 PM V1 6/5/2019 11:59:45 PM
-#CE
+#CE INFO
 
 Func DisplayHiScore()
 	Local $s
@@ -1446,7 +1456,7 @@ Func DisplayHiScore()
 EndFunc   ;==>DisplayHiScore
 #CS INFO
 	102253 V7 7/24/2019 11:20:48 PM V6 7/24/2019 12:53:35 PM V5 7/15/2019 9:15:04 AM V4 7/5/2019 8:47:35 AM
-#CE
+#CE INFO
 
 Func UpDateHiScore()
 	Local $Form1
@@ -1485,7 +1495,7 @@ Func UpDateHiScore()
 EndFunc   ;==>UpDateHiScore
 #CS INFO
 	74545 V14 7/24/2019 11:20:48 PM V13 7/18/2019 11:32:28 PM 123V12 7/13/2019 7:36:11 PM V11 7/5/2019 8:47:35 AM
-#CE
+#CE INFO
 
 Func SaveHiScore()
 	Local $x, $a[12][2]
@@ -1504,10 +1514,11 @@ Func SaveHiScore()
 EndFunc   ;==>SaveHiScore
 #CS INFO
 	33437 V6 7/24/2019 11:20:48 PM V5 7/13/2019 7:20:00 PM V4 6/16/2019 10:16:04 AM V3 6/5/2019 11:59:45 PM
-#CE
+#CE INFO
 
 Func IniHighFive()
-	Local $a, $c, $Z
+	Local $a, $c, $Z, $Save
+	$Save = $g_GameWhich
 
 	For $x = 0 To 1
 		$g_GameWhich = $x
@@ -1519,7 +1530,7 @@ Func IniHighFive()
 		If @error = 0 Then
 
 			For $i = 1 To 10
-				If $i > 5 Then
+				If $i > 8 Then
 					$g_aHiScore[$i][0] = 0 ;
 					$g_aHiScore[$i][1] = "" ;date
 					$g_aHiScore[$i][2] = "" ;len
@@ -1541,9 +1552,11 @@ Func IniHighFive()
 
 		EndIf
 	Next
+	$g_GameWhich = $Save
+
 EndFunc   ;==>IniHighFive
 #CS INFO
-	52802 V3 7/24/2019 11:20:48 PM V2 7/13/2019 7:20:00 PM V1 6/28/2019 7:37:37 PM
+	56498 V4 9/10/2019 4:33:31 PM V3 7/24/2019 11:20:48 PM V2 7/13/2019 7:20:00 PM V1 6/28/2019 7:37:37 PM
 #CE
 
 Func ReadHiScore()
@@ -1556,22 +1569,13 @@ Func ReadHiScore()
 	If @error = 0 Then
 
 		For $i = 1 To 10
-			If $g_first And $i > 5 Then
-				$g_aHiScore[$i][0] = 0 ;
-				$g_aHiScore[$i][1] = "" ;date
-				$g_aHiScore[$i][2] = "" ;len
-				$g_aHiScore[$i][3] = "" ;food
-				$g_aHiScore[$i][4] = "" ;turns
-				$g_aHiScore[$i][5] = "" ;Max
-			Else
-				$c = StringSplit($a[$i][1], "|")
-				$g_aHiScore[$i][0] = Int($c[1])
-				$g_aHiScore[$i][1] = $c[2]
-				$g_aHiScore[$i][2] = $c[3]
-				$g_aHiScore[$i][3] = $c[4]
-				$g_aHiScore[$i][4] = $c[5]
-				$g_aHiScore[$i][5] = $c[6]
-			EndIf
+			$c = StringSplit($a[$i][1], "|")
+			$g_aHiScore[$i][0] = Int($c[1])
+			$g_aHiScore[$i][1] = $c[2]
+			$g_aHiScore[$i][2] = $c[3]
+			$g_aHiScore[$i][3] = $c[4]
+			$g_aHiScore[$i][4] = $c[5]
+			$g_aHiScore[$i][5] = $c[6]
 		Next
 		$g_first = False ; first run since startup
 
@@ -1588,7 +1592,7 @@ Func ReadHiScore()
 	EndIf
 EndFunc   ;==>ReadHiScore
 #CS INFO
-	70503 V6 7/24/2019 11:20:48 PM V5 7/13/2019 7:20:00 PM V4 6/16/2019 10:16:04 AM V3 6/5/2019 11:59:45 PM
+	55181 V7 9/10/2019 4:33:31 PM V6 7/24/2019 11:20:48 PM V5 7/13/2019 7:20:00 PM V4 6/16/2019 10:16:04 AM
 #CE
 
 ;Load Level from THE GAME
@@ -1625,7 +1629,7 @@ Func SayClearBoard($OnOff = False, $Mode = True) ; $OnOff = True/False
 EndFunc   ;==>SayClearBoard
 #CS INFO
 	59050 V1 6/27/2019 5:39:48 PM
-#CE
+#CE INFO
 
 ;Check to see if color files exist, if not create them.
 ;Does a sum check to make sure they haven't change
@@ -1652,7 +1656,7 @@ Func CheckColorJpg($filename, $color) ; $color is only the default color if INI 
 EndFunc   ;==>CheckColorJpg
 #CS INFO
 	35567 V3 8/16/2019 8:51:46 AM V2 7/14/2019 10:10:20 PM V1 7/14/2019 10:20:53 AM
-#CE
+#CE INFO
 
 ;Create Color file and write INI
 Func CreateColorJpg($filename, $color)
@@ -1681,7 +1685,7 @@ Func CreateColorJpg($filename, $color)
 EndFunc   ;==>CreateColorJpg
 #CS INFO
 	43943 V5 8/22/2019 8:37:33 AM V4 8/18/2019 11:15:59 PM V3 8/16/2019 8:51:46 AM V2 7/14/2019 10:10:20 PM
-#CE
+#CE INFO
 
 Func StartForm()
 	Local $Form1, $Group1
@@ -1779,11 +1783,12 @@ Func StartForm()
 
 		EndSwitch
 	WEnd
+	Game()
 	pause()
 
 EndFunc   ;==>StartForm
 #CS INFO
-	197365 V29 8/25/2019 6:50:13 PM V28 8/18/2019 11:56:18 AM V27 8/16/2019 8:51:46 AM V26 8/12/2019 11:06:11 AM
+	197824 V30 9/10/2019 4:33:31 PM V29 8/25/2019 6:50:13 PM V28 8/18/2019 11:56:18 AM V27 8/16/2019 8:51:46 AM
 #CE
 
 Func Settings()
@@ -1820,7 +1825,7 @@ Func Settings()
 EndFunc   ;==>Settings
 #CS INFO
 	53763 V6 8/28/2019 11:39:16 AM V5 8/28/2019 2:01:59 AM V4 8/26/2019 10:02:39 AM V3 8/22/2019 6:28:51 PM
-#CE
+#CE INFO
 
 Func ScreenSize()
 	Local $sInputBoxAnswer, $keep, $s, $mathW, $mathH, $Math
@@ -1871,7 +1876,7 @@ Func ScreenSize()
 EndFunc   ;==>ScreenSize
 #CS INFO
 	82198 V4 8/25/2019 6:50:13 PM V3 8/18/2019 11:15:59 PM V2 8/16/2019 8:51:46 AM V1 8/12/2019 11:06:11 AM
-#CE
+#CE INFO
 
 ; Read INI setting
 Func ReadIni()
@@ -1888,7 +1893,7 @@ Func ReadIni()
 EndFunc   ;==>ReadIni
 #CS INFO
 	17685 V2 8/16/2019 8:51:46 AM V1 8/12/2019 11:06:11 AM
-#CE
+#CE INFO
 
 Func ChooseColor()
 	Local $Which = 1
@@ -2054,7 +2059,7 @@ Func ChooseColor()
 EndFunc   ;==>ChooseColor
 #CS INFO
 	326609 V9 8/28/2019 11:39:16 AM V8 8/25/2019 6:50:13 PM V7 8/22/2019 8:37:33 AM V6 8/20/2019 5:46:24 PM
-#CE
+#CE INFO
 
 Func WallTrue() ;0.79
 
@@ -2093,7 +2098,7 @@ Func WallTrue() ;0.79
 EndFunc   ;==>WallTrue
 #CS INFO
 	35628 V1 8/21/2019 3:27:01 AM
-#CE
+#CE INFO
 
 Func PoopRemove()
 	For $Z = 0 To $s_PoopSize - 1
@@ -2121,7 +2126,7 @@ Func PoopRemove()
 EndFunc   ;==>PoopRemove
 #CS INFO
 	52416 V3 8/25/2019 6:50:13 PM V2 8/25/2019 9:54:57 AM V1 8/24/2019 6:38:07 PM
-#CE
+#CE INFO
 
 Func PoopAdd($x, $y, $delay = $s_PoopSize / 2)
 	For $Z = 0 To $s_PoopSize - 1
@@ -2139,7 +2144,7 @@ Func PoopAdd($x, $y, $delay = $s_PoopSize / 2)
 EndFunc   ;==>PoopAdd
 #CS INFO
 	22331 V4 8/25/2019 6:50:13 PM V3 8/24/2019 6:38:07 PM V2 8/21/2019 10:30:33 PM V1 8/21/2019 10:55:18 AM
-#CE
+#CE INFO
 
 Func PoopShow($x, $y)
 	For $Z = 0 To $s_PoopSize - 1
@@ -2159,7 +2164,7 @@ Func PoopShow($x, $y)
 EndFunc   ;==>PoopShow
 #CS INFO
 	23549 V4 8/25/2019 6:50:13 PM V3 8/24/2019 6:38:07 PM V2 8/21/2019 10:30:33 PM V1 8/21/2019 10:55:18 AM
-#CE
+#CE INFO
 
 ;Check to see if color files exist, if not create them.
 Func CheckJpg()
@@ -2176,7 +2181,7 @@ Func CheckJpg()
 EndFunc   ;==>CheckJpg
 #CS INFO
 	19837 V5 8/25/2019 6:50:13 PM V4 8/20/2019 5:46:24 PM V3 8/16/2019 8:51:46 AM V2 7/14/2019 10:10:20 PM
-#CE
+#CE INFO
 
 Func Speed()
 	Local $last
@@ -2245,7 +2250,7 @@ Func Speed()
 EndFunc   ;==>Speed
 #CS INFO
 	97228 V3 8/28/2019 11:39:16 AM V2 8/26/2019 10:02:39 AM V1 8/22/2019 6:28:51 PM
-#CE
+#CE INFO
 
 Func TickSpeed($speed) ;
 	Local $fdiff
@@ -2261,7 +2266,7 @@ Func TickSpeed($speed) ;
 EndFunc   ;==>TickSpeed
 #CS INFO
 	12887 V1 8/22/2019 6:28:51 PM
-#CE
+#CE INFO
 
 Func AdjustValues()
 	Local $Form1_1 = GUICreate("", 601, 153) ; , 991, 302)
@@ -2294,11 +2299,11 @@ Func AdjustValues()
 EndFunc   ;==>AdjustValues
 #CS INFO
 	77837 V2 8/30/2019 2:18:51 PM V1 8/28/2019 2:01:59 AM
-#CE
+#CE INFO
 
 ;Main
 Main()
 
 Exit
 
-;~T ScriptFunc.exe V0.54a 15 May 2019 - 8/30/2019 2:18:51 PM
+;~T ScriptFunc.exe V0.54a 15 May 2019 - 9/10/2019 4:33:31 PM

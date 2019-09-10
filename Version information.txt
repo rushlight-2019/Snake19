@@ -1,5 +1,10 @@
 Version information
-1.00 29 Aug 2019 Done
+	1.02 10 Sep 2019 Score 8 not 5
+	1.01  10 Sep 2019 Remember last game
+	
+Done
+	1.00a 30 Aug 2019 Done Fix text
+	1.00 29 Aug 2019 Done
 	0.88 28 Aug 2019 Aline Color and Speed, fix Color HEX input
 	0.87 27 Aug 2019 Create Adjust Values windows
 	0.86 26 Aug 2019 Speed saved to INI, alinement of buttons, fix no food on edge
