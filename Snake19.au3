@@ -5,7 +5,7 @@ AutoItSetOption("MustDeclareVars", 1)
 ;Global Static $MESSAGE =  False   ;Pause will still work in script  No DataOut
 
 ; Must be Declared before _Prf_startup
-Global $ver = "1.02 10 Sep 2019 Score 8 not 5"
+Global $ver = "0.89 8 Oct 2019 unDone, lots of little things"
 Global $ini_ver = "10" ;Done
 
 ;Global $TESTING = False
@@ -13,10 +13,14 @@ Global $ini_ver = "10" ;Done
 #include "R:\!Autoit\Blank\_prf_startup.au3"
 
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
-#AutoIt3Wrapper_Res_Fileversion=1.0.0.2
+#AutoIt3Wrapper_Res_Fileversion=0.0.8.9
 #AutoIt3Wrapper_Icon=R:\!Autoit\Ico\prf.ico
 #AutoIt3Wrapper_Res_Description=Another snake game
 #AutoIt3Wrapper_Res_LegalCopyright=© Phillip Forrestal 2019
+#AutoIt3Wrapper_Res_Field=Compile date|%longdate% %time%
+#AutoIt3Wrapper_Res_Field=AutoIt Version|%AutoItVer%
+#AutoIt3Wrapper_Res_Language=1033
+#AutoIt3Wrapper_Run_Debug_Mode=Y
 
 #pragma compile(inputboxres, true)
 
@@ -67,12 +71,24 @@ Global $ini_ver = "10" ;Done
 
 	Version
 	Board Cell size.
+	0. Tony can't play problem
+	1, Extra food only at X = default 100
+	2. Poop 10 at 50%.  1 more each 25 over 100
+	3. Threw wall start at 2 each time +1
+	4. Threw wall  0,1,2,4.2,1,0  if all block free not on side else die
+	5. Poop 2 +1 each time
+	6. Died  snake 2 +1 each time
+	7. Replay
+	8 Change score, below max  rate diff rate.
 
-	1.02 10 Sep 2019 Score 8 not 5
-	1.01  10 Sep 2019 Remember last game
+	0.89 8 Aug 2019  unDone, lots of little things
+	unDone
+	0.89 1.03 10 Sep 2019 Cell size of board
+	0.89 1.02 10 Sep 2019 Score 8 not 5
+	0.89 1.01  10 Sep 2019 Remember last game
 	Done
-	1.00a 30 Aug 2019 Done Fix text
-	1.00 29 Aug 2019 Done -
+	0.89 1.00a 30 Aug 2019 Done Fix text
+	0.89 1.00 29 Aug 2019 Done -
 	0.88 28 Aug 2019 Aline Color and Speed, fix Color HEX input
 	0.87 27 Aug 2019 Adjust Values windows
 	0.85 25 Aug 2019 FOOD2 should act like FOOD, fix Normal lock up
@@ -403,7 +419,7 @@ Func Main()
 
 EndFunc   ;==>Main
 #CS INFO
-	97676 V30 9/10/2019 4:33:31 PM V29 8/26/2019 10:02:39 AM V28 8/16/2019 10:06:14 PM V27 8/16/2019 8:51:46 AM
+	97676 V30 10/8/2019 4:57:52 PM V29 8/26/2019 10:02:39 AM V28 8/16/2019 10:06:14 PM V27 8/16/2019 8:51:46 AM
 #CE
 
 Func Game()
@@ -603,7 +619,7 @@ Func Game()
 
 EndFunc   ;==>Game
 #CS INFO
-	304622 V50 9/10/2019 4:33:31 PM V49 8/26/2019 10:02:39 AM V48 8/25/2019 6:50:13 PM V47 8/24/2019 6:38:07 PM
+	304622 V50 10/8/2019 4:57:52 PM V49 8/26/2019 10:02:39 AM V48 8/25/2019 6:50:13 PM V47 8/24/2019 6:38:07 PM
 #CE
 
 Func Tick() ;
@@ -1556,7 +1572,7 @@ Func IniHighFive()
 
 EndFunc   ;==>IniHighFive
 #CS INFO
-	56498 V4 9/10/2019 4:33:31 PM V3 7/24/2019 11:20:48 PM V2 7/13/2019 7:20:00 PM V1 6/28/2019 7:37:37 PM
+	56498 V4 10/8/2019 4:57:52 PM V3 7/24/2019 11:20:48 PM V2 7/13/2019 7:20:00 PM V1 6/28/2019 7:37:37 PM
 #CE
 
 Func ReadHiScore()
@@ -1592,7 +1608,7 @@ Func ReadHiScore()
 	EndIf
 EndFunc   ;==>ReadHiScore
 #CS INFO
-	55181 V7 9/10/2019 4:33:31 PM V6 7/24/2019 11:20:48 PM V5 7/13/2019 7:20:00 PM V4 6/16/2019 10:16:04 AM
+	55181 V7 10/8/2019 4:57:52 PM V6 7/24/2019 11:20:48 PM V5 7/13/2019 7:20:00 PM V4 6/16/2019 10:16:04 AM
 #CE
 
 ;Load Level from THE GAME
@@ -1788,7 +1804,7 @@ Func StartForm()
 
 EndFunc   ;==>StartForm
 #CS INFO
-	197824 V30 9/10/2019 4:33:31 PM V29 8/25/2019 6:50:13 PM V28 8/18/2019 11:56:18 AM V27 8/16/2019 8:51:46 AM
+	197824 V30 10/8/2019 4:57:52 PM V29 8/25/2019 6:50:13 PM V28 8/18/2019 11:56:18 AM V27 8/16/2019 8:51:46 AM
 #CE
 
 Func Settings()
@@ -2269,6 +2285,7 @@ EndFunc   ;==>TickSpeed
 #CE INFO
 
 Func AdjustValues()
+	Local $sComboRead
 	Local $Form1_1 = GUICreate("", 601, 153) ; , 991, 302)
 	GUICtrlCreateLabel("Adjust Values", 260, 0, 131, 26, $SS_CENTER)
 	GUICtrlSetFont(-1, 14, 800, 0, "Arial")
@@ -2281,9 +2298,13 @@ Func AdjustValues()
 	Local $Label5 = GUICtrlCreateLabel("Normal", 228, 88, 145, 17, $SS_CENTER)
 	Local $Label6 = GUICtrlCreateLabel("Extra", 413, 88, 145, 17, $SS_CENTER)
 
-	Local $Combo1 = GUICtrlCreateCombo("Combo1", 43, 112, 145, 25, BitOR($CBS_DROPDOWN, $CBS_AUTOHSCROLL))
-	Local $Combo2 = GUICtrlCreateCombo("Combo1", 228, 112, 145, 25, BitOR($CBS_DROPDOWN, $CBS_AUTOHSCROLL))
-	Local $Combo3 = GUICtrlCreateCombo("Combo1", 413, 112, 145, 25, BitOR($CBS_DROPDOWN, $CBS_AUTOHSCROLL))
+	Local $ComboGame = GUICtrlCreateCombo("Game", 43, 112, 145, 25, BitOR($CBS_DROPDOWN, $CBS_AUTOHSCROLL))
+	Local $ComboNormal = GUICtrlCreateCombo("Normal", 228, 112, 145, 25, BitOR($CBS_DROPDOWN, $CBS_AUTOHSCROLL))
+	Local $ComboExtra = GUICtrlCreateCombo("Extra", 413, 112, 145, 25, BitOR($CBS_DROPDOWN, $CBS_AUTOHSCROLL))
+
+	GUICtrlSetData($ComboGame, "Set Cell Size *+|Item 2|Item 3", "")
+	GUICtrlSetData($ComboNormal, "Item 1|Item 2|Item 3", "")
+	GUICtrlSetData($ComboExtra, "Item 1|Item 2|Item 3", "")
 
 	GUISetState(@SW_SHOW)
 
@@ -2292,18 +2313,41 @@ Func AdjustValues()
 		Switch GUIGetMsg()
 			Case $GUI_EVENT_CLOSE
 				ExitLoop
+			Case $ComboGame
+				$sComboRead = GUICtrlRead($ComboGame)
+				Switch $sComboRead
+					Case "Set Cell Size *+"
+						SetCellSide()
+					Case Else
+						MsgBox($MB_SYSTEMMODAL, "", $sComboRead)
+				EndSwitch
+
+			Case $ComboNormal
+				$sComboRead = GUICtrlRead($ComboNormal)
+				MsgBox($MB_SYSTEMMODAL, "", $sComboRead)
+
+			Case $ComboExtra
+				$sComboRead = GUICtrlRead($ComboExtra)
+				MsgBox($MB_SYSTEMMODAL, "", $sComboRead)
 
 		EndSwitch
 	WEnd
 	GUIDelete($Form1_1)
 EndFunc   ;==>AdjustValues
 #CS INFO
-	77837 V2 8/30/2019 2:18:51 PM V1 8/28/2019 2:01:59 AM
-#CE INFO
+	123023 V3 10/8/2019 4:57:52 PM V2 8/30/2019 2:18:51 PM V1 8/28/2019 2:01:59 AM
+#CE
+
+Func SetCellSide()
+	Pause("SetCellSide")
+EndFunc   ;==>SetCellSide
+#CS INFO
+	5273 V1 10/8/2019 4:57:52 PM
+#CE
 
 ;Main
 Main()
 
 Exit
 
-;~T ScriptFunc.exe V0.54a 15 May 2019 - 9/10/2019 4:33:31 PM
+;~T ScriptFunc.exe V0.54a 15 May 2019 - 10/8/2019 5:04:48 PM
