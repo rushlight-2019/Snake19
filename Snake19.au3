@@ -5,7 +5,7 @@ AutoItSetOption("MustDeclareVars", 1)
 ;Global Static $MESSAGE =  False   ;Pause will still work in script  No DataOut
 
 ; Must be Declared before _Prf_startup
-Global $ver = "0.89 8 Oct 2019 unDone, lots of little things"
+Global $ver = "0.90 12 Oct 2019 Win 7 and up, data in Appdata. Add start up check, if missing ask box. Remove data from Appdata: Menu, Settings, Delete Data. About, Version, Lin"
 Global $ini_ver = "10" ;Done
 
 ;Global $TESTING = False
@@ -13,7 +13,7 @@ Global $ini_ver = "10" ;Done
 #include "R:\!Autoit\Blank\_prf_startup.au3"
 
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
-#AutoIt3Wrapper_Res_Fileversion=0.0.8.9
+#AutoIt3Wrapper_Res_Fileversion=0.0.9.0
 #AutoIt3Wrapper_Icon=R:\!Autoit\Ico\prf.ico
 #AutoIt3Wrapper_Res_Description=Another snake game
 #AutoIt3Wrapper_Res_LegalCopyright=© Phillip Forrestal 2019
@@ -21,6 +21,9 @@ Global $ini_ver = "10" ;Done
 #AutoIt3Wrapper_Res_Field=AutoIt Version|%AutoItVer%
 #AutoIt3Wrapper_Res_Language=1033
 #AutoIt3Wrapper_Run_Debug_Mode=Y
+
+#AutoIt3Wrapper_Run_Debug=On
+#AutoIt3Wrapper_Run_Debug=Off
 
 #pragma compile(inputboxres, true)
 
@@ -72,6 +75,7 @@ Global $ini_ver = "10" ;Done
 	Version
 	Board Cell size.
 	0. Tony can't play problem
+	.5 Picture can not be capture, fails on Desktop with great then 100% font  I change the loction to be farther down and right until I can remove capture.
 	1, Extra food only at X = default 100
 	2. Poop 10 at 50%.  1 more each 25 over 100
 	3. Threw wall start at 2 each time +1
@@ -81,22 +85,19 @@ Global $ini_ver = "10" ;Done
 	7. Replay
 	8 Change score, below max  rate diff rate.
 
-	0.89 8 Aug 2019  unDone, lots of little things
-	unDone
-	0.89 1.03 10 Sep 2019 Cell size of board
-	0.89 1.02 10 Sep 2019 Score 8 not 5
-	0.89 1.01  10 Sep 2019 Remember last game
-	Done
-	0.89 1.00a 30 Aug 2019 Done Fix text
-	0.89 1.00 29 Aug 2019 Done -
+	0.90 12 Oct 2019 Win 7 and up, data in Appdata.  Add start up check, if missing ask box. Remove data from Appdata: Menu, Settings, Delete Data.  About, Version, Lin
+
+	0.89 10 Sep 2019 Score 8 not 5 - Remember last game
 	0.88 28 Aug 2019 Aline Color and Speed, fix Color HEX input
 	0.87 27 Aug 2019 Adjust Values windows
+	0.86 Removed
 	0.85 25 Aug 2019 FOOD2 should act like FOOD, fix Normal lock up
 	0.84 24 Aug 2019 Changing poop with food
 	0.83 22 Aug 2019 Speed
 	0.82 22 Aug 2019 Regenerate Colors
 	0.81 21 Aug 2019 Extra  Poop better
 	0.80 21 Aug 2019 Extra Poop back, fix location of food
+
 	0.79 21 Aug 2019 Extra - Wall
 	0.78 20 Aug 2019 Hungery better
 	0.77 20 Aug 2019 Playing with settings
@@ -213,32 +214,38 @@ Global $ini_ver = "10" ;Done
 #include <ScreenCapture.au3>
 #include <EditConstants.au3>
 #include <ComboConstants.au3>
+#include <ListBoxConstants.au3>
 
 ;Static
-Static $s_data = @ScriptDir & "\SNAKE19-Data"
-Static $s_ini = $s_data & "\snake.ini"
-Static $s_scoreini = $s_data & "\score.ini"
+Global $g_data ;= @ScriptDir & "\SNAKE19-Data"
+$g_data = CheckDataLoc() ;find data folder
+If $g_data = "" Then
+	Exit
+EndIf
+
+Static $s_ini = $g_data & "\snake.ini"
+Static $s_scoreini = $g_data & "\score.ini"
 
 Static $WALL = -1
-Static $cEDGE = $s_data & "\Edge.jpg"
+Static $cEDGE = $g_data & "\Edge.jpg"
 
 Static $EMPTY = 0
-Static $cEMPTY = $s_data & "\empty.jpg"
+Static $cEMPTY = $g_data & "\empty.jpg"
 
 Static $SNAKE = 1
-Static $cSNAKE = $s_data & "\snake.jpg"
+Static $cSNAKE = $g_data & "\snake.jpg"
 Static $HEAD = 1
-Static $cHEAD = $s_data & "\Head.jpg"
+Static $cHEAD = $g_data & "\Head.jpg"
 
 Static $FOOD = 2
 Static $FOOD2 = 7 ; from 0
-Static $cFOOD = $s_data & "\Food.jpg"
+Static $cFOOD = $g_data & "\Food.jpg"
 
 Static $DEAD = 3
-Static $cDEAD = $s_data & "\Dead.jpg"
+Static $cDEAD = $g_data & "\Dead.jpg"
 
 Static $POOP = 5
-Static $cPOOP = $s_data & "\Poop.jpg"
+Static $cPOOP = $g_data & "\Poop.jpg"
 
 Static $MaxLost = 7 ;   5 to 10
 
@@ -284,7 +291,7 @@ Global $g_StatusOff = 2
 Global $g_aHiScore[12][6] ; data load by INI.  10 =  score,  date, len.food, turns, Max
 Global $g_iScore
 
-Global $g_GameWhich = 1 ; 0 Norma, 1 Mine
+Global $g_GameWhich = 0 ; 0 Norma, 1 Mine
 Global $g_HiScoreWho ;ctrl
 Global $g_HiScore[10]
 
@@ -370,22 +377,28 @@ Global $g_pooprnd
 Func Main()
 	Local $a
 
-	;Check to see if snake19.ini can be created or exists
+	;Check to see if snake19.ini can be created or exists or can read correct data
 	If FileExists($s_ini) = 0 Then ;not exist
-		DirCreate($s_data)
+		DirCreate($g_data)
 		IniWrite($s_ini, "Program", "Version", $ver)
 		If FileExists($s_ini) = 0 Then ;not exist
-			MsgBox(1, "ERROR", "Can not create data files at " & $s_data)
+			MsgBox(1, "ERROR", "Can not create data files at " & $g_data)
 			Exit
 		EndIf
 	EndIf
 	IniWrite($s_ini, "Program", "Version", $ver)
+	Sleep(500)
+	$a = IniRead($s_ini, "Program", "Version", "X")
+	If $a <> $ver Then ;check if can read ini file
+		MsgBox(1, "ERROR", "Can not READ correct data from Snake19.ini " & $g_data)
+		Exit
+	EndIf
 
 	;0.86
 	$g_TickTime = IniRead($s_ini, "General", "Speed", 150)
 
 	;1.01
-	$g_GameWhich = IniRead($s_ini, "General", "Game", 1)
+	$g_GameWhich = IniRead($s_ini, "General", "Game", 0)
 	;IniWrite($s_ini, "General", "Game", $g_GameWhich)
 
 	;Check to see if color files exist, if not create them.
@@ -400,7 +413,7 @@ Func Main()
 		IniWrite($s_scoreini, "Score", "Version", $ini_ver)
 	ElseIf $a <> $ini_ver Then
 		;1.01
-		$g_GameWhich = IniRead($s_ini, "General", "Game", 1)
+		$g_GameWhich = IniRead($s_ini, "General", "Game", 0)
 		;IniWrite($s_ini, "General", "Game", $g_GameWhich)
 
 		IniDelete($s_scoreini, "HighScoreExtra")
@@ -419,7 +432,7 @@ Func Main()
 
 EndFunc   ;==>Main
 #CS INFO
-	97676 V30 10/8/2019 4:57:52 PM V29 8/26/2019 10:02:39 AM V28 8/16/2019 10:06:14 PM V27 8/16/2019 8:51:46 AM
+	97650 V31 10/11/2019 3:14:30 PM V30 10/8/2019 4:57:52 PM V29 8/26/2019 10:02:39 AM V28 8/16/2019 10:06:14 PM
 #CE
 
 Func Game()
@@ -1655,7 +1668,7 @@ Func CheckColorJpg($filename, $color) ; $color is only the default color if INI 
 
 	$a = IniRead($s_ini, "Color", $filename, "X")
 
-	If FileExists($s_data & "\" & $filename & ".jpg") = 0 Then ;Not found
+	If FileExists($g_data & "\" & $filename & ".jpg") = 0 Then ;Not found
 
 		If $a <> "X" Then ; if INI exist then use INI
 			$color = $a
@@ -1671,8 +1684,8 @@ Func CheckColorJpg($filename, $color) ; $color is only the default color if INI 
 
 EndFunc   ;==>CheckColorJpg
 #CS INFO
-	35567 V3 8/16/2019 8:51:46 AM V2 7/14/2019 10:10:20 PM V1 7/14/2019 10:20:53 AM
-#CE INFO
+	35555 V4 10/11/2019 3:14:30 PM V3 8/16/2019 8:51:46 AM V2 7/14/2019 10:10:20 PM V1 7/14/2019 10:20:53 AM
+#CE
 
 ;Create Color file and write INI
 Func CreateColorJpg($filename, $color)
@@ -1688,7 +1701,7 @@ Func CreateColorJpg($filename, $color)
 	; create, sumchk, store in ini Color Filename
 	GUISetBkColor($color, $hGUI)
 	Sleep(500)
-	_ScreenCapture_CaptureWnd($s_data & "\" & $filename & ".jpg", $hGUI, 30, 30, 30 + 25, 30 + 25, False)
+	_ScreenCapture_CaptureWnd($g_data & "\" & $filename & ".jpg", $hGUI, 50, 50, 50 + 25, 50 + 25, False)
 	If @error <> 0 Then ;Failed
 		MsgBox(0, "ERROR", "Color Jpg could not be created " & $filename)
 		Exit
@@ -1700,12 +1713,12 @@ Func CreateColorJpg($filename, $color)
 
 EndFunc   ;==>CreateColorJpg
 #CS INFO
-	43943 V5 8/22/2019 8:37:33 AM V4 8/18/2019 11:15:59 PM V3 8/16/2019 8:51:46 AM V2 7/14/2019 10:10:20 PM
-#CE INFO
+	43939 V7 10/13/2019 1:37:57 PM V6 10/11/2019 3:14:30 PM V5 8/22/2019 8:37:33 AM V4 8/18/2019 11:15:59 PM
+#CE
 
 Func StartForm()
 	Local $Form1, $Group1
-	Local $Radio3, $Checkbox1, $b_start, $b_setting
+	Local $Radio3, $Checkbox1, $b_start, $b_setting, $b_replay
 	Local $nMsg
 	Local $a = 260
 	Local $b = 50
@@ -1744,7 +1757,7 @@ Func StartForm()
 	Next
 
 	$b_setting = GUICtrlCreateButton("Setting", 100, 550, 75, 35) ;~~
-	;GUICtrlCreateButton("?????", 400, 550, 75, 35) ;~~
+	$b_replay = GUICtrlCreateButton("Replay", 500, 550, 75, 35)
 	$b_start = GUICtrlCreateButton("GO", 270, 550, 100, 35)
 
 	Local $Edit1 = GUICtrlCreateEdit("", 20, $b, 550, 230, $ES_READONLY)
@@ -1781,6 +1794,9 @@ Func StartForm()
 				GUIDelete($Form1)
 				Return True
 
+			Case $b_replay
+				ReplayStart()
+
 			Case $b_start
 				$g_Mouse = MouseGetPos()
 				GUIDelete($Form1)
@@ -1804,20 +1820,24 @@ Func StartForm()
 
 EndFunc   ;==>StartForm
 #CS INFO
-	197824 V30 10/8/2019 4:57:52 PM V29 8/25/2019 6:50:13 PM V28 8/18/2019 11:56:18 AM V27 8/16/2019 8:51:46 AM
+	202120 V31 10/11/2019 3:14:30 PM V30 10/8/2019 4:57:52 PM V29 8/25/2019 6:50:13 PM V28 8/18/2019 11:56:18 AM
 #CE
 
 Func Settings()
 	Local $Setting, $y
 
-	$Setting = GUICreate("Change Setting", 600, 100)
+	$Setting = GUICreate("Change Setting", 600, 150)
 	GUICtrlCreateLabel("Settings", 260, 0, 80, 26, $SS_CENTER)
 	GUICtrlSetFont(-1, 14, 800, 0, "Arial")
 
-	Local $b_ScreenSize = GUICtrlCreateButton("Screen Size", 47, 48, 97, 33)
-	Local $b_Color = GUICtrlCreateButton("Colors", 183, 48, 97, 33)
-	Local $b_speed = GUICtrlCreateButton("Speed", 320, 48, 97, 33)
-	Local $b_Adj = GUICtrlCreateButton("Adjust Values", 456, 48, 97, 33)
+	;47,183,320,456  - 50 100
+	Local $b_about = GUICtrlCreateButton("About", 47, 50, 97, 33)
+	Local $b_ScreenSize = GUICtrlCreateButton("Screen Size", 183, 50, 97, 33)
+	Local $b_Color = GUICtrlCreateButton("Colors", 320, 50, 97, 33)
+	Local $b_speed = GUICtrlCreateButton("Speed", 456, 50, 97, 33)
+
+	Local $b_Adj = GUICtrlCreateButton("Adjust Values", 320, 100, 97, 33)
+	Local $b_Uni = GUICtrlCreateButton("Delete Data", 456, 100, 97, 33)
 	GUISetState(@SW_SHOW)
 
 	While 1
@@ -1825,6 +1845,9 @@ Func Settings()
 		Local $nMsg = GUIGetMsg()
 		Switch $nMsg
 			Case $GUI_EVENT_CLOSE
+				ExitLoop
+			Case $b_about
+				About()
 				ExitLoop
 			Case $b_ScreenSize
 				ScreenSize()
@@ -1834,14 +1857,17 @@ Func Settings()
 				Speed()
 			Case $b_Adj
 				AdjustValues()
+				ExitLoop
+			Case $b_Uni
+				DeleteData()
 		EndSwitch
 	WEnd
 
 	GUIDelete($Setting)
 EndFunc   ;==>Settings
 #CS INFO
-	53763 V6 8/28/2019 11:39:16 AM V5 8/28/2019 2:01:59 AM V4 8/26/2019 10:02:39 AM V3 8/22/2019 6:28:51 PM
-#CE INFO
+	69421 V7 10/13/2019 1:37:57 PM V6 8/28/2019 11:39:16 AM V5 8/28/2019 2:01:59 AM V4 8/26/2019 10:02:39 AM
+#CE
 
 Func ScreenSize()
 	Local $sInputBoxAnswer, $keep, $s, $mathW, $mathH, $Math
@@ -2051,7 +2077,7 @@ Func ChooseColor()
 
 					GUISetBkColor($r_what[$x][3], $hGUI)
 					Sleep(500)
-					_ScreenCapture_CaptureWnd($s_data & "\" & $r_what[$x][1] & ".jpg", $hGUI, 30, 30, 30 + 25, 30 + 25, False)
+					_ScreenCapture_CaptureWnd($g_data & "\" & $r_what[$x][1] & ".jpg", $hGUI, 50, 50, 50 + 25, 50 + 25, False)
 					$restart = True
 				Next
 				GUIDelete($hGUI)
@@ -2074,8 +2100,8 @@ Func ChooseColor()
 	EndIf
 EndFunc   ;==>ChooseColor
 #CS INFO
-	326609 V9 8/28/2019 11:39:16 AM V8 8/25/2019 6:50:13 PM V7 8/22/2019 8:37:33 AM V6 8/20/2019 5:46:24 PM
-#CE INFO
+	326605 V11 10/13/2019 1:37:57 PM V10 10/11/2019 3:14:30 PM V9 8/28/2019 11:39:16 AM V8 8/25/2019 6:50:13 PM
+#CE
 
 Func WallTrue() ;0.79
 
@@ -2345,9 +2371,197 @@ EndFunc   ;==>SetCellSide
 	5273 V1 10/8/2019 4:57:52 PM
 #CE
 
+Func ReplayStart()
+	MsgBox(0, "Replay", "Problem: No program code. 10/Oct/2019")
+EndFunc   ;==>ReplayStart
+#CS INFO
+	8129 V1 10/11/2019 3:14:30 PM
+#CE
+
+;Check to see it Data is store in one of the two locations. If not ask where to store the data
+Func CheckDataLoc()
+	Local $progr
+	Local $data
+
+	$progr = @ScriptDir
+	$data = @AppDataDir & "\SNAKE19-Data"
+
+	;@ScriptDir & "\SNAKE19-Data"
+	If FileExists($data & "\snake.ini") = 1 Then
+		Return $data
+	EndIf
+
+	If FileExists(@ScriptDir & "\SNAKE19-Data\snake.ini") = 1 Then
+		Return @ScriptDir & "\SNAKE19-Data"
+	EndIf
+
+	;Ask where to store the data
+	Local $Form1 = GUICreate("Snake19 - Setup Data", 615, 430, -1, -1, $ws_popup + $ws_caption)
+	GUICtrlCreateLabel("Welcome to Snake19 data setup", 0, 24, 610, 28, $SS_CENTER)
+	GUICtrlSetFont(-1, 14, 800, 0, "MS Sans Serif")
+	GUICtrlCreateLabel("Set Data files folder:", 32, 144, 610, 20)
+	GUICtrlSetFont(-1, 10, 400, 0, "MS Sans Serif")
+
+	Local $ProgLabel = GUICtrlCreateLabel("", 32, 80, 610, 20)
+	GUICtrlSetData(-1, "Program file directory: " & $progr)
+	GUICtrlSetFont(-1, 10, 400, 0, "MS Sans Serif")
+	Local $Radio1 = GUICtrlCreateRadio("User's Application Ddata folder (recommended for( Win7, Win 8, Win10)", 64, 176, 610, 17)
+	GUICtrlSetState(-1, $GUI_CHECKED)
+	GUICtrlSetFont(-1, 10, 400, 0, "MS Sans Serif")
+	Local $Radio2 = GUICtrlCreateRadio("Snake19 folder in Program folder (portability)", 64, 216, 610, 17)
+	GUICtrlSetFont(-1, 10, 400, 0, "MS Sans Serif")
+	Local $DataLabel = GUICtrlCreateLabel("", 32, 264, 610, 17)
+	GUICtrlSetData(-1, "Data files directory: " & $data)
+	GUICtrlSetFont(-1, 10, 400, 0, "MS Sans Serif")
+	Local $DeleteData = GUICtrlCreateLabel("To delete data folder:  Menu, Settings, Change Data", 32, 296, 610, 20)
+	GUICtrlSetFont(-1, 10, 400, 0, "MS Sans Serif")
+
+	Local $Bgo = GUICtrlCreateButton("Create", 420, 392, 75, 25)
+	Local $Bexit = GUICtrlCreateButton("Exit", 520, 392, 75, 25)
+	GUICtrlCreateLabel("________________________________________________________________________________________________", 16, 360, 580, 17)
+	GUISetState(@SW_SHOW)
+
+	While 1
+		Local $nMsg = GUIGetMsg()
+		Switch $nMsg
+			Case $GUI_EVENT_CLOSE, $Bexit
+				GUIDelete($Form1)
+				Return ""
+			Case $Radio1
+				$data = @AppDataDir & "\SNAKE19-Data"
+				GUICtrlSetData($DataLabel, "Data files directory: " & $data)
+				GUICtrlSetData($DeleteData, "To delete data folder:  Menu, Settings, Uninstall")
+			Case $Radio2
+				$data = $progr & "\SNAKE19-Data"
+				GUICtrlSetData($DataLabel, "Data files directory: " & $data)
+				GUICtrlSetData($DeleteData, "To delete data folder:  Delete " & $data)
+			Case $Bgo
+				GUIDelete($Form1)
+				Return $data
+		EndSwitch
+	WEnd
+
+EndFunc   ;==>CheckDataLoc
+#CS INFO
+	172918 V2 10/13/2019 1:37:57 PM V1 10/11/2019 3:14:30 PM
+#CE
+
+;This will delete the data files and exit the game
+Func DeleteData()
+	Local $progr = @ScriptDir
+	Local $data = @AppDataDir & "\SNAKE19-Data"
+
+	If FileExists($data & "\snake.ini") = 0 Then
+		$data = @ScriptDir & "\SNAKE19-Data"
+		If FileExists(@ScriptDir & "\SNAKE19-Data\snake.ini") = 0 Then
+			MsgBox(0, "Error", "Data folder missing - Tell programer")
+			Exit
+		EndIf
+	EndIf
+
+	Local $Form1 = GUICreate("Snake19 - Remove Data", 615, 294, -1, -1, $ws_popup + $ws_caption)
+	GUICtrlCreateLabel("Thanks for using the Snake19 game", 0, 24, 610, 28, $SS_CENTER)
+	GUICtrlSetFont(-1, 14, 800, 0, "MS Sans Serif")
+	GUICtrlCreateLabel("To delete the program Snake19.exe. Go to the program folder and delete it manually.", 32, 144, 504, 20)
+	GUICtrlSetFont(-1, 10, 400, 0, "MS Sans Serif")
+	GUICtrlCreateLabel("This will delete the data files created by the Snake19 game.", 32, 80, 355, 20)
+	GUICtrlSetFont(-1, 10, 400, 0, "MS Sans Serif")
+	GUICtrlCreateLabel("________________________________________________________________________________________________", 24, 216, 580, 17)
+
+	Local $Label5 = GUICtrlCreateLabel("Data folder: ", 32, 112, 610, 20)
+	GUICtrlSetData(-1, "Data files directory: " & $data)
+	GUICtrlSetFont(-1, 10, 400, 0, "MS Sans Serif")
+
+	Local $Label6 = GUICtrlCreateLabel("Program folder: ", 32, 184, 610, 20)
+	GUICtrlSetData(-1, "Program file directory: " & $progr)
+	GUICtrlSetFont(-1, 10, 400, 0, "MS Sans Serif")
+
+	Local $Button1 = GUICtrlCreateButton("Delete Data", 416, 248, 75, 25)
+	Local $Button2 = GUICtrlCreateButton("Cancel", 520, 248, 75, 25)
+
+	GUISetState(@SW_SHOW)
+
+	While 1
+		Local $nMsg = GUIGetMsg()
+		Switch $nMsg
+			Case $GUI_EVENT_CLOSE, $Button2
+				GUIDelete($Form1)
+				Return
+			Case $Button1
+				FileDelete($s_ini)
+				FileDelete($s_scoreini)
+
+				FileDelete($cEDGE)
+				FileDelete($cEMPTY)
+				FileDelete($cSNAKE)
+				FileDelete($cHEAD)
+				FileDelete($cFOOD)
+				FileDelete($cDEAD)
+				FileDelete($cPOOP)
+				Exit
+		EndSwitch
+	WEnd
+	GUIDelete($Form1)
+
+	Exit
+EndFunc   ;==>DeleteData
+#CS INFO
+	138770 V1 10/13/2019 1:37:57 PM
+#CE
+
+Func About()
+	Local $FormAbout = GUICreate("Snake19 - About", 615, 430, -1, -1, $ws_popup + $ws_caption)
+
+	Local $Message = "0.90 12 Oct 2019 Win 7 and up, data in Appdata.  Add start up check, if missing ask box.| Remove data from Appdata: Menu, Settings, Delete Data.  About, Version"
+
+	$Message &= "||0.89 10 Sep 2019 Score 8 not 5 - Remember last game"
+	$Message &= "||0.88 28 Aug 2019 Aline Color and Speed, fix Color HEX input"
+	$Message &= "|0.87 27 Aug 2019 Adjust Values windows"
+	$Message &= "|0.86 Removed"
+	$Message &= "|0.85 25 Aug 2019 FOOD2 should act like FOOD, fix Normal lock up"
+	$Message &= "|0.84 24 Aug 2019 Changing poop with food"
+	$Message &= "|0.83 22 Aug 2019 Speed"
+	$Message &= "|0.82 22 Aug 2019 Regenerate Colors"
+	$Message &= "|0.81 21 Aug 2019 Extra  Poop better"
+	$Message &= "|0.80 21 Aug 2019 Extra Poop back, fix location of food"
+
+	GUICtrlCreateLabel("Welcome to Snake19", 0, 24, 617, 28, $SS_CENTER)
+	GUICtrlSetFont(-1, 14, 800, 0, "MS Sans Serif")
+	GUICtrlCreateLabel("Copyright (C) 2019 -- by Phillip Forrestal", 0, 104, 620, 20, $SS_CENTER)
+	GUICtrlSetFont(-1, 10, 400, 0, "MS Sans Serif")
+	GUICtrlCreateLabel("", 0, 80, 618, 20, $SS_CENTER)
+	GUICtrlSetData(-1, "Snake 19 -beta but working version " & $ver)
+	GUICtrlSetFont(-1, 10, 400, 0, "MS Sans Serif")
+
+	GUICtrlCreateLabel("Versions", 24, 136, 70, 24)
+	GUICtrlSetFont(-1, 10, 800, 0, "MS Sans Serif")
+
+	GUICtrlCreateList("", 32, 160, 548, 196, BitAND($GUI_SS_DEFAULT_LIST, BitNOT($LBS_SORT)))
+	GUICtrlSetData(-1, $Message)
+
+	GUICtrlCreateLabel("________________________________________________________________________________________________", 16, 360, 580, 17)
+
+	Local $Button1 = GUICtrlCreateButton("Click", 270, 392, 75, 25)
+	GUISetState(@SW_SHOW)
+
+	While 1
+		Local $nMsg = GUIGetMsg()
+		Switch $nMsg
+			Case $Button1
+				ExitLoop
+		EndSwitch
+	WEnd
+
+	GUIDelete($FormAbout)
+EndFunc   ;==>About
+#CS INFO
+	132285 V1 10/13/2019 1:37:57 PM
+#CE
+
 ;Main
+
 Main()
 
 Exit
 
-;~T ScriptFunc.exe V0.54a 15 May 2019 - 10/8/2019 5:04:48 PM
+;~T ScriptFunc.exe V0.54a 15 May 2019 - 10/13/2019 1:37:57 PM
