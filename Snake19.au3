@@ -4,8 +4,8 @@ AutoItSetOption("MustDeclareVars", 1)
 ;Global Static $MESSAGE = True ;Define then DataOut will show in script or compiled
 ;Global Static $MESSAGE =  False   ;Pause will still work in script  No DataOut
 
-; Must be Declared before _Prf_startup
-Global $ver = "0.90 12 Oct 2019 Win 7 and up, data in Appdata. Add start up check, if missing ask box. Remove data from Appdata: Menu, Settings, Delete Data. About, Version, Lin"
+; Must be Declared before _Prf_startup   ~+~+
+Global $ver = "0.91 18 Oct 2019 Through wall, might not pass straight through"
 Global $ini_ver = "10" ;Done
 
 ;Global $TESTING = False
@@ -13,14 +13,14 @@ Global $ini_ver = "10" ;Done
 #include "R:\!Autoit\Blank\_prf_startup.au3"
 
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
-#AutoIt3Wrapper_Res_Fileversion=0.0.9.0
+#AutoIt3Wrapper_Res_Fileversion=0.0.9.1
 #AutoIt3Wrapper_Icon=R:\!Autoit\Ico\prf.ico
 #AutoIt3Wrapper_Res_Description=Another snake game
 #AutoIt3Wrapper_Res_LegalCopyright=© Phillip Forrestal 2019
 #AutoIt3Wrapper_Res_Field=Compile date|%longdate% %time%
 #AutoIt3Wrapper_Res_Field=AutoIt Version|%AutoItVer%
 #AutoIt3Wrapper_Res_Language=1033
-#AutoIt3Wrapper_Run_Debug_Mode=Y
+#AutoIt3Wrapper_Run_Debug_Mode=N
 
 #AutoIt3Wrapper_Run_Debug=On
 #AutoIt3Wrapper_Run_Debug=Off
@@ -73,18 +73,18 @@ Global $ini_ver = "10" ;Done
 	to do
 
 	Version
-	Board Cell size.
-	0. Tony can't play problem
 	.5 Picture can not be capture, fails on Desktop with great then 100% font  I change the loction to be farther down and right until I can remove capture.
 	1, Extra food only at X = default 100
 	2. Poop 10 at 50%.  1 more each 25 over 100
 	3. Threw wall start at 2 each time +1
-	4. Threw wall  0,1,2,4.2,1,0  if all block free not on side else die
 	5. Poop 2 +1 each time
 	6. Died  snake 2 +1 each time
 	7. Replay
 	8 Change score, below max  rate diff rate.
+	9 Board Cell size.
+	10 Adjust when special food gen ends - revert ot normal
 
+	0.91 18 Oct 2019 Through wall, might not pass straight through
 	0.90 12 Oct 2019 Win 7 and up, data in Appdata.  Add start up check, if missing ask box. Remove data from Appdata: Menu, Settings, Delete Data.  About, Version, Lin
 
 	0.89 10 Sep 2019 Score 8 not 5 - Remember last game
@@ -373,6 +373,14 @@ Global $g_TickTime
 ;0.84
 Global $g_pooprnd
 
+;0.91
+Global $g_PWchance[6]
+
+Global $g_PWsnkTruWall
+Global $g_PWsnkTruPer
+Global $g_PWsnkTruCnt
+PassWallDefault()
+
 ; Main is call at end
 Func Main()
 	Local $a
@@ -432,8 +440,8 @@ Func Main()
 
 EndFunc   ;==>Main
 #CS INFO
-	97650 V31 10/11/2019 3:14:30 PM V30 10/8/2019 4:57:52 PM V29 8/26/2019 10:02:39 AM V28 8/16/2019 10:06:14 PM
-#CE
+	113674 V32 10/14/2019 8:06:40 AM V31 10/11/2019 3:14:30 PM V30 10/8/2019 4:57:52 PM V29 8/26/2019 10:02:39 AM
+#CE INFO
 
 Func Game()
 	Local $nMsg, $x, $y, $flag
@@ -520,6 +528,7 @@ Func Game()
 	StartSnake()
 	AddFood(True)
 	;clear poop
+	$g_PWsnkTruCnt = 0 ;start game as 0
 	For $Z = 0 To $s_PoopSize - 1
 		$g_poop[$Z][0] = 0
 	Next
@@ -542,6 +551,9 @@ Func Game()
 
 	;0.84
 	$g_pooprnd = $s_PoopSize / 4 ;  no poop for first few foods
+
+	;0.91
+	PassWallDefault()
 
 	Local $aAccelKey2[][] = [["{RIGHT}", $L_idRight], ["{LEFT}", $L_idLeft], ["{DOWN}", $L_idDown], ["{UP}", $L_idUp], ["{ESC}", $L_idEsc]]
 	GUISetAccelerators($aAccelKey2, $g_ctrlBoard)
@@ -632,7 +644,7 @@ Func Game()
 
 EndFunc   ;==>Game
 #CS INFO
-	304622 V50 10/8/2019 4:57:52 PM V49 8/26/2019 10:02:39 AM V48 8/25/2019 6:50:13 PM V47 8/24/2019 6:38:07 PM
+	309215 V51 10/18/2019 9:17:20 AM V50 10/8/2019 4:57:52 PM V49 8/26/2019 10:02:39 AM V48 8/25/2019 6:50:13 PM
 #CE
 
 Func Tick() ;
@@ -747,18 +759,7 @@ Func Extra()
 			PoopAdd($x_new + $g_dirX, $y_new + $g_dirY, $s_PoopSize)
 
 		Case $WALL
-			$flag = WallTrue()
-			If Not $flag Then
-				$flag = DoubleBackWall()
-				If $flag Then
-					Status(2, "Double back WALL, Lost 2", 3)
-					$g_gChange -= 2
-				Else
-					Status(0, "Ate Wall", 1)
-					$g_endgame = True
-					Return
-				EndIf
-			EndIf
+			WallTrue()
 
 		Case $SNAKE
 
@@ -805,7 +806,8 @@ Func Extra()
 						$g_iScore += 50
 						Status(0, "Turn bonus: Score 50 Snake 2", 4)
 					Else
-						Status(0, "Turn bonus: Snake 2", 4)
+						$g_iScore += 25
+						Status(0, "Turn bonus: Score 25 Snake 2", 4)
 					EndIf
 				Case 3
 					$g_gChange += 1
@@ -813,7 +815,8 @@ Func Extra()
 						$g_iScore += 20
 						Status(0, "Turn bonus: Score 20 Snake 1", 4)
 					Else
-						Status(0, "Turn bonus: Snake 1", 4)
+						$g_iScore += 10
+						Status(0, "Turn bonus: Score 10 Snake 1", 4)
 					EndIf
 				Case 4
 					$g_gChange += 0
@@ -849,7 +852,7 @@ Func Extra()
 			PrevNext($x_new + $g_dirX, $y_new + $g_dirY) ;New value
 			RemoveSnakeExtra() ;only empty cell change len
 			$g_iScore += 10
-			Status(0, "Poop Bonus Food: Score 10, Snake 5", 4)
+			Status(0, "Poop Bonus Food: Score 10, Snake 5", 2)
 
 			$g_Turns = 0
 			$g_HungeryLast = 0
@@ -926,8 +929,8 @@ Func Extra()
 
 EndFunc   ;==>Extra
 #CS INFO
-	364074 V41 8/30/2019 2:18:51 PM V40 8/26/2019 10:02:39 AM V39 8/25/2019 6:50:13 PM V38 8/25/2019 12:01:59 AM
-#CE INFO
+	353668 V42 10/18/2019 9:17:20 AM V41 8/30/2019 2:18:51 PM V40 8/26/2019 10:02:39 AM V39 8/25/2019 6:50:13 PM
+#CE
 
 Func Normal()
 	Local Static $LS_SnakeLenLast = 0
@@ -1586,7 +1589,7 @@ Func IniHighFive()
 EndFunc   ;==>IniHighFive
 #CS INFO
 	56498 V4 10/8/2019 4:57:52 PM V3 7/24/2019 11:20:48 PM V2 7/13/2019 7:20:00 PM V1 6/28/2019 7:37:37 PM
-#CE
+#CE INFO
 
 Func ReadHiScore()
 	Local $a, $c, $Z
@@ -1622,7 +1625,7 @@ Func ReadHiScore()
 EndFunc   ;==>ReadHiScore
 #CS INFO
 	55181 V7 10/8/2019 4:57:52 PM V6 7/24/2019 11:20:48 PM V5 7/13/2019 7:20:00 PM V4 6/16/2019 10:16:04 AM
-#CE
+#CE INFO
 
 ;Load Level from THE GAME
 ; to remove Run again
@@ -1685,7 +1688,7 @@ Func CheckColorJpg($filename, $color) ; $color is only the default color if INI 
 EndFunc   ;==>CheckColorJpg
 #CS INFO
 	35555 V4 10/11/2019 3:14:30 PM V3 8/16/2019 8:51:46 AM V2 7/14/2019 10:10:20 PM V1 7/14/2019 10:20:53 AM
-#CE
+#CE INFO
 
 ;Create Color file and write INI
 Func CreateColorJpg($filename, $color)
@@ -1714,7 +1717,7 @@ Func CreateColorJpg($filename, $color)
 EndFunc   ;==>CreateColorJpg
 #CS INFO
 	43939 V7 10/13/2019 1:37:57 PM V6 10/11/2019 3:14:30 PM V5 8/22/2019 8:37:33 AM V4 8/18/2019 11:15:59 PM
-#CE
+#CE INFO
 
 Func StartForm()
 	Local $Form1, $Group1
@@ -1734,14 +1737,17 @@ Func StartForm()
 	GUICtrlCreateLabel("Snake 19", 0, 0, 600, 24, $SS_CENTER)
 	GUICtrlSetFont(-1, 12, 800, 0, "Arial")
 
-	GUICtrlCreateLabel($ver, 0, 24, 600, 20, $SS_CENTER)
-	GUICtrlSetFont(-1, 10, 400, 0, "Arial")
+	GUICtrlCreateLabel($ver, 0, 18, 600, 20, $SS_CENTER)
+	GUICtrlSetFont(-1, 8, 400, 0, "Arial")
+
+	GUICtrlCreateLabel("Type of Game", 0, 32, 600, 20, $SS_CENTER)
+	GUICtrlSetFont(-1, 10, 900, 0, "Arial")
 
 	$Group1 = GUIStartGroup()
 	$Radio1 = GUICtrlCreateRadio("Normal", $a, $b, $c, 20)
-	GUICtrlSetFont(-1, 10, 400, 0, "Arial")
+	GUICtrlSetFont(-1, 10, 800, 0, "Arial")
 	$Radio2 = GUICtrlCreateRadio("Extra", $a, $b + 20, $c, 20)
-	GUICtrlSetFont(-1, 10, 400, 0, "Arial")
+	GUICtrlSetFont(-1, 10, 800, 0, "Arial")
 
 	$b += 40
 
@@ -1756,9 +1762,11 @@ Func StartForm()
 		$b += 20
 	Next
 
-	$b_setting = GUICtrlCreateButton("Setting", 100, 550, 75, 35) ;~~
+	$b_setting = GUICtrlCreateButton("Setting", 150, 550, 75, 35)
+	;$b_setting = GUICtrlCreateButton("Setting", 100, 550, 75, 35)
 	$b_replay = GUICtrlCreateButton("Replay", 500, 550, 75, 35)
-	$b_start = GUICtrlCreateButton("GO", 270, 550, 100, 35)
+		$b_replay = GUICtrlCreateButton("Test HELP", 10, 550, 100, 35)
+	$b_start = GUICtrlCreateButton("GO", 270, 550, 75, 35)
 
 	Local $Edit1 = GUICtrlCreateEdit("", 20, $b, 550, 230, $ES_READONLY)
 	GUICtrlSetFont($Edit1, 10, 400, 0, "Arial")
@@ -1775,7 +1783,7 @@ Func StartForm()
 	GUICtrlSetData($Edit1, "  Food increase Snake by 1.  A special food will get you more." & @CRLF, 1)
 	GUICtrlSetData($Edit1, @CRLF, 1)
 	GUICtrlSetData($Edit1, "Extra Bonus:" & @CRLF, 1)
-	GUICtrlSetData($Edit1, " Snake can 'double back' on self. Pass threw Wall to other side. But loose 2 cells." & @CRLF, 1)
+	GUICtrlSetData($Edit1, " Snake can 'double back' on self. Pass threw Wall to other side. But loose X cells." & @CRLF, 1)
 	GUICtrlSetData($Edit1, " Snake does not like to Turn so, so few turns and Food increase snake & score" & @CRLF, 1)
 	GUICtrlSetData($Edit1, "  Too many turns Snake gets shorter", 1)
 
@@ -1820,7 +1828,7 @@ Func StartForm()
 
 EndFunc   ;==>StartForm
 #CS INFO
-	202120 V31 10/11/2019 3:14:30 PM V30 10/8/2019 4:57:52 PM V29 8/25/2019 6:50:13 PM V28 8/18/2019 11:56:18 AM
+	217461 V32 10/18/2019 9:17:20 AM V31 10/11/2019 3:14:30 PM V30 10/8/2019 4:57:52 PM V29 8/25/2019 6:50:13 PM
 #CE
 
 Func Settings()
@@ -1836,7 +1844,7 @@ Func Settings()
 	Local $b_Color = GUICtrlCreateButton("Colors", 320, 50, 97, 33)
 	Local $b_speed = GUICtrlCreateButton("Speed", 456, 50, 97, 33)
 
-	Local $b_Adj = GUICtrlCreateButton("Adjust Values", 320, 100, 97, 33)
+	;Local $b_Adj = GUICtrlCreateButton("Adjust Values", 320, 100, 97, 33) see below
 	Local $b_Uni = GUICtrlCreateButton("Delete Data", 456, 100, 97, 33)
 	GUISetState(@SW_SHOW)
 
@@ -1855,9 +1863,9 @@ Func Settings()
 				ChooseColor()
 			Case $b_speed
 				Speed()
-			Case $b_Adj
-				AdjustValues()
-				ExitLoop
+			;Case $b_Adj   Going to use buttons in setting  Combo menu is broken
+			;	AdjustValues()
+			;	ExitLoop
 			Case $b_Uni
 				DeleteData()
 		EndSwitch
@@ -1866,7 +1874,7 @@ Func Settings()
 	GUIDelete($Setting)
 EndFunc   ;==>Settings
 #CS INFO
-	69421 V7 10/13/2019 1:37:57 PM V6 8/28/2019 11:39:16 AM V5 8/28/2019 2:01:59 AM V4 8/26/2019 10:02:39 AM
+	75129 V8 10/18/2019 9:17:20 AM V7 10/13/2019 1:37:57 PM V6 8/28/2019 11:39:16 AM V5 8/28/2019 2:01:59 AM
 #CE
 
 Func ScreenSize()
@@ -2101,46 +2109,91 @@ Func ChooseColor()
 EndFunc   ;==>ChooseColor
 #CS INFO
 	326605 V11 10/13/2019 1:37:57 PM V10 10/11/2019 3:14:30 PM V9 8/28/2019 11:39:16 AM V8 8/25/2019 6:50:13 PM
-#CE
+#CE INFO
 
 Func WallTrue() ;0.79
-
-	;	$g_dirX, $g_dirY
-	Local $a, $flag, $x, $y
-	;1 Keep direction
-	;2 other side.  Check to see if free
-	;Global $g_sx = 40 ;50
-	;Global $g_sy = 30 ;40
+	Local $direction
+	Local $foundedge ; 0 1 or 2 if 2 found edge in both offest
+	Local $a, $flag, $x, $y, $Z, $offset, $kx, $ky
 
 	$x = $x_new
 	$y = $y_new
 
+	$offset = PWrandom()
+
 	Select
 		Case $x = 1
 			$x = $g_sx
+			$y = PWedge($y, $offset, $g_sy, $foundedge)
 		Case $y = 1
 			$y = $g_sy
+			$x = PWedge($x, $offset, $g_sx, $foundedge)
 		Case $x = $g_sx
 			$x = 1
+			$y = PWedge($y, $offset, $g_sy, $foundedge)
 		Case $y = $g_sy
 			$y = 1
+			$x = PWedge($x, $offset, $g_sx, $foundedge)
 	EndSelect
 
+	$kx = $x
+	$ky = $y
+	$offset = 1
+	$direction = 1 ; 1 or -1
+	$foundedge = 0
+	While $Map[$what][$x][$y] <> $EMPTY
+		$x = $kx ; $x or $y changes  so on start of loop they are reset
+		$y = $ky
+		Select
+			Case $x = 1
+				$y = PWedge($y, $offset * $direction, $g_sy, $foundedge)
+			Case $y = 1
+				$x = PWedge($x, $offset * $direction, $g_sx, $foundedge)
+			Case $x = $g_sx
+				$y = PWedge($y, $offset * $direction, $g_sy, $foundedge)
+			Case $y = $g_sy
+				$x = PWedge($x, $offset * $direction, $g_sx, $foundedge)
+		EndSelect
+		If $foundedge = 2 Then
+			Status(0, "Ate Wall, no way out", 1)
+			$g_endgame = True
+			Return True
+		EndIf
+		$foundedge = 0
+		If $direction = -1 Then
+			$offset += 1
+			$direction = 1
+		Else
+			$direction = -1
+		EndIf
+	WEnd
+
 	$flag = False
+
 	If $Map[$what][$x][$y] = $EMPTY Then
+
+		$g_PWsnkTruCnt += $g_PWsnkTruPer
+
+		$a = $g_PWsnkTruCnt + $g_PWsnkTruWall
 		$flag = True
-		Status(2, "Pass threw WALL: Lose 2", 3)
-		$g_gChange -= 2
+		Status(2, "Pass threw WALL: Lose " & $a, 3)
+		$g_gChange -= $a
 		PrevNext($x, $y)
 		RemoveSnakeExtra() ;Same size
 	EndIf
+
+;~~
+	;if not empty then loop to above  $flag = False ~~ selet and try again
+	;Need to ffnde a different  location by +- count of z, first direction random of 50%
+	;
+	;if above both edge then FALSE
 
 	Return $flag
 
 EndFunc   ;==>WallTrue
 #CS INFO
-	35628 V1 8/21/2019 3:27:01 AM
-#CE INFO
+	119651 V2 10/18/2019 9:17:20 AM V1 8/21/2019 3:27:01 AM
+#CE
 
 Func PoopRemove()
 	For $Z = 0 To $s_PoopSize - 1
@@ -2310,74 +2363,6 @@ EndFunc   ;==>TickSpeed
 	12887 V1 8/22/2019 6:28:51 PM
 #CE INFO
 
-Func AdjustValues()
-	Local $sComboRead
-	Local $Form1_1 = GUICreate("", 601, 153) ; , 991, 302)
-	GUICtrlCreateLabel("Adjust Values", 260, 0, 131, 26, $SS_CENTER)
-	GUICtrlSetFont(-1, 14, 800, 0, "Arial")
-	GUICtrlCreateLabel("+ Some changes will cause the High Scores to be delete.", 124, 32, 398, 22)
-	GUICtrlSetFont(-1, 12, 400, 0, "Arial")
-	GUICtrlCreateLabel("* Other changes will cause the game to restart", 124, 56, 320, 22)
-	GUICtrlSetFont(-1, 12, 400, 0, "Arial")
-
-	Local $Label4 = GUICtrlCreateLabel("Game", 43, 88, 145, 17, $SS_CENTER)
-	Local $Label5 = GUICtrlCreateLabel("Normal", 228, 88, 145, 17, $SS_CENTER)
-	Local $Label6 = GUICtrlCreateLabel("Extra", 413, 88, 145, 17, $SS_CENTER)
-
-	Local $ComboGame = GUICtrlCreateCombo("Game", 43, 112, 145, 25, BitOR($CBS_DROPDOWN, $CBS_AUTOHSCROLL))
-	Local $ComboNormal = GUICtrlCreateCombo("Normal", 228, 112, 145, 25, BitOR($CBS_DROPDOWN, $CBS_AUTOHSCROLL))
-	Local $ComboExtra = GUICtrlCreateCombo("Extra", 413, 112, 145, 25, BitOR($CBS_DROPDOWN, $CBS_AUTOHSCROLL))
-
-	GUICtrlSetData($ComboGame, "Set Cell Size *+|Item 2|Item 3", "")
-	GUICtrlSetData($ComboNormal, "Item 1|Item 2|Item 3", "")
-	GUICtrlSetData($ComboExtra, "Item 1|Item 2|Item 3", "")
-
-	GUISetState(@SW_SHOW)
-
-	While 1
-
-		Switch GUIGetMsg()
-			Case $GUI_EVENT_CLOSE
-				ExitLoop
-			Case $ComboGame
-				$sComboRead = GUICtrlRead($ComboGame)
-				Switch $sComboRead
-					Case "Set Cell Size *+"
-						SetCellSide()
-					Case Else
-						MsgBox($MB_SYSTEMMODAL, "", $sComboRead)
-				EndSwitch
-
-			Case $ComboNormal
-				$sComboRead = GUICtrlRead($ComboNormal)
-				MsgBox($MB_SYSTEMMODAL, "", $sComboRead)
-
-			Case $ComboExtra
-				$sComboRead = GUICtrlRead($ComboExtra)
-				MsgBox($MB_SYSTEMMODAL, "", $sComboRead)
-
-		EndSwitch
-	WEnd
-	GUIDelete($Form1_1)
-EndFunc   ;==>AdjustValues
-#CS INFO
-	123023 V3 10/8/2019 4:57:52 PM V2 8/30/2019 2:18:51 PM V1 8/28/2019 2:01:59 AM
-#CE
-
-Func SetCellSide()
-	Pause("SetCellSide")
-EndFunc   ;==>SetCellSide
-#CS INFO
-	5273 V1 10/8/2019 4:57:52 PM
-#CE
-
-Func ReplayStart()
-	MsgBox(0, "Replay", "Problem: No program code. 10/Oct/2019")
-EndFunc   ;==>ReplayStart
-#CS INFO
-	8129 V1 10/11/2019 3:14:30 PM
-#CE
-
 ;Check to see it Data is store in one of the two locations. If not ask where to store the data
 Func CheckDataLoc()
 	Local $progr
@@ -2444,7 +2429,7 @@ Func CheckDataLoc()
 EndFunc   ;==>CheckDataLoc
 #CS INFO
 	172918 V2 10/13/2019 1:37:57 PM V1 10/11/2019 3:14:30 PM
-#CE
+#CE INFO
 
 ;This will delete the data files and exit the game
 Func DeleteData()
@@ -2507,15 +2492,16 @@ Func DeleteData()
 EndFunc   ;==>DeleteData
 #CS INFO
 	138770 V1 10/13/2019 1:37:57 PM
-#CE
+#CE INFO
 
 Func About()
 	Local $FormAbout = GUICreate("Snake19 - About", 615, 430, -1, -1, $ws_popup + $ws_caption)
-
-	Local $Message = "0.90 12 Oct 2019 Win 7 and up, data in Appdata.  Add start up check, if missing ask box.| Remove data from Appdata: Menu, Settings, Delete Data.  About, Version"
+;~+~+
+	Local $Message = "0.91 18 Oct 2019 Through wall, might not pass straight through"
+	$Message &= "||0.90 12 Oct 2019 Win 7 and up, data in Appdata.  Add start up check, if missing ask box.| Remove data from Appdata: Menu, Settings, Delete Data.  About, Version"
 
 	$Message &= "||0.89 10 Sep 2019 Score 8 not 5 - Remember last game"
-	$Message &= "||0.88 28 Aug 2019 Aline Color and Speed, fix Color HEX input"
+	$Message &= "|0.88 28 Aug 2019 Aline Color and Speed, fix Color HEX input"
 	$Message &= "|0.87 27 Aug 2019 Adjust Values windows"
 	$Message &= "|0.86 Removed"
 	$Message &= "|0.85 25 Aug 2019 FOOD2 should act like FOOD, fix Normal lock up"
@@ -2555,13 +2541,197 @@ Func About()
 	GUIDelete($FormAbout)
 EndFunc   ;==>About
 #CS INFO
-	132285 V1 10/13/2019 1:37:57 PM
+	138687 V3 10/18/2019 9:17:20 AM V2 10/14/2019 8:06:40 AM V1 10/13/2019 1:37:57 PM
+#CE
+
+#cs
+Func AdjustValuesCancel()
+	Local $sComboRead
+	Local $Form1_1 = GUICreate("", 601, 153) ; , 991, 302)
+	GUICtrlCreateLabel("Adjust Values", 260, 0, 131, 26, $SS_CENTER)
+	GUICtrlSetFont(-1, 14, 800, 0, "Arial")
+	GUICtrlCreateLabel("+ Some changes will cause the High Scores to be delete.", 124, 32, 398, 22)
+	GUICtrlSetFont(-1, 12, 400, 0, "Arial")
+	GUICtrlCreateLabel("* Other changes will cause the game to restart", 124, 56, 320, 22)
+	GUICtrlSetFont(-1, 12, 400, 0, "Arial")
+
+	Local $Label4 = GUICtrlCreateLabel("Game", 43, 88, 145, 17, $SS_CENTER)
+	Local $Label5 = GUICtrlCreateLabel("Normal", 228, 88, 145, 17, $SS_CENTER)
+	Local $Label6 = GUICtrlCreateLabel("Extra", 413, 88, 145, 17, $SS_CENTER)
+
+	Local $ComboGame = GUICtrlCreateCombo("Game", 43, 112, 145, 25, BitOR($CBS_DROPDOWN, $CBS_AUTOHSCROLL))
+	Local $ComboNormal = GUICtrlCreateCombo("Normal", 228, 112, 145, 25, BitOR($CBS_DROPDOWN, $CBS_AUTOHSCROLL))
+	Local $ComboExtra = GUICtrlCreateCombo("Extra", 413, 112, 145, 25, BitOR($CBS_DROPDOWN, $CBS_AUTOHSCROLL))
+
+	;GUICtrlSetData($ComboGame, "Set Cell Size *+|Item 2|Item 3", "")
+	;GUICtrlSetData($ComboNormal, "Item 1|Item 2|Item 3", "")
+	GUICtrlSetData($ComboExtra, "Pass Wall", "")
+
+	GUISetState(@SW_SHOW)
+
+	While 1
+
+		Switch GUIGetMsg()
+			Case $GUI_EVENT_CLOSE
+				ExitLoop
+			Case $ComboGame
+				$sComboRead = GUICtrlRead($ComboGame)
+				Switch $sComboRead
+					Case "Set Cell Size *+"
+						SetCellSide()
+					Case Else
+						MsgBox($MB_SYSTEMMODAL, "", $sComboRead)
+				EndSwitch
+
+			Case $ComboNormal
+				$sComboRead = GUICtrlRead($ComboNormal)
+				MsgBox($MB_SYSTEMMODAL, "", $sComboRead)
+
+			Case $ComboExtra
+				$sComboRead = GUICtrlRead($ComboExtra)
+				Switch $sComboRead
+					Case "Pass Wall"
+						PassWallSetting()
+				EndSwitch
+
+		EndSwitch
+	WEnd
+	GUIDelete($Form1_1)
+EndFunc   ;==>AdjustValues
+#ce
+
+#CS INFO
+#CS INFO
+	138687 V1 10/18/2019 9:17:20 AM
+#CE
+
+#CE INFO
+
+Func SetCellSide()
+	Pause("SetCellSide")
+EndFunc   ;==>SetCellSide
+#CS INFO
+	5273 V1 10/8/2019 4:57:52 PM
+#CE INFO
+
+;------ Pass Wall
+
+Func HelpPassWall()
+Local $a
+	Local $Form1 = GUICreate("HELP - Hitting a Wall ", 600, 210, -1, -1, $ws_popup + $ws_caption)
+
+$a = 20
+GUICtrlCreateLabel("Snake Hitting a Wall", 32, $a, 550, 28)
+	GUICtrlSetFont(-1, 14, 400, 0, "MS Sans Serif")
+
+$a +=30
+GUICtrlCreateLabel("NORMAL: Can not pass through wall.  -  Snake will die - Ate Wall", 32, $a, 550, 24)
+	GUICtrlSetFont(-1, 12, 400, 0, "MS Sans Serif")
+$a +=30
+GUICtrlCreateLabel("EXTRA: Snake can pass through wall. - Very rare: Snake will die.", 32, $a, 550, 24)
+	GUICtrlSetFont(-1, 12, 400, 0, "MS Sans Serif")
+$a +=30
+	GUICtrlCreateLabel("The wall is thick and snake might not pass straight through.", 35, $a, 550, 20)
+	GUICtrlSetFont(-1, 11, 400, 0, "MS Sans Serif")
+$a +=20
+	GUICtrlCreateLabel("If something on  the other side. The snake will find a free area.", 35, $a, 550, 20)
+	GUICtrlSetFont(-1, 11, 400, 0, "MS Sans Serif")
+$a +=30
+	Local $Button1 = GUICtrlCreateButton("OK", 32, $a, 90, 25)
+	GUISetState(@SW_SHOW)
+;pause($a, $a+50)
+
+		While 1
+			Local $nMsg = GUIGetMsg()
+			Switch $nMsg
+				Case $Button1
+				ExitLoop
+			EndSwitch
+		WEnd
+
+	GUIDelete($Form1)
+
+EndFunc   ;==>PassWallSetting
+#CS INFO
+	78802 V1 10/18/2019 9:17:20 AM
+#CE
+
+Func PWedge($dir, $offset, $far, ByRef $edge)
+	Local $flag = False
+
+	If $dir + $offset < 1 Then
+		$flag = True
+	EndIf
+	If $dir + $offset > $far Then
+		$flag = True
+	EndIf
+
+	If $flag Then
+		$edge += 1
+		Return $dir
+	EndIf
+	Return $dir + $offset
+EndFunc   ;==>PWedge
+#CS INFO
+	17828 V1 10/18/2019 9:17:20 AM
+#CE
+
+Func PWrandom()
+	Local $a, $b, $c
+	$b = 0
+	$a = Random(1, $g_PWchance[0], 1)
+	For $y = 1 To 5
+		$b += $g_PWchance[$y]
+		If $a <= $b Then
+			$b = $y
+			ExitLoop
+		EndIf
+	Next
+
+	$a = 0
+	Switch $b
+		Case 1
+			$a = 2
+		Case 2
+			$a = 1
+		Case 4
+			$a = -1
+		Case 5
+			$a = -2
+	EndSwitch
+	Return $a
+EndFunc   ;==>PWrandom
+#CS INFO
+	17419 V1 10/18/2019 9:17:20 AM
+#CE
+
+Func PassWallDefault()
+	$g_PWchance[0] = 15
+	$g_PWchance[1] = 2
+	$g_PWchance[2] = 3
+	$g_PWchance[3] = 5
+	$g_PWchance[4] = 3
+	$g_PWchance[5] = 2
+	$g_PWsnkTruWall = 1
+	$g_PWsnkTruPer = 1
+	$g_PWsnkTruCnt = 0 ;
+EndFunc   ;==>PassWallDefault
+#CS INFO
+	17143 V1 10/18/2019 9:17:20 AM
+#CE
+
+;-----------------------------------------
+Func ReplayStart()
+	HelpPassWall()
+	;MsgBox(0, "Replay", "Problem: No program code. 10/Oct/2019")
+EndFunc   ;==>ReplayStart
+#CS INFO
+	9469 V2 10/18/2019 9:17:20 AM V1 10/11/2019 3:14:30 PM
 #CE
 
 ;Main
-
 Main()
 
 Exit
 
-;~T ScriptFunc.exe V0.54a 15 May 2019 - 10/13/2019 1:37:57 PM
+;~T ScriptFunc.exe V0.54a 15 May 2019 - 10/18/2019 9:17:20 AM
