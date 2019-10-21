@@ -5,7 +5,7 @@ AutoItSetOption("MustDeclareVars", 1)
 ;Global Static $MESSAGE =  False   ;Pause will still work in script  No DataOut
 
 ; Must be Declared before _Prf_startup   ~+~+
-Global $ver = "0.92 19 Oct 2019 Poop better, Other minor fixes"
+Global $ver = "0.93 20 Oct 2019 Main Menu Stay with Game"
 Global $ini_ver = "10" ;Done
 
 ;Global $TESTING = False
@@ -13,7 +13,7 @@ Global $ini_ver = "10" ;Done
 #include "R:\!Autoit\Blank\_prf_startup.au3"
 
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
-#AutoIt3Wrapper_Res_Fileversion=0.0.9.2
+#AutoIt3Wrapper_Res_Fileversion=0.0.9.3
 #AutoIt3Wrapper_Icon=R:\!Autoit\Ico\prf.ico
 #AutoIt3Wrapper_Res_Description=Another snake game
 #AutoIt3Wrapper_Res_LegalCopyright=© Phillip Forrestal 2019
@@ -78,6 +78,7 @@ Global $ini_ver = "10" ;Done
 	9 Board Cell size.
 
 ;~+~+
+	0.93 20 Oct 2019 Main Menu Stay with Game
 	0.92 18 Oct 2019 Poop better, Other minor fixes
 	0.91 18 Oct 2019 Through wall, might not pass straight through
 	0.90 12 Oct 2019 Win 7 and up, data in Appdata.  Add start up check, if missing ask box. Remove data from Appdata: Menu, Settings, Delete Data.  About, Version, Lin
@@ -355,7 +356,7 @@ Global $g_tc ; move to score
 ;0.75
 Global $g_HungeryLast
 
-;0.80 ~~
+;0.80
 Static $s_PoopSize = 20
 Global $g_poop[$s_PoopSize][4]
 ;0 flag, 1 x, 2 y, 3 cnt down
@@ -444,6 +445,7 @@ EndFunc   ;==>Main
 	113674 V32 10/14/2019 8:06:40 AM V31 10/11/2019 3:14:30 PM V30 10/8/2019 4:57:52 PM V29 8/26/2019 10:02:39 AM
 #CE INFO
 
+;~~
 Func Game()
 	Local $nMsg, $x, $y, $flag
 	;Keys acc
@@ -463,7 +465,7 @@ Func Game()
 		$b = $g_Font * 2
 		SayClearBoard(True)
 
-		$g_ctrlBoard = GUICreate("Snake19 - " & $ver, $g_boardx * $g_Size, $g_boardy * $g_Size + $b + 2)
+		$g_ctrlBoard = GUICreate("Snake19 - " & $ver, $g_boardx * $g_Size, $g_boardy * $g_Size + $b + 2, -1, -1, $ws_popup + $ws_caption)
 
 		MouseMove(0, 0, 0)
 
@@ -788,7 +790,6 @@ Func Extra()
 		Case $FOOD
 			;$Map[$what][$x_new + $g_dirX][$y_new + $g_dirY]
 
-;~~
 			PoopRemove()
 
 			;THIS IS WHAT I NEED TO CHANGE
@@ -1760,6 +1761,7 @@ EndFunc   ;==>CreateColorJpg
 	43939 V7 10/13/2019 1:37:57 PM V6 10/11/2019 3:14:30 PM V5 8/22/2019 8:37:33 AM V4 8/18/2019 11:15:59 PM
 #CE INFO
 
+;~~
 Func StartForm()
 	Local $Form1, $Group1
 	Local $Radio3, $Checkbox1, $b_start, $b_setting, $b_replay
@@ -1767,11 +1769,24 @@ Func StartForm()
 	Local $a = 260
 	Local $b = 50
 	Local $c = 200 ;120
-	Local $Z
+	Local $Z, $x, $y
+	Local $gameLoc
 
 	Local $sForm1 = "Snake19 - Main Menu"
 
-	$g_StartForm = GUICreate($sForm1, 600, 600, -1, -1)
+
+	If $g_ctrlBoard = -1 Then
+		$g_StartForm = GUICreate($sForm1, 600, 600, -1, -1)
+	Else
+		$gameLoc = WinGetPos($g_ctrlBoard) ;x=0, y=1
+
+		$x = ($gameLoc[2]) / 2 - 300 + $gameLoc[0]
+		$y = ($gameLoc[3]) / 2 - 300 + $gameLoc[1]
+
+		$g_StartForm = GUICreate($sForm1, 600, 600, $x, $y );, -1, -1, $g_ctrlBoard)
+	EndIf
+
+
 	If IsArray($g_Mouse) Then
 		MouseMove($g_Mouse[0], $g_Mouse[1], 0)
 	EndIf
@@ -1833,10 +1848,29 @@ Func StartForm()
 
 	NormalExtra()
 
-	While 1
+	While 1 ;~~
+		If $g_ctrlBoard <> -1 Then
+			$a = WinGetPos($g_StartForm)
+			$b = WinGetPos($g_ctrlBoard)
+			$x = ($b[2]) / 2 - 300 + $b[0]
+			$y = ($b[3]) / 2 - 300 + $b[1]
+			If $a[0] <> $x Or $a[1] <> $y Then
+			Sleep(5000)
+				WinMove($g_StartForm, "", $x, $y)
+				ControlFocus($g_StartForm, "", $b_start)
+			EndIf
+		EndIf
+
 		If WinGetTitle("[ACTIVE]") <> $sForm1 Then
-			Sleep(3000)
+			Sleep(5000)
 			ControlFocus($g_StartForm, "", $b_start)
+
+			;		$g_formKillpos = WinGetPos($g_formKill)
+
+			;		If $a[0] <> $g_formKillpos[0] Or $a[1] <> $g_formKillpos[1] Then
+			;			WinMove($g_formKill, "", $g_formKillpos[0], $g_formKillpos[1])
+			;		EndIf
+
 		EndIf
 		$nMsg = GUIGetMsg()
 		Switch $nMsg
@@ -1917,7 +1951,7 @@ Func Settings()
 EndFunc   ;==>Settings
 #CS INFO
 	77279 V10 10/20/2019 1:07:26 AM V9 10/20/2019 12:46:58 AM V8 10/18/2019 9:17:20 AM V7 10/13/2019 1:37:57 PM
-#CE
+#CE INFO
 
 Func ScreenSize()
 	Local $sInputBoxAnswer, $keep, $s, $mathW, $mathH, $Math
@@ -1968,7 +2002,7 @@ Func ScreenSize()
 EndFunc   ;==>ScreenSize
 #CS INFO
 	85600 V5 10/20/2019 1:07:26 AM V4 8/25/2019 6:50:13 PM V3 8/18/2019 11:15:59 PM V2 8/16/2019 8:51:46 AM
-#CE
+#CE INFO
 
 ; Read INI setting
 Func ReadIni()
@@ -2151,7 +2185,7 @@ Func ChooseColor()
 EndFunc   ;==>ChooseColor
 #CS INFO
 	328573 V12 10/20/2019 1:07:26 AM V11 10/13/2019 1:37:57 PM V10 10/11/2019 3:14:30 PM V9 8/28/2019 11:39:16 AM
-#CE
+#CE INFO
 
 Func WallTrue() ;0.79
 	Local $direction
@@ -2270,7 +2304,7 @@ EndFunc   ;==>PoopRemove
 	60881 V4 10/20/2019 12:46:58 AM V3 8/25/2019 6:50:13 PM V2 8/25/2019 9:54:57 AM V1 8/24/2019 6:38:07 PM
 #CE INFO
 
-;Add poop array: Poop will replace food once this loction is empty  ~~
+;Add poop array: Poop will replace food once this loction is empty
 Func PoopAdd($x, $y, $delay = $s_PoopSize / 4 + Random(0, Ceiling($s_PoopSize / 3), 1))
 	For $Z = 0 To $s_PoopSize - 1
 		If $g_poop[$Z][0] = 0 Then
@@ -2279,7 +2313,7 @@ Func PoopAdd($x, $y, $delay = $s_PoopSize / 4 + Random(0, Ceiling($s_PoopSize / 
 				$g_poop[$Z][1] = $x
 				$g_poop[$Z][2] = $y
 				$g_poop[$Z][3] = $delay + Random(0, 5, 1)
-				Status(3, "Add Poop " & $Z & " - " & $delay, 2)
+				;Status(3, "Add Poop " & $Z & " - " & $delay, 2)
 				Return
 			EndIf
 		EndIf
@@ -2399,7 +2433,7 @@ Func Speed()
 EndFunc   ;==>Speed
 #CS INFO
 	99196 V4 10/20/2019 1:07:26 AM V3 8/28/2019 11:39:16 AM V2 8/26/2019 10:02:39 AM V1 8/22/2019 6:28:51 PM
-#CE
+#CE INFO
 
 Func TickSpeed($speed) ;
 	Local $fdiff
@@ -2546,13 +2580,14 @@ Func DeleteData()
 EndFunc   ;==>DeleteData
 #CS INFO
 	140324 V2 10/20/2019 1:07:26 AM V1 10/13/2019 1:37:57 PM
-#CE
+#CE INFO
 
 Func About()
 	Local $FormAbout = GUICreate("Snake19 - About", 615, 430, -1, -1, $ws_popup + $ws_caption, -1, $g_SettingForm)
 ;~+~+
-	Local $Message = "0.92 19 Oct 2019 Poop better, Other minor fixes"
-	$Message &= "||0.91 18 Oct 2019 Through wall, might not pass straight through"
+	Local $Message = "0.93 20 Oct 2019 Main Menu Stay with Game"
+	$Message &= "|0.92 19 Oct 2019 Poop better, Other minor fixes"
+	$Message &= "|0.91 18 Oct 2019 Through wall, might not pass straight through"
 	$Message &= "||0.90 12 Oct 2019 Win 7 and up, data in Appdata.  Add start up check, if missing ask box.| Remove data from Appdata: Menu, Settings, Delete Data.  About, Version"
 
 	$Message &= "|0.89 10 Sep 2019 Score 8 not 5 - Remember last game"
@@ -2597,7 +2632,7 @@ Func About()
 EndFunc   ;==>About
 #CS INFO
 	144792 V5 10/20/2019 1:07:26 AM V4 10/20/2019 12:46:58 AM V3 10/18/2019 9:17:20 AM V2 10/14/2019 8:06:40 AM
-#CE
+#CE INFO
 
 #cs
 Func AdjustValuesCancel()
@@ -2658,7 +2693,7 @@ EndFunc   ;==>AdjustValues
 #CS INFO
 #CS INFO
 	144792 V3 10/20/2019 1:07:26 AM V2 10/20/2019 12:46:58 AM V1 10/18/2019 9:17:20 AM
-#CE
+#CE INFO
 
 #CE INFO
 
