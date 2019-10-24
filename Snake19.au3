@@ -5,7 +5,7 @@ AutoItSetOption("MustDeclareVars", 1)
 ;Global Static $MESSAGE =  False   ;Pause will still work in script  No DataOut
 
 ; Must be Declared before _Prf_startup   ~+~+
-Global $ver = "0.92 20 Oct 2019 Poop better, Other minor fixes"
+Global $ver = "0.94 24 Oct 2019 Main Menu"
 Global $ini_ver = "10" ;Done
 
 ;Global $TESTING = False
@@ -13,7 +13,7 @@ Global $ini_ver = "10" ;Done
 #include "R:\!Autoit\Blank\_prf_startup.au3"
 
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
-#AutoIt3Wrapper_Res_Fileversion=0.0.9.2
+#AutoIt3Wrapper_Res_Fileversion=0.0.9.4
 #AutoIt3Wrapper_Icon=R:\!Autoit\Ico\prf.ico
 #AutoIt3Wrapper_Res_Description=Another snake game
 #AutoIt3Wrapper_Res_LegalCopyright=© Phillip Forrestal 2019
@@ -78,6 +78,8 @@ Global $ini_ver = "10" ;Done
 	9 Board Cell size.
 
 ;~+~+
+	0.94 24 Oct 2019 Main Menu
+	0.93 20 Oct 2019 Failled reverted to 0.92
 	0.92 18 Oct 2019 Poop better, Other minor fixes
 	0.91 18 Oct 2019 Through wall, might not pass straight through
 	0.90 12 Oct 2019 Win 7 and up, data in Appdata.  Add start up check, if missing ask box. Remove data from Appdata: Menu, Settings, Delete Data.  About, Version, Lin
@@ -376,6 +378,7 @@ Global $g_PWchance[6]
 Global $g_PWsnkTruWall
 Global $g_PWsnkTruPer
 Global $g_PWsnkTruCnt
+Global $g_PWfoodCnt
 PassWallDefault()
 
 ;0.92
@@ -463,7 +466,7 @@ Func Game()
 		$b = $g_Font * 2
 		SayClearBoard(True)
 
-		$g_ctrlBoard = GUICreate("Snake19 - " & $ver, $g_boardx * $g_Size, $g_boardy * $g_Size + $b + 2)
+		$g_ctrlBoard = GUICreate("Snake19 - " & $ver, $g_boardx * $g_Size, $g_boardy * $g_Size + $b + 2, -1, -1, $ws_popup + $ws_caption)
 
 		MouseMove(0, 0, 0)
 
@@ -530,6 +533,8 @@ Func Game()
 	AddFood(True)
 	;clear poop
 	$g_PWsnkTruCnt = 0 ;start game as 0
+	$g_PWfoodCnt = 0
+
 	For $Z = 0 To $s_PoopSize - 1
 		$g_poop[$Z][0] = 0
 	Next
@@ -642,8 +647,8 @@ Func Game()
 
 EndFunc   ;==>Game
 #CS INFO
-	304253 V52 10/20/2019 12:46:58 AM V51 10/18/2019 9:17:20 AM V50 10/8/2019 4:57:52 PM V49 8/26/2019 10:02:39 AM
-#CE INFO
+	307887 V53 10/24/2019 11:03:40 AM V52 10/20/2019 12:46:58 AM V51 10/18/2019 9:17:20 AM V50 10/8/2019 4:57:52 PM
+#CE
 
 Func Tick() ;
 	Local $fdiff
@@ -788,7 +793,16 @@ Func Extra()
 		Case $FOOD
 			;$Map[$what][$x_new + $g_dirX][$y_new + $g_dirY]
 
-;~~
+			If $g_PWsnkTruCnt > 2 Then
+				$g_PWfoodCnt += 1 ; count to 5 then -1 to $g_PWsnkTruCnt
+				If $g_PWfoodCnt = 5 Then
+					$g_PWfoodCnt = 0
+					$g_PWsnkTruCnt -= $g_PWsnkTruPer
+					If $g_PWsnkTruCnt < 2 Then $g_PWsnkTruCnt = 2
+				EndIf
+			EndIf
+			dataout($g_PWfoodCnt, $g_PWsnkTruCnt)
+
 			PoopRemove()
 
 			;THIS IS WHAT I NEED TO CHANGE
@@ -887,6 +901,13 @@ Func Extra()
 			$g_ScoreFood += 1
 			$g_gChange += 5
 
+			If $g_PWsnkTruCnt > 2 Then
+				$g_PWfoodCnt = 4
+				$g_PWsnkTruCnt = 3
+			EndIf
+			dataout("Super Food")
+			dataout($g_PWfoodCnt, $g_PWsnkTruCnt)
+
 			PrevNext($x_new + $g_dirX, $y_new + $g_dirY) ;New value
 			RemoveSnakeExtra() ;only empty cell change len
 			$g_iScore += 10
@@ -967,8 +988,8 @@ Func Extra()
 
 EndFunc   ;==>Extra
 #CS INFO
-	399944 V43 10/20/2019 12:46:58 AM V42 10/18/2019 9:17:20 AM V41 8/30/2019 2:18:51 PM V40 8/26/2019 10:02:39 AM
-#CE INFO
+	429787 V44 10/24/2019 11:03:40 AM V43 10/20/2019 12:46:58 AM V42 10/18/2019 9:17:20 AM V41 8/30/2019 2:18:51 PM
+#CE
 
 Func Normal()
 	Local Static $LS_SnakeLenLast = 0
@@ -1767,11 +1788,22 @@ Func StartForm()
 	Local $a = 260
 	Local $b = 50
 	Local $c = 200 ;120
-	Local $Z
+	Local $Z, $gameLoc, $x, $y
 
 	Local $sForm1 = "Snake19 - Main Menu"
 
-	$g_StartForm = GUICreate($sForm1, 600, 600, -1, -1)
+	If $g_ctrlBoard = -1 Then
+		$g_StartForm = GUICreate($sForm1, 600, 600, -1, -1)
+	Else
+		$gameLoc = WinGetPos($g_ctrlBoard) ;x=0, y=1
+
+		$x = ($gameLoc[2]) / 2 - 300 + $gameLoc[0]
+		$y = ($gameLoc[3]) / 2 - 300 + $gameLoc[1]
+
+		$g_StartForm = GUICreate($sForm1, 600, 600, $x, $y) ;  ,-1 -1, $g_ctrlBoard)  adding this and the program crashes.
+	EndIf
+
+	;$g_StartForm = GUICreate($sForm1, 600, 600, -1, -1)
 	If IsArray($g_Mouse) Then
 		MouseMove($g_Mouse[0], $g_Mouse[1], 0)
 	EndIf
@@ -1870,8 +1902,8 @@ Func StartForm()
 
 EndFunc   ;==>StartForm
 #CS INFO
-	226365 V33 10/20/2019 12:46:58 AM V32 10/18/2019 9:17:20 AM V31 10/11/2019 3:14:30 PM V30 10/8/2019 4:57:52 PM
-#CE INFO
+	250643 V34 10/24/2019 11:03:40 AM V33 10/20/2019 12:46:58 AM V32 10/18/2019 9:17:20 AM V31 10/11/2019 3:14:30 PM
+#CE
 
 Func Settings()
 	Local $y
@@ -1917,7 +1949,7 @@ Func Settings()
 EndFunc   ;==>Settings
 #CS INFO
 	77279 V10 10/20/2019 1:07:26 AM V9 10/20/2019 12:46:58 AM V8 10/18/2019 9:17:20 AM V7 10/13/2019 1:37:57 PM
-#CE
+#CE INFO
 
 Func ScreenSize()
 	Local $sInputBoxAnswer, $keep, $s, $mathW, $mathH, $Math
@@ -1968,7 +2000,7 @@ Func ScreenSize()
 EndFunc   ;==>ScreenSize
 #CS INFO
 	85600 V5 10/20/2019 1:07:26 AM V4 8/25/2019 6:50:13 PM V3 8/18/2019 11:15:59 PM V2 8/16/2019 8:51:46 AM
-#CE
+#CE INFO
 
 ; Read INI setting
 Func ReadIni()
@@ -2151,7 +2183,7 @@ Func ChooseColor()
 EndFunc   ;==>ChooseColor
 #CS INFO
 	328573 V12 10/20/2019 1:07:26 AM V11 10/13/2019 1:37:57 PM V10 10/11/2019 3:14:30 PM V9 8/28/2019 11:39:16 AM
-#CE
+#CE INFO
 
 Func WallTrue() ;0.79
 	Local $direction
@@ -2215,6 +2247,7 @@ Func WallTrue() ;0.79
 	If $Map[$what][$x][$y] = $EMPTY Then
 
 		$g_PWsnkTruCnt += $g_PWsnkTruPer
+		$g_PWfoodCnt = 0
 
 		$a = $g_PWsnkTruCnt + $g_PWsnkTruWall
 		If $a > 10 Then
@@ -2232,8 +2265,8 @@ Func WallTrue() ;0.79
 
 EndFunc   ;==>WallTrue
 #CS INFO
-	108113 V3 10/20/2019 12:46:58 AM V2 10/18/2019 9:17:20 AM V1 8/21/2019 3:27:01 AM
-#CE INFO
+	109340 V4 10/24/2019 11:03:40 AM V3 10/20/2019 12:46:58 AM V2 10/18/2019 9:17:20 AM V1 8/21/2019 3:27:01 AM
+#CE
 
 ;Search the poop array for time out
 ;0 flag, 1 x, 2 y, 3 cnt down
@@ -2279,15 +2312,15 @@ Func PoopAdd($x, $y, $delay = $s_PoopSize / 4 + Random(0, Ceiling($s_PoopSize / 
 				$g_poop[$Z][1] = $x
 				$g_poop[$Z][2] = $y
 				$g_poop[$Z][3] = $delay + Random(0, 5, 1)
-				Status(3, "Add Poop " & $Z & " - " & $delay, 2)
+				;Status(3, "Add Poop " & $Z & " - " & $delay, 2)
 				Return
 			EndIf
 		EndIf
 	Next
 EndFunc   ;==>PoopAdd
 #CS INFO
-	25893 V5 10/20/2019 12:46:58 AM V4 8/25/2019 6:50:13 PM V3 8/24/2019 6:38:07 PM V2 8/21/2019 10:30:33 PM
-#CE INFO
+	25952 V6 10/24/2019 11:03:40 AM V5 10/20/2019 12:46:58 AM V4 8/25/2019 6:50:13 PM V3 8/24/2019 6:38:07 PM
+#CE
 
 ;0 flag, 1 x, 2 y, 3 cnt down
 ;flag
@@ -2399,7 +2432,7 @@ Func Speed()
 EndFunc   ;==>Speed
 #CS INFO
 	99196 V4 10/20/2019 1:07:26 AM V3 8/28/2019 11:39:16 AM V2 8/26/2019 10:02:39 AM V1 8/22/2019 6:28:51 PM
-#CE
+#CE INFO
 
 Func TickSpeed($speed) ;
 	Local $fdiff
@@ -2546,16 +2579,19 @@ Func DeleteData()
 EndFunc   ;==>DeleteData
 #CS INFO
 	140324 V2 10/20/2019 1:07:26 AM V1 10/13/2019 1:37:57 PM
-#CE
+#CE INFO
 
 Func About()
 	Local $FormAbout = GUICreate("Snake19 - About", 615, 430, -1, -1, $ws_popup + $ws_caption, -1, $g_SettingForm)
 ;~+~+
-	Local $Message = "0.92 19 Oct 2019 Poop better, Other minor fixes"
-	$Message &= "||0.91 18 Oct 2019 Through wall, might not pass straight through"
-	$Message &= "||0.90 12 Oct 2019 Win 7 and up, data in Appdata.  Add start up check, if missing ask box.| Remove data from Appdata: Menu, Settings, Delete Data.  About, Version"
+	Local $Message = "0.94 24 Oct 2019 Main Menu"
+	;$Message &= "|"
+	$Message &= "|0.93 20 Oct 2019 Problems, removed"
+	$Message &= "|0.92 19 Oct 2019 Poop better, Other minor fixes"
+	$Message &= "|0.91 18 Oct 2019 Through wall, might not pass straight through"
+	$Message &= "|0.90 12 Oct 2019 Win 7 and up, data in Appdata.  Add start up check, if missing ask box.| Remove data from Appdata: Menu, Settings, Delete Data.  About, Version"
 
-	$Message &= "|0.89 10 Sep 2019 Score 8 not 5 - Remember last game"
+	$Message &= "||0.89 10 Sep 2019 Score 8 not 5 - Remember last game"
 	$Message &= "|0.88 28 Aug 2019 Aline Color and Speed, fix Color HEX input"
 	$Message &= "|0.87 27 Aug 2019 Adjust Values windows"
 	$Message &= "|0.86 Removed"
@@ -2596,7 +2632,7 @@ Func About()
 	GUIDelete($FormAbout)
 EndFunc   ;==>About
 #CS INFO
-	144792 V5 10/20/2019 1:07:26 AM V4 10/20/2019 12:46:58 AM V3 10/18/2019 9:17:20 AM V2 10/14/2019 8:06:40 AM
+	151864 V6 10/24/2019 11:03:40 AM V5 10/20/2019 1:07:26 AM V4 10/20/2019 12:46:58 AM V3 10/18/2019 9:17:20 AM
 #CE
 
 #cs
@@ -2657,7 +2693,7 @@ EndFunc   ;==>AdjustValues
 
 #CS INFO
 #CS INFO
-	144792 V3 10/20/2019 1:07:26 AM V2 10/20/2019 12:46:58 AM V1 10/18/2019 9:17:20 AM
+	151864 V4 10/24/2019 11:03:40 AM V3 10/20/2019 1:07:26 AM V2 10/20/2019 12:46:58 AM V1 10/18/2019 9:17:20 AM
 #CE
 
 #CE INFO
@@ -2767,13 +2803,14 @@ Func PassWallDefault()
 	$g_PWchance[3] = 5
 	$g_PWchance[4] = 3
 	$g_PWchance[5] = 2
-	$g_PWsnkTruWall = 1
-	$g_PWsnkTruPer = 1
+	$g_PWsnkTruWall = 0  ;fix
+	$g_PWsnkTruPer = 1 ;fix
 	$g_PWsnkTruCnt = 0 ;
+	$g_PWfoodCnt = 0 ; count to 5 then -1 to $g_PWsnkTruCnt
 EndFunc   ;==>PassWallDefault
 #CS INFO
-	17143 V1 10/18/2019 9:17:20 AM
-#CE INFO
+	22126 V2 10/24/2019 11:03:40 AM V1 10/18/2019 9:17:20 AM
+#CE
 
 ;-----------------------------------------
 Func ReplayStart()
@@ -2789,4 +2826,4 @@ Main()
 
 Exit
 
-;~T ScriptFunc.exe V0.54a 15 May 2019 - 10/20/2019 1:07:26 AM
+;~T ScriptFunc.exe V0.54a 15 May 2019 - 10/24/2019 11:03:40 AM
