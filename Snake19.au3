@@ -5,7 +5,7 @@ AutoItSetOption("MustDeclareVars", 1)
 ;Global Static $MESSAGE =  False   ;Pause will still work in script  No DataOut
 
 ; Must be Declared before _Prf_startup   ~+~+
-Global $ver = "0.94 24 Oct 2019 Main Menu"
+Global $ver = "0.95 25 Oct 2019 Make color jpg without using capture"
 Global $ini_ver = "10" ;Done
 
 ;Global $TESTING = False
@@ -13,7 +13,7 @@ Global $ini_ver = "10" ;Done
 #include "R:\!Autoit\Blank\_prf_startup.au3"
 
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
-#AutoIt3Wrapper_Res_Fileversion=0.0.9.4
+#AutoIt3Wrapper_Res_Fileversion=0.0.9.5
 #AutoIt3Wrapper_Icon=R:\!Autoit\Ico\prf.ico
 #AutoIt3Wrapper_Res_Description=Another snake game
 #AutoIt3Wrapper_Res_LegalCopyright=© Phillip Forrestal 2019
@@ -78,6 +78,7 @@ Global $ini_ver = "10" ;Done
 	9 Board Cell size.
 
 ;~+~+
+	0.95 25 Oct 2019 Make color jpg without using capture
 	0.94 24 Oct 2019 Main Menu
 	0.93 20 Oct 2019 Failled reverted to 0.92
 	0.92 18 Oct 2019 Poop better, Other minor fixes
@@ -410,8 +411,7 @@ Func Main()
 	$g_TickTime = IniRead($s_ini, "General", "Speed", 150)
 
 	;1.01
-	$g_GameWhich = IniRead($s_ini, "General", "Game", 0)
-	;IniWrite($s_ini, "General", "Game", $g_GameWhich)
+	$g_GameWhich = IniRead($s_ini, "General", "Game", 1)
 
 	;Check to see if color files exist, if not create them.
 	CheckJpg()
@@ -425,8 +425,7 @@ Func Main()
 		IniWrite($s_scoreini, "Score", "Version", $ini_ver)
 	ElseIf $a <> $ini_ver Then
 		;1.01
-		$g_GameWhich = IniRead($s_ini, "General", "Game", 0)
-		;IniWrite($s_ini, "General", "Game", $g_GameWhich)
+		$g_GameWhich = IniRead($s_ini, "General", "Game", 1)
 
 		IniDelete($s_scoreini, "HighScoreExtra")
 		IniDelete($s_scoreini, "HighScoreNormal")
@@ -444,8 +443,8 @@ Func Main()
 
 EndFunc   ;==>Main
 #CS INFO
-	113674 V32 10/14/2019 8:06:40 AM V31 10/11/2019 3:14:30 PM V30 10/8/2019 4:57:52 PM V29 8/26/2019 10:02:39 AM
-#CE INFO
+	105724 V33 10/25/2019 12:39:53 AM V32 10/14/2019 8:06:40 AM V31 10/11/2019 3:14:30 PM V30 10/8/2019 4:57:52 PM
+#CE
 
 Func Game()
 	Local $nMsg, $x, $y, $flag
@@ -648,7 +647,7 @@ Func Game()
 EndFunc   ;==>Game
 #CS INFO
 	307887 V53 10/24/2019 11:03:40 AM V52 10/20/2019 12:46:58 AM V51 10/18/2019 9:17:20 AM V50 10/8/2019 4:57:52 PM
-#CE
+#CE INFO
 
 Func Tick() ;
 	Local $fdiff
@@ -798,20 +797,13 @@ Func Extra()
 				If $g_PWfoodCnt = 5 Then
 					$g_PWfoodCnt = 0
 					$g_PWsnkTruCnt -= $g_PWsnkTruPer
-					If $g_PWsnkTruCnt < 2 Then $g_PWsnkTruCnt = 2
+					If $g_PWsnkTruCnt < 2 Then
+						$g_PWsnkTruCnt = 2
+					EndIf
 				EndIf
 			EndIf
-			dataout($g_PWfoodCnt, $g_PWsnkTruCnt)
 
 			PoopRemove()
-
-			;THIS IS WHAT I NEED TO CHANGE
-			;Snake len < 50 then need 5 poop added at 50% rate
-			;:Snake len > 50 Then Snake len /10 +1 at 50% rate.
-			;Snake > 200 then 20 max
-
-			;Static $s_PoopSize = 20
-			;Global $g_poop[$s_PoopSize][4]
 
 			$c = 0
 			For $Z = 0 To $s_PoopSize - 1
@@ -840,12 +832,6 @@ Func Extra()
 					EndIf
 				EndIf
 			EndIf
-
-			;			$g_pooprnd += 1
-			;			If Random(0, $g_pooprnd, 1) > 6 Then
-			;				PoopAdd($x_new + $g_dirX, $y_new + $g_dirY)
-			;				$g_pooprnd = Ceiling($LS_SnakeLenLast / 10) + 5
-			;			EndIf
 
 			$g_ScoreFood += 1
 			$HungerCnt = 0
@@ -905,8 +891,6 @@ Func Extra()
 				$g_PWfoodCnt = 4
 				$g_PWsnkTruCnt = 3
 			EndIf
-			dataout("Super Food")
-			dataout($g_PWfoodCnt, $g_PWsnkTruCnt)
 
 			PrevNext($x_new + $g_dirX, $y_new + $g_dirY) ;New value
 			RemoveSnakeExtra() ;only empty cell change len
@@ -981,15 +965,12 @@ Func Extra()
 		$g_GameScore = $g_iScore + $g_ScoreFood + $g_SnakeMax
 
 		Status(1, StringFormat("Lenght: %4u, Max: %4u, Score: %6u,   ms/cyc %u", $a, $g_SnakeMax, $g_GameScore, $g_tc), 2)
-
-		;		Status(1, "Snake length: " & $a & " Max " & $g_SnakeMax & "   Score: " & $g_GameScore & "     tick:" & $g_tc, 2)
-
 	EndIf
 
 EndFunc   ;==>Extra
 #CS INFO
-	429787 V44 10/24/2019 11:03:40 AM V43 10/20/2019 12:46:58 AM V42 10/18/2019 9:17:20 AM V41 8/30/2019 2:18:51 PM
-#CE
+	388433 V45 10/25/2019 12:29:56 AM V44 10/24/2019 11:03:40 AM V43 10/20/2019 12:46:58 AM V42 10/18/2019 9:17:20 AM
+#CE INFO
 
 Func Normal()
 	Local Static $LS_SnakeLenLast = 0
@@ -1754,31 +1735,11 @@ EndFunc   ;==>CheckColorJpg
 
 ;Create Color file and write INI
 Func CreateColorJpg($filename, $color)
-	Local $a
-	Local $handle, $err
-	Local $tRECT
-	Local $hGUI
-
-	;$hGUI = GUICreate("", 100, 100)
-	$hGUI = GUICreate("", 100, 100, -1, -1, $DS_SETFOREGROUND)
-	GUISetState(@SW_SHOW, $hGUI)
-
-	; create, sumchk, store in ini Color Filename
-	GUISetBkColor($color, $hGUI)
-	Sleep(500)
-	_ScreenCapture_CaptureWnd($g_data & "\" & $filename & ".jpg", $hGUI, 50, 50, 50 + 25, 50 + 25, False)
-	If @error <> 0 Then ;Failed
-		MsgBox(0, "ERROR", "Color Jpg could not be created " & $filename)
-		Exit
-	EndIf
-
+	CreateJpg($color, $g_data & "\" & $filename & ".jpg")
 	IniWrite($s_ini, "Color", $filename, "0x" & Hex($color, 6))
-
-	GUIDelete($hGUI)
-
 EndFunc   ;==>CreateColorJpg
 #CS INFO
-	43939 V7 10/13/2019 1:37:57 PM V6 10/11/2019 3:14:30 PM V5 8/22/2019 8:37:33 AM V4 8/18/2019 11:15:59 PM
+	13853 V8 10/25/2019 12:29:56 AM V7 10/13/2019 1:37:57 PM V6 10/11/2019 3:14:30 PM V5 8/22/2019 8:37:33 AM
 #CE INFO
 
 Func StartForm()
@@ -1903,7 +1864,7 @@ Func StartForm()
 EndFunc   ;==>StartForm
 #CS INFO
 	250643 V34 10/24/2019 11:03:40 AM V33 10/20/2019 12:46:58 AM V32 10/18/2019 9:17:20 AM V31 10/11/2019 3:14:30 PM
-#CE
+#CE INFO
 
 Func Settings()
 	Local $y
@@ -2153,16 +2114,10 @@ Func ChooseColor()
 				EndIf
 
 			Case $b_all
-				Local $hGUI = GUICreate("", 100, 100, -1, -1, $DS_SETFOREGROUND, -1, $Form1)
-				GUISetState(@SW_SHOW, $hGUI)
 				For $x = 1 To 7
-
-					GUISetBkColor($r_what[$x][3], $hGUI)
-					Sleep(500)
-					_ScreenCapture_CaptureWnd($g_data & "\" & $r_what[$x][1] & ".jpg", $hGUI, 50, 50, 50 + 25, 50 + 25, False)
-					$restart = True
+					CreateJpg($r_what[$x][3], $g_data & "\" & $r_what[$x][1] & ".jpg")
 				Next
-				GUIDelete($hGUI)
+				$restart = True
 			Case $e_value
 				$r_what[$Which][4] = Int("0x" & GUICtrlRead($e_value))
 				GUICtrlSetBkColor($b_change, $r_what[$Which][4])
@@ -2182,7 +2137,7 @@ Func ChooseColor()
 	EndIf
 EndFunc   ;==>ChooseColor
 #CS INFO
-	328573 V12 10/20/2019 1:07:26 AM V11 10/13/2019 1:37:57 PM V10 10/11/2019 3:14:30 PM V9 8/28/2019 11:39:16 AM
+	314692 V13 10/25/2019 12:29:56 AM V12 10/20/2019 1:07:26 AM V11 10/13/2019 1:37:57 PM V10 10/11/2019 3:14:30 PM
 #CE INFO
 
 Func WallTrue() ;0.79
@@ -2266,7 +2221,7 @@ Func WallTrue() ;0.79
 EndFunc   ;==>WallTrue
 #CS INFO
 	109340 V4 10/24/2019 11:03:40 AM V3 10/20/2019 12:46:58 AM V2 10/18/2019 9:17:20 AM V1 8/21/2019 3:27:01 AM
-#CE
+#CE INFO
 
 ;Search the poop array for time out
 ;0 flag, 1 x, 2 y, 3 cnt down
@@ -2320,7 +2275,7 @@ Func PoopAdd($x, $y, $delay = $s_PoopSize / 4 + Random(0, Ceiling($s_PoopSize / 
 EndFunc   ;==>PoopAdd
 #CS INFO
 	25952 V6 10/24/2019 11:03:40 AM V5 10/20/2019 12:46:58 AM V4 8/25/2019 6:50:13 PM V3 8/24/2019 6:38:07 PM
-#CE
+#CE INFO
 
 ;0 flag, 1 x, 2 y, 3 cnt down
 ;flag
@@ -2584,8 +2539,9 @@ EndFunc   ;==>DeleteData
 Func About()
 	Local $FormAbout = GUICreate("Snake19 - About", 615, 430, -1, -1, $ws_popup + $ws_caption, -1, $g_SettingForm)
 ;~+~+
-	Local $Message = "0.94 24 Oct 2019 Main Menu"
-	;$Message &= "|"
+	;$Message &= "|
+	Local $Message = "0.95 25 Oct 2019 Make color jpg without using capture"
+	$Message &= "|0.94 24 Oct 2019 Main Menu"
 	$Message &= "|0.93 20 Oct 2019 Problems, removed"
 	$Message &= "|0.92 19 Oct 2019 Poop better, Other minor fixes"
 	$Message &= "|0.91 18 Oct 2019 Through wall, might not pass straight through"
@@ -2632,8 +2588,8 @@ Func About()
 	GUIDelete($FormAbout)
 EndFunc   ;==>About
 #CS INFO
-	151864 V6 10/24/2019 11:03:40 AM V5 10/20/2019 1:07:26 AM V4 10/20/2019 12:46:58 AM V3 10/18/2019 9:17:20 AM
-#CE
+	157011 V7 10/25/2019 12:29:56 AM V6 10/24/2019 11:03:40 AM V5 10/20/2019 1:07:26 AM V4 10/20/2019 12:46:58 AM
+#CE INFO
 
 #cs
 Func AdjustValuesCancel()
@@ -2693,8 +2649,8 @@ EndFunc   ;==>AdjustValues
 
 #CS INFO
 #CS INFO
-	151864 V4 10/24/2019 11:03:40 AM V3 10/20/2019 1:07:26 AM V2 10/20/2019 12:46:58 AM V1 10/18/2019 9:17:20 AM
-#CE
+	157011 V5 10/25/2019 12:29:56 AM V4 10/24/2019 11:03:40 AM V3 10/20/2019 1:07:26 AM V2 10/20/2019 12:46:58 AM
+#CE INFO
 
 #CE INFO
 
@@ -2810,7 +2766,26 @@ Func PassWallDefault()
 EndFunc   ;==>PassWallDefault
 #CS INFO
 	22126 V2 10/24/2019 11:03:40 AM V1 10/18/2019 9:17:20 AM
-#CE
+#CE INFO
+
+; In Color out Picture using color
+Func CreateJpg($color, $picture)
+	_GDIPlus_Startup()
+	Local Const $iW = 50, $iH = 50
+	Local $hBitmap = _GDIPlus_BitmapCreateFromScan0($iW, $iH) ;create an empty bitmap
+	Local $hBmpCtxt = _GDIPlus_ImageGetGraphicsContext($hBitmap) ;get the graphics context of the bitmap
+	_GDIPlus_GraphicsSetSmoothingMode($hBmpCtxt, $GDIP_SMOOTHINGMODE_HIGHQUALITY)
+	_GDIPlus_GraphicsClear($hBmpCtxt, 0xFF000000 + $color) ;clear bitmap with color
+
+	_GDIPlus_ImageSaveToFile($hBitmap, $picture) ;save bitmap to disk
+	;cleanup GDI+ resources
+	_GDIPlus_GraphicsDispose($hBmpCtxt)
+	_GDIPlus_BitmapDispose($hBitmap)
+	_GDIPlus_Shutdown()
+EndFunc   ;==>CreateJpg
+#CS INFO
+	52681 V1 10/25/2019 12:29:56 AM
+#CE INFO
 
 ;-----------------------------------------
 Func ReplayStart()
@@ -2826,4 +2801,4 @@ Main()
 
 Exit
 
-;~T ScriptFunc.exe V0.54a 15 May 2019 - 10/24/2019 11:03:40 AM
+;~T ScriptFunc.exe V0.54a 15 May 2019 - 10/25/2019 12:39:53 AM
