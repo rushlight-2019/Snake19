@@ -5,7 +5,8 @@ AutoItSetOption("MustDeclareVars", 1)
 ;Global Static $MESSAGE =  False   ;Pause will still work in script  No DataOut
 
 ; Must be Declared before _Prf_startup   ~+~+
-Global $ver = "0.95 25 Oct 2019 Make color jpg without using capture"
+Global $ver = "0.97 28 Oct 2019 Change Main Menu to work with Replay"
+;Global $v  er = "0.98 28 Oct 2019 Replay"
 Global $ini_ver = "10" ;Done
 
 ;Global $TESTING = False
@@ -13,7 +14,7 @@ Global $ini_ver = "10" ;Done
 #include "R:\!Autoit\Blank\_prf_startup.au3"
 
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
-#AutoIt3Wrapper_Res_Fileversion=0.0.9.5
+#AutoIt3Wrapper_Res_Fileversion=0.0.9.7
 #AutoIt3Wrapper_Icon=R:\!Autoit\Ico\prf.ico
 #AutoIt3Wrapper_Res_Description=Another snake game
 #AutoIt3Wrapper_Res_LegalCopyright=© Phillip Forrestal 2019
@@ -73,11 +74,13 @@ Global $ini_ver = "10" ;Done
 	to do
 
 	Version
-	.5 Picture can not be capture, fails on Desktop with great then 100% font  I change the loction to be farther down and right until I can remove capture.
 	7. Replay
 	9 Board Cell size.
 
 ;~+~+
+	0.98 28 Oct 2019 Replay
+	0.97 28 Oct 2019 Change Main Menu to work with Replay
+	0.96 28 Oct 2019 Fixed Go Mouse pointer
 	0.95 25 Oct 2019 Make color jpg without using capture
 	0.94 24 Oct 2019 Main Menu
 	0.93 20 Oct 2019 Failled reverted to 0.92
@@ -302,7 +305,6 @@ Global $g_Status0Off = 1000
 Global $g_Status2Off = 1000
 Global $g_Status3Off = 1000
 ; Size can be zero at the begin so once size is > 0 then hunger is active.
-Global $g_Mouse = 0
 
 ;0.27+
 Static $s_bdCycle = 0 ;No active -1, 1 or 0
@@ -358,7 +360,7 @@ Global $g_tc ; move to score
 ;0.75
 Global $g_HungeryLast
 
-;0.80 ~~
+;0.80
 Static $s_PoopSize = 20
 Global $g_poop[$s_PoopSize][4]
 ;0 flag, 1 x, 2 y, 3 cnt down
@@ -385,6 +387,20 @@ PassWallDefault()
 ;0.92
 Global $g_StartForm
 Global $g_SettingForm
+
+;0.96~~
+Global $g_iReplaySz = 6000
+Global $g_aReplay[$g_iReplaySz]
+Static $s_ReplayRec = 1
+Static $s_ReplayPlay = 2
+Static $s_ReplayOff = 3
+Global $g_Replay = $s_ReplayOff
+
+;Global $g_fReplayRec = False
+;Global $g_fReplayPlay = False
+Global $g_iReplayRecInx = 0
+Global $g_iReplayPlyInx = 0
+Global $g_Tick = 150 ; not used yet
 
 ; Main is call at end
 Func Main()
@@ -435,16 +451,27 @@ Func Main()
 	IniHighFive()
 
 	Do
-		If StartForm() Then
-			Return
-		EndIf
-		Game()
+		Switch StartForm()
+			Case 0 ; end game
+				ExitLoop
+			Case 1 ; start game
+				Game()
+			Case 2 ;Loop back to start form
+
+			Case 3 ;Start game
+				$g_Replay = $s_ReplayPlay
+				$g_iReplayPlyInx = 0
+				_ArrayDisplay($g_aReplay)
+				Game()
+
+		EndSwitch
+
 	Until False
 
 EndFunc   ;==>Main
 #CS INFO
-	105724 V33 10/25/2019 12:39:53 AM V32 10/14/2019 8:06:40 AM V31 10/11/2019 3:14:30 PM V30 10/8/2019 4:57:52 PM
-#CE
+	119712 V34 10/28/2019 1:14:59 PM V33 10/25/2019 12:39:53 AM V32 10/14/2019 8:06:40 AM V31 10/11/2019 3:14:30 PM
+#CE INFO
 
 Func Game()
 	Local $nMsg, $x, $y, $flag
@@ -516,6 +543,11 @@ Func Game()
 	EndIf
 	GUISetState(@SW_SHOW, $g_ctrlBoard)
 
+	;Replay reset game to record ~~
+	$g_Replay = $s_ReplayRec
+	$g_iReplayRecInx = 0
+	$g_iReplayPlyInx = 0
+
 	$g_dirX = 0
 	$g_dirY = 0
 
@@ -575,6 +607,7 @@ Func Game()
 
 	$g_endgame = False
 
+	ReplayRecData(4, $g_gChange) ; Start cell len
 	$g_hTick = TimerInit()
 	Do ;game Loop
 		Tick()
@@ -632,6 +665,8 @@ Func Game()
 			ContinueLoop
 		EndIf
 
+		ReplayRecData(2, $g_dirX, $g_dirY)
+
 		Switch $g_GameWhich
 			Case 1
 				Extra()
@@ -646,7 +681,7 @@ Func Game()
 
 EndFunc   ;==>Game
 #CS INFO
-	307887 V53 10/24/2019 11:03:40 AM V52 10/20/2019 12:46:58 AM V51 10/18/2019 9:17:20 AM V50 10/8/2019 4:57:52 PM
+	322522 V54 10/28/2019 1:14:59 PM V53 10/24/2019 11:03:40 AM V52 10/20/2019 12:46:58 AM V51 10/18/2019 9:17:20 AM
 #CE INFO
 
 Func Tick() ;
@@ -989,17 +1024,21 @@ Func Normal()
 		Case $FOOD ;Normal
 			Switch $g_Turns
 				Case 0
+					ReplayRecData(4, 4)
 					$g_gChange += 4
 					Status(0, "Turn bonus: Snake 4", 4)
 				Case 1
+					ReplayRecData(4, 3)
 					$g_gChange += 3
 					$g_iScore += 80
 					Status(0, "Turn bonus: Snake 3", 4)
 				Case 2
+					ReplayRecData(4, 2)
 					$g_gChange += 2
 					$g_iScore += 60
 					Status(0, "Turn bonus: Snake 2", 4)
 				Case 3
+					ReplayRecData(4, 1)
 					$g_gChange += 1
 					Status(0, "Turn bonus: Snake 1", 4)
 				Case Else
@@ -1041,7 +1080,7 @@ Func Normal()
 	; END NORMAL
 EndFunc   ;==>Normal
 #CS INFO
-	107983 V9 8/18/2019 11:56:18 AM V8 7/18/2019 11:32:28 PM V7 7/15/2019 9:15:04 AM V6 7/13/2019 7:36:11 PM
+	114017 V10 10/28/2019 1:14:59 PM V9 8/18/2019 11:56:18 AM V8 7/18/2019 11:32:28 PM V7 7/15/2019 9:15:04 AM
 #CE INFO
 
 Func StartDead($inX, $inY)
@@ -1170,6 +1209,8 @@ Func StartSnake()
 	$x = Int(Random(5, $g_sx - 5))
 	$y = Int(Random(5, $g_sy - 5))
 
+	ReplayRecData(1, $x, $y)
+
 	$x_new = $x
 	$y_new = $y
 	$Map[$prX][$x_new][$y_new] = 0
@@ -1188,7 +1229,7 @@ Func StartSnake()
 
 EndFunc   ;==>StartSnake
 #CS INFO
-	33453 V5 6/22/2019 7:09:09 PM V4 6/6/2019 11:09:42 PM V3 6/3/2019 8:05:25 PM V2 6/3/2019 10:34:22 AM
+	35265 V6 10/28/2019 1:14:59 PM V5 6/22/2019 7:09:09 PM V4 6/6/2019 11:09:42 PM V3 6/3/2019 8:05:25 PM
 #CE INFO
 
 ; Dirx& Diry moving to wall not like Double Back which has reserves direction
@@ -1435,12 +1476,13 @@ Func AddFood($start = False)
 		Until $Map[$what][$x][$y] = $EMPTY
 	EndIf
 
+	ReplayRecData(3, $x, $y)
 	$Map[$what][$x][$y] = $FOOD
 	GUICtrlSetImage($Map[$ctrl][$x][$y], $cFOOD)
 
 EndFunc   ;==>AddFood
 #CS INFO
-	83530 V13 10/20/2019 12:46:58 AM V12 8/26/2019 10:02:39 AM V11 8/25/2019 6:50:13 PM V10 6/28/2019 7:37:37 PM
+	85344 V14 10/28/2019 1:14:59 PM V13 10/20/2019 12:46:58 AM V12 8/26/2019 10:02:39 AM V11 8/25/2019 6:50:13 PM
 #CE INFO
 
 Func ClearBoard()
@@ -1743,30 +1785,25 @@ EndFunc   ;==>CreateColorJpg
 #CE INFO
 
 Func StartForm()
-	Local $Form1, $Group1
-	Local $Radio3, $Checkbox1, $b_start, $b_setting, $b_replay
+	;Local $FormMainMenu ; , $Group1
+	Local $Radio3, $Checkbox1, $b_start, $b_setting, $b_replay, $b_about
 	Local $nMsg
 	Local $a = 260
 	Local $b = 50
 	Local $c = 200 ;120
-	Local $Z, $gameLoc, $x, $y
+	Local $gameLoc, $x, $y, $done
 
-	Local $sForm1 = "Snake19 - Main Menu"
+	Local $sMainMenuTitle = "Snake19 - Main Menu"
 
 	If $g_ctrlBoard = -1 Then
-		$g_StartForm = GUICreate($sForm1, 600, 600, -1, -1)
+		$g_StartForm = GUICreate($sMainMenuTitle, 600, 600, -1, -1)
 	Else
 		$gameLoc = WinGetPos($g_ctrlBoard) ;x=0, y=1
 
 		$x = ($gameLoc[2]) / 2 - 300 + $gameLoc[0]
 		$y = ($gameLoc[3]) / 2 - 300 + $gameLoc[1]
 
-		$g_StartForm = GUICreate($sForm1, 600, 600, $x, $y) ;  ,-1 -1, $g_ctrlBoard)  adding this and the program crashes.
-	EndIf
-
-	;$g_StartForm = GUICreate($sForm1, 600, 600, -1, -1)
-	If IsArray($g_Mouse) Then
-		MouseMove($g_Mouse[0], $g_Mouse[1], 0)
+		$g_StartForm = GUICreate($sMainMenuTitle, 600, 600, $x, $y) ;  ,-1 -1, $g_ctrlBoard)  adding this and the program crashes.
 	EndIf
 
 	GUICtrlCreateLabel("Snake 19", 0, 0, 600, 24, $SS_CENTER)
@@ -1778,7 +1815,7 @@ Func StartForm()
 	GUICtrlCreateLabel("Type of Game", 0, 32, 600, 20, $SS_CENTER)
 	GUICtrlSetFont(-1, 10, 900, 0, "Arial")
 
-	$Group1 = GUIStartGroup()
+	GUIStartGroup()
 	$Radio1 = GUICtrlCreateRadio("Normal Snake", $a, $b + 20, $c, 20)
 	GUICtrlSetFont(-1, 10, 800, 0, "Arial")
 	$Radio2 = GUICtrlCreateRadio("Extra - My Snake", $a, $b, $c, 20)
@@ -1797,10 +1834,9 @@ Func StartForm()
 		$b += 20
 	Next
 
-	$b_setting = GUICtrlCreateButton("Setting", 150, 550, 75, 35)
-	;$b_setting = GUICtrlCreateButton("Setting", 100, 550, 75, 35)
-	$b_replay = GUICtrlCreateButton("Replay", 500, 550, 75, 35)
-	$b_replay = GUICtrlCreateButton("Test HELP", 10, 550, 100, 35)
+	$b_setting = GUICtrlCreateButton("Setting", 50, 550, 75, 35)
+	$b_about = GUICtrlCreateButton("About", 500, 550, 75, 35)
+	$b_replay = GUICtrlCreateButton("Replay", 270 + 75 + 25, 550, 75, 35)
 	$b_start = GUICtrlCreateButton("GO", 270, 550, 75, 35)
 
 	Local $Edit1 = GUICtrlCreateEdit("", 20, $b, 550, 230, $ES_READONLY)
@@ -1824,10 +1860,14 @@ Func StartForm()
 
 	GUISetState(@SW_SHOW)
 
+	;Move mouse to the GO button
+	$a = WinGetPos(GUICtrlGetHandle($b_start))
+	MouseMove($a[0] + (75 / 2), $a[1] + (35 / 2), 0)
+
 	NormalExtra()
 
 	While 1
-		If WinGetTitle("[ACTIVE]") <> $sForm1 Then
+		If WinGetTitle("[ACTIVE]") <> $sMainMenuTitle Then
 			Sleep(3000)
 			ControlFocus($g_StartForm, "", $b_start)
 		EndIf
@@ -1835,18 +1875,72 @@ Func StartForm()
 		Switch $nMsg
 			Case $GUI_EVENT_CLOSE
 				GUIDelete($g_StartForm)
-				Return True
+				Return 0
 
-			Case $b_replay
-				ReplayStart()
+			Case $b_about
+				GUIDelete($g_StartForm)
+				If $g_ctrlBoard <> -1 Then
+					GUISetState(@SW_DISABLE, $g_ctrlBoard)
+				EndIf
+				About()
+				If $g_ctrlBoard <> -1 Then
+					GUISetState(@SW_ENABLE, $g_ctrlBoard)
+				EndIf
+				Return 2
+			Case $b_setting
+				GUIDelete($g_StartForm)
+				If $g_ctrlBoard <> -1 Then
+					GUISetState(@SW_DISABLE, $g_ctrlBoard)
+				EndIf
+				Settings()
+				If $g_ctrlBoard <> -1 Then
+					GUISetState(@SW_ENABLE, $g_ctrlBoard)
+				EndIf
+				Return 2
+
+				;	Case $b_replay ;~~
+
+				GUIDelete($g_StartForm)
+
+				Local $FormReplay = GUICreate("Replay Speed", 600, 200, -1, -1)
+				GUICtrlCreateLabel("Replay - still has problems.  --- not functional", 40, 40)
+				Local $b_rpStd = GUICtrlCreateButton("Std 150ms", 40, 150, 100, 40)
+				Local $b_rp200 = GUICtrlCreateButton("200ms", 180, 150, 100, 40)
+				Local $b_rp100 = GUICtrlCreateButton("100ms", 300, 150, 100, 40)
+				Local $b_rpfull = GUICtrlCreateButton("Full", 420, 150, 100, 40)
+				GUISetState(@SW_SHOW)
+
+				$g_Tick = 150
+				While 1
+					Local $nMsg = GUIGetMsg()
+					Switch $nMsg
+						Case $GUI_EVENT_CLOSE
+							$done = 2 ;restart Start Form
+							ExitLoop
+						Case $b_rpStd
+							$g_Tick = 150
+							ExitLoop
+						Case $b_rp200
+							$g_Tick = 200
+							ExitLoop
+						Case $b_rp100
+							$g_Tick = 100
+							ExitLoop
+						Case $b_rpfull
+							$g_Tick = 0
+							ExitLoop
+
+					EndSwitch
+				WEnd
+				GUIDelete($FormReplay)
+
+
+
+				Return $done
 
 			Case $b_start
-				$g_Mouse = MouseGetPos()
 				GUIDelete($g_StartForm)
-				Return False
-
-			Case $b_setting
-				Settings()
+				Return 1
 
 			Case $Radio1 ;Normal
 				$g_GameWhich = 0
@@ -1863,13 +1957,13 @@ Func StartForm()
 
 EndFunc   ;==>StartForm
 #CS INFO
-	250643 V34 10/24/2019 11:03:40 AM V33 10/20/2019 12:46:58 AM V32 10/18/2019 9:17:20 AM V31 10/11/2019 3:14:30 PM
+	334566 V35 10/28/2019 1:14:59 PM V34 10/24/2019 11:03:40 AM V33 10/20/2019 12:46:58 AM V32 10/18/2019 9:17:20 AM
 #CE INFO
 
 Func Settings()
 	Local $y
 
-	$g_SettingForm = GUICreate("Change Setting", 600, 150, -1, -1, -1, -1, $g_StartForm)
+	$g_SettingForm = GUICreate("Change Setting", 600, 150) ;, -1, -1, -1, -1, $g_StartForm)
 	GUICtrlCreateLabel("Settings", 260, 0, 80, 26, $SS_CENTER)
 	GUICtrlSetFont(-1, 14, 800, 0, "Arial")
 
@@ -1909,7 +2003,7 @@ Func Settings()
 	GUIDelete($g_SettingForm)
 EndFunc   ;==>Settings
 #CS INFO
-	77279 V10 10/20/2019 1:07:26 AM V9 10/20/2019 12:46:58 AM V8 10/18/2019 9:17:20 AM V7 10/13/2019 1:37:57 PM
+	77379 V11 10/28/2019 1:14:59 PM V10 10/20/2019 1:07:26 AM V9 10/20/2019 12:46:58 AM V8 10/18/2019 9:17:20 AM
 #CE INFO
 
 Func ScreenSize()
@@ -2258,7 +2352,7 @@ EndFunc   ;==>PoopRemove
 	60881 V4 10/20/2019 12:46:58 AM V3 8/25/2019 6:50:13 PM V2 8/25/2019 9:54:57 AM V1 8/24/2019 6:38:07 PM
 #CE INFO
 
-;Add poop array: Poop will replace food once this loction is empty  ~~
+;Add poop array: Poop will replace food once this loction is empty
 Func PoopAdd($x, $y, $delay = $s_PoopSize / 4 + Random(0, Ceiling($s_PoopSize / 3), 1))
 	For $Z = 0 To $s_PoopSize - 1
 		If $g_poop[$Z][0] = 0 Then
@@ -2537,10 +2631,13 @@ EndFunc   ;==>DeleteData
 #CE INFO
 
 Func About()
-	Local $FormAbout = GUICreate("Snake19 - About", 615, 430, -1, -1, $ws_popup + $ws_caption, -1, $g_SettingForm)
+	Local $FormAbout = GUICreate("Snake19 - About", 615, 430, -1, -1, $ws_popup + $ws_caption)
 ;~+~+
 	;$Message &= "|
-	Local $Message = "0.95 25 Oct 2019 Make color jpg without using capture"
+	Local $Message = "0.98 28 Oct 2019 Replay - not working"
+	$Message &= "|0.97 28 Oct 2019 Change Main Menu to work with Replay"
+	$Message &= "|0.96 28 Oct 2019 Fixed Go Mouse pointer"
+	$Message &= "|0.95 25 Oct 2019 Make color jpg without using capture"
 	$Message &= "|0.94 24 Oct 2019 Main Menu"
 	$Message &= "|0.93 20 Oct 2019 Problems, removed"
 	$Message &= "|0.92 19 Oct 2019 Poop better, Other minor fixes"
@@ -2588,71 +2685,9 @@ Func About()
 	GUIDelete($FormAbout)
 EndFunc   ;==>About
 #CS INFO
-	157011 V7 10/25/2019 12:29:56 AM V6 10/24/2019 11:03:40 AM V5 10/20/2019 1:07:26 AM V4 10/20/2019 12:46:58 AM
+	166703 V8 10/28/2019 1:14:59 PM V7 10/25/2019 12:29:56 AM V6 10/24/2019 11:03:40 AM V5 10/20/2019 1:07:26 AM
 #CE INFO
 
-#cs
-Func AdjustValuesCancel()
-	Local $sComboRead
-	Local $Form1_1 = GUICreate("", 601, 153) ; , 991, 302)
-	GUICtrlCreateLabel("Adjust Values", 260, 0, 131, 26, $SS_CENTER)
-	GUICtrlSetFont(-1, 14, 800, 0, "Arial")
-	GUICtrlCreateLabel("+ Some changes will cause the High Scores to be delete.", 124, 32, 398, 22)
-	GUICtrlSetFont(-1, 12, 400, 0, "Arial")
-	GUICtrlCreateLabel("* Other changes will cause the game to restart", 124, 56, 320, 22)
-	GUICtrlSetFont(-1, 12, 400, 0, "Arial")
-
-	Local $Label4 = GUICtrlCreateLabel("Game", 43, 88, 145, 17, $SS_CENTER)
-	Local $Label5 = GUICtrlCreateLabel("Normal", 228, 88, 145, 17, $SS_CENTER)
-	Local $Label6 = GUICtrlCreateLabel("Extra", 413, 88, 145, 17, $SS_CENTER)
-
-	Local $ComboGame = GUICtrlCreateCombo("Game", 43, 112, 145, 25, BitOR($CBS_DROPDOWN, $CBS_AUTOHSCROLL))
-	Local $ComboNormal = GUICtrlCreateCombo("Normal", 228, 112, 145, 25, BitOR($CBS_DROPDOWN, $CBS_AUTOHSCROLL))
-	Local $ComboExtra = GUICtrlCreateCombo("Extra", 413, 112, 145, 25, BitOR($CBS_DROPDOWN, $CBS_AUTOHSCROLL))
-
-	;GUICtrlSetData($ComboGame, "Set Cell Size *+|Item 2|Item 3", "")
-	;GUICtrlSetData($ComboNormal, "Item 1|Item 2|Item 3", "")
-	GUICtrlSetData($ComboExtra, "Pass Wall", "")
-
-	GUISetState(@SW_SHOW)
-
-	While 1
-
-		Switch GUIGetMsg()
-			Case $GUI_EVENT_CLOSE
-				ExitLoop
-			Case $ComboGame
-				$sComboRead = GUICtrlRead($ComboGame)
-				Switch $sComboRead
-					Case "Set Cell Size *+"
-						SetCellSide()
-					Case Else
-						MsgBox($MB_SYSTEMMODAL, "", $sComboRead)
-				EndSwitch
-
-			Case $ComboNormal
-				$sComboRead = GUICtrlRead($ComboNormal)
-				MsgBox($MB_SYSTEMMODAL, "", $sComboRead)
-
-			Case $ComboExtra
-				$sComboRead = GUICtrlRead($ComboExtra)
-				Switch $sComboRead
-					Case "Pass Wall"
-						PassWallSetting()
-				EndSwitch
-
-		EndSwitch
-	WEnd
-	GUIDelete($Form1_1)
-EndFunc   ;==>AdjustValues
-#ce
-
-#CS INFO
-#CS INFO
-	157011 V5 10/25/2019 12:29:56 AM V4 10/24/2019 11:03:40 AM V3 10/20/2019 1:07:26 AM V2 10/20/2019 12:46:58 AM
-#CE INFO
-
-#CE INFO
 
 Func SetCellSide()
 	Pause("SetCellSide")
@@ -2788,12 +2823,39 @@ EndFunc   ;==>CreateJpg
 #CE INFO
 
 ;-----------------------------------------
-Func ReplayStart()
-	HelpPassWall()
-	;MsgBox(0, "Replay", "Problem: No program code. 10/Oct/2019")
-EndFunc   ;==>ReplayStart
+; Replay
+Func ReplayRecData($func, $x = 0, $y = 0)
+	;Func ~~
+	;1 Start Snake
+	;2 Move snake
+	;3 Food add
+	;4 Add Cell  +-x
+
+	;X, Y
+
+	If $g_Replay = $s_ReplayRec Then
+		If $g_iReplayRecInx < $g_iReplaySz Then
+			dataout("Func: ", $func)
+			dataout($x, $y)
+
+			Switch $func
+				Case 1, 2, 3
+					$g_aReplay[$g_iReplayRecInx] = $func & "|" & $x & "|" & $y
+					$g_iReplayRecInx += 1
+				Case 4
+					$g_aReplay[$g_iReplayRecInx] = $func & "|" & $x
+					$g_iReplayRecInx += 1
+
+			EndSwitch
+
+		Else
+			$g_Replay = $s_ReplayOff
+		EndIf
+	EndIf
+
+EndFunc   ;==>ReplayRecData
 #CS INFO
-	9469 V2 10/18/2019 9:17:20 AM V1 10/11/2019 3:14:30 PM
+	36505 V4 10/28/2019 1:14:59 PM V3 8/11/2019 10:47:42 PM V2 8/8/2019 11:30:50 PM V1 8/8/2019 4:33:56 PM
 #CE INFO
 
 ;Main
@@ -2801,4 +2863,4 @@ Main()
 
 Exit
 
-;~T ScriptFunc.exe V0.54a 15 May 2019 - 10/25/2019 12:39:53 AM
+;~T ScriptFunc.exe V0.54a 15 May 2019 - 10/28/2019 1:14:59 PM
