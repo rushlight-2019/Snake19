@@ -5,7 +5,7 @@ AutoItSetOption("MustDeclareVars", 1)
 ;Global Static $MESSAGE =  False   ;Pause will still work in script  No DataOut
 
 ; Must be Declared before _Prf_startup   ~+~+
-Global $ver = "0.100 2 Nov 2019 Replay - crashes on end"
+Global $ver = "0.101 4 Nov 2019 Replay - Speed"
 Global $ini_ver = "10" ;Done
 
 ;Global $TESTING = False
@@ -13,7 +13,7 @@ Global $ini_ver = "10" ;Done
 #include "R:\!Autoit\Blank\_prf_startup.au3"
 
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
-#AutoIt3Wrapper_Res_Fileversion=0.1.0.0
+#AutoIt3Wrapper_Res_Fileversion=0.1.0.1
 #AutoIt3Wrapper_Icon=R:\!Autoit\Ico\prf.ico
 #AutoIt3Wrapper_Res_Description=Another snake game
 #AutoIt3Wrapper_Res_LegalCopyright=© Phillip Forrestal 2019
@@ -73,10 +73,15 @@ Global $ini_ver = "10" ;Done
 	to do
 
 	Version
-	7. Replay
+	7. Replay  speed
+	7 Replay save and restore
+	8 Replay My Snake.
 	9 Board Cell size.
+	10 minimis button going
+	11 min main menu do not min game window.
 
 ;~+~+
+	0.101 4 Nov 2019 Replay - Speed
 	0.100 2 Nov 2019 Replay - crashes on end
 
 	0.99 1 Nov 2019 Start 31 Oct Replay try 2
@@ -368,9 +373,6 @@ Global $g_poop[$s_PoopSize][4]
 ;1 Waiting to be empty
 ;2 show
 
-;0.82
-Global $g_TickTime
-
 ;0.84
 Global $g_pooprnd = True
 
@@ -401,13 +403,15 @@ Global $g_Replay = $s_ReplayOff
 Global $gb_replay
 Global $g_iReplayRecInx = 0
 Global $g_iReplayPlyInx = 0
-Global $g_Tick = 150 ; not used yet
 
-;0.99 Found that 2 or more actions per tick.   Not going to count move turn, food, death will be done at tick count.
-Global $g_iTickCnt = 0
+;0.99
+Global $g_iTickCnt = 0 ; replay Tick count
 
 ;0.100
 Global $g_ReplayActive = False
+
+;0.82 0.101
+Global $g_TickTime  ; Game Tick Time  To change Tick time in replay this has to be restored in beginning of Main Menu
 
 ; Main is call at end
 Func Main()
@@ -484,7 +488,7 @@ Func Main()
 EndFunc   ;==>Main
 #CS INFO
 	126142 V38 11/2/2019 6:19:14 PM V37 11/1/2019 7:15:17 PM V36 10/31/2019 6:10:24 PM V35 10/30/2019 2:05:21 AM
-#CE
+#CE INFO
 
 Func Game()
 	Local $nMsg, $x, $y, $flag
@@ -590,7 +594,7 @@ Func Game()
 	EndSwitch
 	If $g_Replay = $s_ReplayPlay Then  ;skip first record
 		$g_iReplayPlyInx += 1
-Endif
+	EndIf
 
 	StartSnake()
 	AddFood(True)
@@ -745,7 +749,7 @@ Endif
 
 EndFunc   ;==>Game
 #CS INFO
-	390219 V59 11/2/2019 6:19:14 PM V58 11/1/2019 7:15:17 PM V57 11/1/2019 8:41:21 AM V56 10/31/2019 6:10:24 PM
+	390187 V60 11/4/2019 9:35:34 AM V59 11/2/2019 6:19:14 PM V58 11/1/2019 7:15:17 PM V57 11/1/2019 8:41:21 AM
 #CE
 
 Func Tick() ;
@@ -786,8 +790,7 @@ Func Tick() ;
 
 	While 1
 		$fdiff = TimerDiff($g_hTick)
-		;If $fdiff > 1000 then ;150 Then ;150
-		If $fdiff > $g_TickTime Then ;150
+		If $fdiff > $g_TickTime Then
 			ExitLoop
 		EndIf
 	WEnd
@@ -807,8 +810,8 @@ Func Tick() ;
 	$g_hTick = TimerInit()
 EndFunc   ;==>Tick
 #CS INFO
-	68587 V16 8/25/2019 6:50:13 PM V15 8/22/2019 6:28:51 PM V14 7/14/2019 10:20:53 AM V13 7/13/2019 7:20:00 PM
-#CE INFO
+	66094 V17 11/4/2019 9:35:34 AM V16 8/25/2019 6:50:13 PM V15 8/22/2019 6:28:51 PM V14 7/14/2019 10:20:53 AM
+#CE
 
 ; $g_iscore is extra + length
 Func Extra()
@@ -1635,7 +1638,7 @@ Func NormalExtra()
 EndFunc   ;==>NormalExtra
 #CS INFO
 	44116 V5 11/2/2019 6:19:14 PM V4 10/30/2019 2:05:21 AM V3 8/11/2019 11:35:36 PM V2 8/2/2019 8:56:18 PM
-#CE
+#CE INFO
 
 Func DisplayHiScore()
 	Local $s
@@ -1706,8 +1709,8 @@ Func UpDateHiScore()
 	EndIf
 EndFunc   ;==>UpDateHiScore
 #CS INFO
-	74545 V14 7/24/2019 11:20:48 PM V13 7/18/2019 11:32:28 PM 123V12 7/13/2019 7:36:11 PM V11 7/5/2019 8:47:35 AM
-#CE INFO
+	74544 V15 11/4/2019 9:35:34 AM V14 7/24/2019 11:20:48 PM V13 7/18/2019 11:32:28 PM 123V12 7/13/2019 7:36:11 PM
+#CE
 
 Func SaveHiScore()
 	Local $x, $a[12][2]
@@ -1882,7 +1885,7 @@ EndFunc   ;==>CreateColorJpg
 Func StartForm()
 	;Local $FormMainMenu ; , $Group1
 	Local $Radio3, $Checkbox1, $b_start, $b_setting, $b_about
-	Local $nMsg
+	Local $nMsg, $L_Tick
 	Local $a = 260
 	Local $b = 50
 	Local $c = 200     ;120
@@ -1957,6 +1960,9 @@ Func StartForm()
 
 	GUISetState(@SW_SHOW)
 
+	;restored here because Replay will change it.
+	$g_TickTime = IniRead($s_ini, "General", "Speed", 150)
+
 	;Move mouse to the GO button
 	$a = WinGetPos(GUICtrlGetHandle($b_start))
 	MouseMove($a[0] + (75 / 2), $a[1] + (35 / 2), 0)
@@ -2002,7 +2008,7 @@ Func StartForm()
 				Local $FormReplay = GUICreate("Replay Speed", 600, 200, -1, -1)
 				GUICtrlCreateLabel("Replay - Works for Normal Snake.", 20, 40, 540, 20, $SS_CENTER)
 				GUICtrlSetFont(-1, 14, 800, 0, "Arial")
-				GUICtrlCreateLabel("ESC to stop --- Below buttons are not functional. Any one to start.",20, 60, 540, 20, $SS_CENTER)
+				GUICtrlCreateLabel("ESC to stop --- Pick speed Below", 20, 60, 540, 20, $SS_CENTER)
 				GUICtrlSetFont(-1, 14, 400, 0, "Arial")
 				Local $b_rpStd = GUICtrlCreateButton("Std 150ms", 40, 150, 100, 40)
 				Local $b_rp200 = GUICtrlCreateButton("200ms", 180, 150, 100, 40)
@@ -2010,7 +2016,7 @@ Func StartForm()
 				Local $b_rpfull = GUICtrlCreateButton("Full", 420, 150, 100, 40)
 				GUISetState(@SW_SHOW)
 
-				$g_Tick = 150
+				$L_Tick = 150
 				$done = 3     ; start replay
 
 				While 1
@@ -2020,22 +2026,23 @@ Func StartForm()
 							$done = 2     ;restart Start Form
 							ExitLoop
 						Case $b_rpStd
-							$g_Tick = 150
+							$L_Tick = 150
 							ExitLoop
 						Case $b_rp200
-							$g_Tick = 200
+							$L_Tick = 200
 							ExitLoop
 						Case $b_rp100
-							$g_Tick = 100
+							$L_Tick = 100
 							ExitLoop
 						Case $b_rpfull
-							$g_Tick = 0
+							$L_Tick = 0
 							ExitLoop
 
 					EndSwitch
 				WEnd
 				GUIDelete($FormReplay)
 				$g_ReplayActive = True
+				$g_TickTime = $L_Tick
 				Return $done
 
 			Case $b_start
@@ -2057,7 +2064,7 @@ Func StartForm()
 
 EndFunc   ;==>StartForm
 #CS INFO
-	339453 V37 11/2/2019 6:19:14 PM V36 10/30/2019 2:05:21 AM V35 10/28/2019 1:14:59 PM V34 10/24/2019 11:03:40 AM
+	358107 V38 11/4/2019 9:35:34 AM V37 11/2/2019 6:19:14 PM V36 10/30/2019 2:05:21 AM V35 10/28/2019 1:14:59 PM
 #CE
 
 Func Settings()
@@ -2734,7 +2741,8 @@ Func About()
 	Local $FormAbout = GUICreate("Snake19 - About", 615, 430, -1, -1, $ws_popup + $ws_caption)
 ;~+~+
 	;$Message &= "|
-	Local $Message = "0.100 2 Nov 2019 Replay - crashes on end"
+	Local $Message = "0.101 4 Nov 2019 Replay - Speed"
+	$Message &= "|0.100 2 Nov 2019 Replay - crashes on end"
 	$Message &= "||0.99 1 Nov 2019 Replay try 2"
 	$Message &= "|0.98 31 Oct 2019 Str 28 Oct Replay Failed removing"
 	$Message &= "|0.97 28 Oct 2019 Change Main Menu to work with Replay"
@@ -2787,7 +2795,7 @@ Func About()
 	GUIDelete($FormAbout)
 EndFunc   ;==>About
 #CS INFO
-	175591 V11 11/2/2019 6:19:14 PM V10 10/31/2019 6:10:24 PM V9 10/30/2019 2:05:21 AM V8 10/28/2019 1:14:59 PM
+	178593 V12 11/4/2019 9:35:34 AM V11 11/2/2019 6:19:14 PM V10 10/31/2019 6:10:24 PM V9 10/30/2019 2:05:21 AM
 #CE
 
 Func SetCellSide()
@@ -2965,10 +2973,10 @@ Func ReplayRecData($func, $x = 0, $y = 0, $Z = 0)
 EndFunc   ;==>ReplayRecData
 #CS INFO
 	64277 V7 11/2/2019 6:19:14 PM V6 11/1/2019 8:41:21 AM V5 10/31/2019 6:10:24 PM V4 10/28/2019 1:14:59 PM
-#CE
+#CE INFO
 
 ;$nMsg = GetReplayPlay(N)
-Func GetReplayPlay($Expecting)
+Func GetReplayPlay($Expecting) ;~~
 	Local $a
 
 	If $g_Replay <> $s_ReplayPlay Then
@@ -2981,18 +2989,18 @@ Func GetReplayPlay($Expecting)
 		$g_endgame = True
 		$a = "5|0|0|0|0"
 	Else
-		$a = $g_aReplay[$g_iReplayPlyInx] ;~~
+		$a = $g_aReplay[$g_iReplayPlyInx]
 	EndIf
 	DataOut("AT loc", $a)
 	$a = StringSplit($a, "|")
 
 	;_ArrayDisplay($a)
 
-If $testing then
-	dataout("Tick cnt", $a[2])
-	dataout("Tick Cur", $g_iTickCnt)
-	dataout("Func", $a[1])
-	endif
+	If $TESTING Then
+		dataout("Tick cnt", $a[2])
+		dataout("Tick Cur", $g_iTickCnt)
+		dataout("Func", $a[1])
+	EndIf
 
 	If $g_iTickCnt >= $a[2] Then
 		If $a[1] = 5 Then
@@ -3014,7 +3022,7 @@ If $testing then
 
 EndFunc   ;==>GetReplayPlay
 #CS INFO
-	57021 V4 11/2/2019 6:19:14 PM V3 11/1/2019 7:15:17 PM V2 10/31/2019 6:10:24 PM V1 10/30/2019 2:05:21 AM
+	56701 V5 11/4/2019 9:35:34 AM V4 11/2/2019 6:19:14 PM V3 11/1/2019 7:15:17 PM V2 10/31/2019 6:10:24 PM
 #CE
 
 ;Main
@@ -3022,4 +3030,4 @@ Main()
 
 Exit
 
-;~T ScriptFunc.exe V0.54a 15 May 2019 - 11/2/2019 6:19:14 PM
+;~T ScriptFunc.exe V0.54a 15 May 2019 - 11/4/2019 9:35:34 AM
