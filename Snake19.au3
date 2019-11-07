@@ -5,7 +5,8 @@ AutoItSetOption("MustDeclareVars", 1)
 ;Global Static $MESSAGE =  False   ;Pause will still work in script  No DataOut
 
 ; Must be Declared before _Prf_startup   ~+~+
-Global $ver = "0.101 4 Nov 2019 Replay - Speed"
+Global $ver = "0.103 6 Nov 2019 Replay - My Snake - Food"
+; "0.102 5 Nov 2019 Replay - My Snake"
 Global $ini_ver = "10" ;Done
 
 ;Global $TESTING = False
@@ -13,7 +14,7 @@ Global $ini_ver = "10" ;Done
 #include "R:\!Autoit\Blank\_prf_startup.au3"
 
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
-#AutoIt3Wrapper_Res_Fileversion=0.1.0.1
+#AutoIt3Wrapper_Res_Fileversion=0.1.0.3
 #AutoIt3Wrapper_Icon=R:\!Autoit\Ico\prf.ico
 #AutoIt3Wrapper_Res_Description=Another snake game
 #AutoIt3Wrapper_Res_LegalCopyright=© Phillip Forrestal 2019
@@ -79,8 +80,13 @@ Global $ini_ver = "10" ;Done
 	9 Board Cell size.
 	10 minimis button going
 	11 min main menu do not min game window.
+	12 Save load setting
+	14 Save load scores merge or clear
+	15 Alt colors, save users colors.
 
 ;~+~+
+	0.103 6 Nov 2019 Replay - My Snake - Food
+	0.102 4 Nov 2019 Changed Snake Lost
 	0.101 4 Nov 2019 Replay - Speed
 	0.100 2 Nov 2019 Replay - crashes on end
 
@@ -379,8 +385,6 @@ Global $g_pooprnd = True
 ;0.91
 Global $g_PWchance[6]
 
-Global $g_PWsnkTruWall
-Global $g_PWsnkTruPer
 Global $g_PWsnkTruCnt
 Global $g_PWfoodCnt
 PassWallDefault()
@@ -392,7 +396,7 @@ Global $g_SettingForm
 ;0.98~~
 Global $g_iReplaySz = 6000
 If $TESTING Then
-	$g_iReplaySz = 20
+	$g_iReplaySz = 50
 EndIf
 Global $g_aReplay[$g_iReplaySz]
 $g_aReplay[0] = 0 ; so replay check has a value, not 10 or 11
@@ -573,7 +577,7 @@ Func Game()
 		ClearBoard() ; Change how create is done not need on fist pass
 	EndIf
 
-	;Replay reset game to record ~~
+	;Replay reset game to record
 	If $g_Replay = $s_ReplayPlay Then
 		$g_iTickCnt = 0
 		If $g_iReplayPlyInx <> 0 Then
@@ -653,7 +657,7 @@ Func Game()
 	Do ;game Loop
 		Tick()
 		$g_iTickCnt += 1
-		DataOut("Tick~~", $g_iTickCnt)
+		;DataOut("Tick~~", $g_iTickCnt)
 
 		$nMsg = GUIGetMsg()
 		If $nMsg = $L_idEsc Then
@@ -749,7 +753,7 @@ Func Game()
 
 EndFunc   ;==>Game
 #CS INFO
-	390187 V60 11/4/2019 9:35:34 AM V59 11/2/2019 6:19:14 PM V58 11/1/2019 7:15:17 PM V57 11/1/2019 8:41:21 AM
+	389994 V61 11/6/2019 5:52:00 PM V60 11/4/2019 9:35:34 AM V59 11/2/2019 6:19:14 PM V58 11/1/2019 7:15:17 PM
 #CE
 
 Func Tick() ;
@@ -811,9 +815,9 @@ Func Tick() ;
 EndFunc   ;==>Tick
 #CS INFO
 	66094 V17 11/4/2019 9:35:34 AM V16 8/25/2019 6:50:13 PM V15 8/22/2019 6:28:51 PM V14 7/14/2019 10:20:53 AM
-#CE
+#CE INFO
 
-; $g_iscore is extra + length
+; $g_iscore is extra + length ~~
 Func Extra()
 	Local $a, $c
 	Local Static $ls_SnakeLenLast
@@ -840,28 +844,33 @@ Func Extra()
 				EndIf
 
 			EndIf
-
-			Status(3, "Ate DEAD snake  Yuck!! Lost " & $MaxLost + 3 & " cells of snake", 1)
-			If $g_gChange > $MaxLost * 2 Then
-				$g_gChange -= Int($MaxLost / 2)
-			Else
-				$g_gChange -= $MaxLost + 3
-			EndIf
+			$a = LostSnake()
+			Status(3, "Ate DEAD snake  Yuck!! Lost " & $a & " cells of snake", 1)
+			$g_gChange -= $a
+			;Status(3, "Ate DEAD snake  Yuck!! Lost " & $MaxLost + 3 & " cells of snake", 1)
+			;If $g_gChange > $MaxLost * 2 Then
+			;	$g_gChange -= Int($MaxLost / 2)
+			;Else
+			;	$g_gChange -= $MaxLost + 3
+			;EndIf
 
 			$Map[$what][$x_new + $g_dirX][$y_new + $g_dirY] = $EMPTY
 			$g_Ouch = 2
 			PrevNext($x_new + $g_dirX, $y_new + $g_dirY) ;New value
 
 		Case $POOP
-			If $g_gChange > $MaxLost * 1.5 Then
-				$g_gChange -= Int($MaxLost / 2)
-			Else
-				$g_gChange -= $MaxLost
-			EndIf
+			$a = LostSnake()
+			;If $g_gChange > $MaxLost * 1.5 Then
+			;				$g_gChange -= Int($MaxLost / 2)
+			;			Else
+			;				$g_gChange -= $MaxLost
+			;			EndIf
+			$g_gChange -= $a
 
 			PrevNext($x_new + $g_dirX, $y_new + $g_dirY) ;New value
 
-			Status(3, "Ate  snake POOP  Yuck! Lost " & $MaxLost & " cells of snake", 1)
+			Status(3, "Ate  snake POOP  Yuck! Lost " & $a & " cells of snake", 1)
+			;Status(3, "Ate  snake POOP  Yuck! Lost " & $MaxLost & " cells of snake", 1)
 			PoopAdd($x_new + $g_dirX, $y_new + $g_dirY, $s_PoopSize)
 
 		Case $WALL
@@ -898,12 +907,13 @@ Func Extra()
 				$g_PWfoodCnt += 1 ; count to 5 then -1 to $g_PWsnkTruCnt
 				If $g_PWfoodCnt = 5 Then
 					$g_PWfoodCnt = 0
-					$g_PWsnkTruCnt -= $g_PWsnkTruPer
+					$g_PWsnkTruCnt -= 1
 					If $g_PWsnkTruCnt < 2 Then
 						$g_PWsnkTruCnt = 2
 					EndIf
 				EndIf
 			EndIf
+			Dataout("FOOD", $g_PWsnkTruCnt)
 
 			PoopRemove()
 
@@ -989,10 +999,20 @@ Func Extra()
 			$g_ScoreFood += 1
 			$g_gChange += 5
 
+			;			If $g_PWsnkTruCnt > 2 Then
+			;				$g_PWfoodCnt = 4
+			;				$g_PWsnkTruCnt = 3
+			;			EndIf
+
+			; 3 1= 3 4 2= 3 5 2= 3 6 2=4 7 3=4
 			If $g_PWsnkTruCnt > 2 Then
 				$g_PWfoodCnt = 4
-				$g_PWsnkTruCnt = 3
+				$g_PWsnkTruCnt = Ceiling($g_PWsnkTruCnt / 3)
+				If $g_PWsnkTruCnt < 3 Then
+					$g_PWsnkTruCnt = 3
+				EndIf
 			EndIf
+			dataout("FOOD2", $g_PWsnkTruCnt)
 
 			PrevNext($x_new + $g_dirX, $y_new + $g_dirY) ;New value
 			RemoveSnakeExtra() ;only empty cell change len
@@ -1071,10 +1091,11 @@ Func Extra()
 
 EndFunc   ;==>Extra
 #CS INFO
-	388433 V45 10/25/2019 12:29:56 AM V44 10/24/2019 11:03:40 AM V43 10/20/2019 12:46:58 AM V42 10/18/2019 9:17:20 AM
+	419404 V46 11/5/2019 12:50:43 AM V45 10/25/2019 12:29:56 AM V44 10/24/2019 11:03:40 AM V43 10/20/2019 12:46:58 AM
 #CE INFO
 
-Func Normal() ;~~
+;~~
+Func Normal()
 	Local Static $LS_SnakeLenLast = 0
 
 	Switch $Map[$what][$x_new + $g_dirX][$y_new + $g_dirY]
@@ -1147,7 +1168,7 @@ Func Normal() ;~~
 	; END NORMAL
 EndFunc   ;==>Normal
 #CS INFO
-	114564 V11 10/31/2019 6:10:24 PM V10 10/28/2019 1:14:59 PM V9 8/18/2019 11:56:18 AM V8 7/18/2019 11:32:28 PM
+	114253 V12 11/5/2019 12:50:43 AM V11 10/31/2019 6:10:24 PM V10 10/28/2019 1:14:59 PM V9 8/18/2019 11:56:18 AM
 #CE INFO
 
 Func StartDead($inX, $inY)
@@ -1508,7 +1529,7 @@ Func AddFood($start = False)
 		Local $len, $x1, $y1, $mid, $len2, $x2, $y2
 
 		If $g_Replay = $s_ReplayPlay Then
-			$a = GetReplayPlay(3) ;~~
+			$a = GetReplayPlay(3) ;normal
 			$x = $a[3]
 			$y = $a[4]
 		Else
@@ -1547,17 +1568,22 @@ Func AddFood($start = False)
 				Until $Map[$what][$x][$y] = $EMPTY
 			EndIf
 			DataOut("Record 3 Food")
-			ReplayRecData(3, $x, $y)
+			ReplayRecData(3, $x, $y) ;normal
 
 		EndIf
 
 	Else ;MyGame
-		Do
-			$x = Random(1, $g_sx, 1)
-			$y = Random(1, $g_sy, 1)
-		Until $Map[$what][$x][$y] = $EMPTY
-		ReplayRecData(3, $x, $y)
-
+		If $g_Replay = $s_ReplayPlay Then
+			$a = GetReplayPlay(3) ;extra
+			$x = $a[3]
+			$y = $a[4]
+		Else
+			Do
+				$x = Random(1, $g_sx, 1)
+				$y = Random(1, $g_sy, 1)
+			Until $Map[$what][$x][$y] = $EMPTY
+			ReplayRecData(3, $x, $y) ;extra
+		EndIf
 	EndIf
 
 	$Map[$what][$x][$y] = $FOOD
@@ -1565,8 +1591,8 @@ Func AddFood($start = False)
 
 EndFunc   ;==>AddFood
 #CS INFO
-	96593 V17 11/1/2019 8:41:21 AM V16 10/31/2019 6:10:24 PM V15 10/30/2019 2:05:21 AM V14 10/28/2019 1:14:59 PM
-#CE INFO
+	105335 V19 11/6/2019 5:52:00 PM V18 11/5/2019 12:50:43 AM V17 11/1/2019 8:41:21 AM V16 10/31/2019 6:10:24 PM
+#CE
 
 Func ClearBoard()
 	Local $var, $NotEmpty
@@ -1710,7 +1736,7 @@ Func UpDateHiScore()
 EndFunc   ;==>UpDateHiScore
 #CS INFO
 	74544 V15 11/4/2019 9:35:34 AM V14 7/24/2019 11:20:48 PM V13 7/18/2019 11:32:28 PM 123V12 7/13/2019 7:36:11 PM
-#CE
+#CE INFO
 
 Func SaveHiScore()
 	Local $x, $a[12][2]
@@ -2001,7 +2027,7 @@ Func StartForm()
 				EndIf
 				Return 2
 
-			Case $gb_replay         ;~~
+			Case $gb_replay
 
 				GUIDelete($g_StartForm)
 
@@ -2064,7 +2090,7 @@ Func StartForm()
 
 EndFunc   ;==>StartForm
 #CS INFO
-	358107 V38 11/4/2019 9:35:34 AM V37 11/2/2019 6:19:14 PM V36 10/30/2019 2:05:21 AM V35 10/28/2019 1:14:59 PM
+	357796 V39 11/6/2019 5:52:00 PM V38 11/4/2019 9:35:34 AM V37 11/2/2019 6:19:14 PM V36 10/30/2019 2:05:21 AM
 #CE
 
 Func Settings()
@@ -2402,14 +2428,15 @@ Func WallTrue()     ;0.79
 
 	If $Map[$what][$x][$y] = $EMPTY Then
 
-		$g_PWsnkTruCnt += $g_PWsnkTruPer
-		$g_PWfoodCnt = 0
+		;$g_PWsnkTruCnt += 1
+		;$g_PWfoodCnt = 0
 
-		$a = $g_PWsnkTruCnt + $g_PWsnkTruWall
-		If $a > 10 Then
-			$a = 10
-		EndIf
+		;$a = $g_PWsnkTruCnt
+		;If $a > 10 Then
+		;	$a = 10
+		;EndIf
 		$flag = True
+		$a = LostSnake()
 		Status(2, "Pass threw WALL: Lose " & $a, 3)
 		$g_gChange -= $a
 		PrevNext($x, $y)
@@ -2421,7 +2448,25 @@ Func WallTrue()     ;0.79
 
 EndFunc   ;==>WallTrue
 #CS INFO
-	109340 V4 10/24/2019 11:03:40 AM V3 10/20/2019 12:46:58 AM V2 10/18/2019 9:17:20 AM V1 8/21/2019 3:27:01 AM
+	108100 V5 11/5/2019 12:50:43 AM V4 10/24/2019 11:03:40 AM V3 10/20/2019 12:46:58 AM V2 10/18/2019 9:17:20 AM
+#CE INFO
+
+Func LostSnake()
+	Local $a
+
+	$g_PWsnkTruCnt += 1
+	$g_PWfoodCnt = 0
+
+	$a = $g_PWsnkTruCnt
+	If $a > 10 Then
+		$a = 10
+	EndIf
+	Dataout("Lost Snake", $a)
+	Dataout($g_PWsnkTruCnt)
+	Return $a
+EndFunc   ;==>LostSnake
+#CS INFO
+	14599 V1 11/5/2019 12:50:43 AM
 #CE INFO
 
 ;Search the poop array for time out
@@ -2741,7 +2786,9 @@ Func About()
 	Local $FormAbout = GUICreate("Snake19 - About", 615, 430, -1, -1, $ws_popup + $ws_caption)
 ;~+~+
 	;$Message &= "|
-	Local $Message = "0.101 4 Nov 2019 Replay - Speed"
+	Local $Message = "0.103 6 Nov 2019 Replay - My Snake - Food"
+	$Message &= "|0.102 4 Nov 2019 Changed Snake Lost"
+	$Message &= "|0.101 4 Nov 2019 Replay - Speed"
 	$Message &= "|0.100 2 Nov 2019 Replay - crashes on end"
 	$Message &= "||0.99 1 Nov 2019 Replay try 2"
 	$Message &= "|0.98 31 Oct 2019 Str 28 Oct Replay Failed removing"
@@ -2795,7 +2842,7 @@ Func About()
 	GUIDelete($FormAbout)
 EndFunc   ;==>About
 #CS INFO
-	178593 V12 11/4/2019 9:35:34 AM V11 11/2/2019 6:19:14 PM V10 10/31/2019 6:10:24 PM V9 10/30/2019 2:05:21 AM
+	185673 V14 11/6/2019 5:52:00 PM V13 11/5/2019 12:50:43 AM V12 11/4/2019 9:35:34 AM V11 11/2/2019 6:19:14 PM
 #CE
 
 Func SetCellSide()
@@ -2903,13 +2950,12 @@ Func PassWallDefault()
 	$g_PWchance[3] = 5
 	$g_PWchance[4] = 3
 	$g_PWchance[5] = 2
-	$g_PWsnkTruWall = 0     ;fix
-	$g_PWsnkTruPer = 1     ;fix
+
 	$g_PWsnkTruCnt = 0     ;
 	$g_PWfoodCnt = 0     ; count to 5 then -1 to $g_PWsnkTruCnt
 EndFunc   ;==>PassWallDefault
 #CS INFO
-	22126 V2 10/24/2019 11:03:40 AM V1 10/18/2019 9:17:20 AM
+	18344 V3 11/5/2019 12:50:43 AM V2 10/24/2019 11:03:40 AM V1 10/18/2019 9:17:20 AM
 #CE INFO
 
 ; In Color out Picture using color
@@ -2983,7 +3029,6 @@ Func GetReplayPlay($Expecting) ;~~
 		Return
 	EndIf
 	DataOut("GetReplayPlay", $Expecting)
-
 	If $g_iReplayPlyInx >= $g_iReplayRecInx Then
 		$g_Replay = $s_ReplayOff
 		$g_endgame = True
@@ -3023,11 +3068,11 @@ Func GetReplayPlay($Expecting) ;~~
 EndFunc   ;==>GetReplayPlay
 #CS INFO
 	56701 V5 11/4/2019 9:35:34 AM V4 11/2/2019 6:19:14 PM V3 11/1/2019 7:15:17 PM V2 10/31/2019 6:10:24 PM
-#CE
+#CE INFO
 
 ;Main
 Main()
 
 Exit
 
-;~T ScriptFunc.exe V0.54a 15 May 2019 - 11/4/2019 9:35:34 AM
+;~T ScriptFunc.exe V0.54a 15 May 2019 - 11/6/2019 5:52:00 PM
