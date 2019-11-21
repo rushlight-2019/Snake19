@@ -5,7 +5,7 @@ AutoItSetOption("MustDeclareVars", 1)
 ;Global Static $MESSAGE =  False   ;Pause will still work in script  No DataOut
 
 ; Must be Declared before _Prf_startup   ~+~+
-Global $ver = "0.104 19 Nov 2019 Replay - My Snake - Poop"
+Global $ver = "0.106 21 Nov 2019 About - Url to program site"
 
 Global $ini_ver = "10" ;Done
 
@@ -14,7 +14,7 @@ Global $ini_ver = "10" ;Done
 #include "R:\!Autoit\Blank\_prf_startup.au3"
 
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
-#AutoIt3Wrapper_Res_Fileversion=0.1.0.4
+#AutoIt3Wrapper_Res_Fileversion=0.1.0.6
 #AutoIt3Wrapper_Icon=R:\!Autoit\Ico\prf.ico
 #AutoIt3Wrapper_Res_Description=Another snake game
 #AutoIt3Wrapper_Res_LegalCopyright=© Phillip Forrestal 2019
@@ -85,7 +85,9 @@ Global $ini_ver = "10" ;Done
 	15 Alt colors, save users colors.
 
 ;~+~+
-0.104 19 Nov 2019 Replay - My Snake - Poop
+	0.106 21 Nov 2019 About  - Url to program site
+	0.105 21 Nov 2019 Replay - My Snake - Back on self
+	0.104 19 Nov 2019 Replay - My Snake - Poop
 	0.103 6 Nov 2019 Replay - My Snake - Food
 	0.102 4 Nov 2019 Changed Snake Lost
 	0.101 4 Nov 2019 Replay - Speed
@@ -850,12 +852,6 @@ Func Extra()
 			$a = LostSnake()
 			Status(3, "Ate DEAD snake  Yuck!! Lost " & $a & " cells of snake", 1)
 			$g_gChange -= $a
-			;Status(3, "Ate DEAD snake  Yuck!! Lost " & $MaxLost + 3 & " cells of snake", 1)
-			;If $g_gChange > $MaxLost * 2 Then
-			;	$g_gChange -= Int($MaxLost / 2)
-			;Else
-			;	$g_gChange -= $MaxLost + 3
-			;EndIf
 
 			$Map[$what][$x_new + $g_dirX][$y_new + $g_dirY] = $EMPTY
 			$g_Ouch = 2
@@ -863,18 +859,11 @@ Func Extra()
 
 		Case $POOP
 			$a = LostSnake()
-			;If $g_gChange > $MaxLost * 1.5 Then
-			;				$g_gChange -= Int($MaxLost / 2)
-			;			Else
-			;				$g_gChange -= $MaxLost
-			;			EndIf
 			$g_gChange -= $a
 
 			PrevNext($x_new + $g_dirX, $y_new + $g_dirY) ;New value
 
 			Status(3, "Ate  snake POOP  Yuck! Lost " & $a & " cells of snake", 1)
-			;Status(3, "Ate  snake POOP  Yuck! Lost " & $MaxLost & " cells of snake", 1)
-			Local $a, $z
 			If $g_Replay = $s_ReplayPlay Then
 				$a = GetReplayPlay(20)
 				$z = $a[5]
@@ -895,6 +884,7 @@ Func Extra()
 
 			; Check  prev to be the same  last location
 			If $Map[$prX][$x_new][$y_new] = $x_new + $g_dirX And $Map[$prY][$x_new][$y_new] = $y_new + $g_dirY Then ; Double back
+
 				$flag = DoubleBack($g_dirX, $g_dirY)
 				If $flag Then
 					Status(2, "Double back on self, Lost 2", 3)
@@ -928,7 +918,6 @@ Func Extra()
 					EndIf
 				EndIf
 			EndIf
-			;	Dataout("FOOD", $g_PWsnkTruCnt)
 
 			PoopRemove()
 
@@ -1118,8 +1107,8 @@ Func Extra()
 
 EndFunc   ;==>Extra
 #CS INFO
-	453638 V47 11/19/2019 1:09:35 PM V46 11/5/2019 12:50:43 AM V45 10/25/2019 12:29:56 AM V44 10/24/2019 11:03:40 AM
-#CE INFO
+	424412 V48 11/21/2019 3:52:08 PM V47 11/19/2019 1:09:35 PM V46 11/5/2019 12:50:43 AM V45 10/25/2019 12:29:56 AM
+#CE
 
 ;~~
 Func Normal()
@@ -1358,6 +1347,7 @@ Func DoubleBackWall() ;(ByRef $dirx, ByRef $diry) ;
 	;	$g_dirX, $g_dirY
 	Local $a, $flag
 
+	Pause("DoubleBackWall()")
 	;Reverse $dirx and $g_diry here and after that they must not change.
 	$g_dirX *= -1 ;1 to -1: 0 to 0: -1 to 1
 	$g_dirY *= -1
@@ -1409,57 +1399,68 @@ Func DoubleBackWall() ;(ByRef $dirx, ByRef $diry) ;
 
 EndFunc   ;==>DoubleBackWall
 #CS INFO
-	72317 V8 10/20/2019 12:46:58 AM V7 8/18/2019 11:56:18 AM V6 7/5/2019 4:03:49 PM V5 7/4/2019 11:42:05 AM
-#CE INFO
+	74429 V9 11/21/2019 3:52:08 PM V8 10/20/2019 12:46:58 AM V7 8/18/2019 11:56:18 AM V6 7/5/2019 4:03:49 PM
+#CE
 
 Func DoubleBack($dirx, $diry)
 	Local $a, $flag
 	;new+dir  is one back.
 	; Find which X or Y which is the same, then random _+ one on there
-	If $dirx = 0 Then
-		$a = Random(0, 1, 1)
-		If $a = 0 Then
-			$a = -1
+	dataout("DoubleBack")
+	If $g_Replay = $s_ReplayPlay Then
+		$a = GetReplayPlay(21)
+		If $a[0] Then              ; if false not at location
+			PrevNext($a[3], $a[4])
+			RemoveSnakeExtra()     ;Same size
+			Return True
 		EndIf
-		$flag = False
-		If $Map[$what][$x_new + $a][$y_new] = 0 Then
-			$flag = True
-		Else
-			$a *= -1
+	Else
+		If $dirx = 0 Then
+			$a = Random(0, 1, 1)
+			If $a = 0 Then
+				$a = -1
+			EndIf
+			$flag = False
 			If $Map[$what][$x_new + $a][$y_new] = 0 Then
 				$flag = True
+			Else
+				$a *= -1
+				If $Map[$what][$x_new + $a][$y_new] = 0 Then
+					$flag = True
+				EndIf
 			EndIf
-		EndIf
-		If $flag Then
-			PrevNext($x_new + $a, $y_new + $diry)
-			RemoveSnakeExtra() ;Same size
-		EndIf
-	Else ;$diry =0
-		$a = Random(0, 1, 1)
-		If $a = 0 Then
-			$a = -1
-		EndIf
-		$flag = False
-		If $Map[$what][$x_new][$y_new + $a] = 0 Then
-			$flag = True
-		Else
-			$a *= -1
+			If $flag Then
+				ReplayRecData(21, $x_new + $a, $y_new + $diry)
+				PrevNext($x_new + $a, $y_new + $diry)
+				RemoveSnakeExtra() ;Same size
+			EndIf
+		Else ;$diry =0
+			$a = Random(0, 1, 1)
+			If $a = 0 Then
+				$a = -1
+			EndIf
+			$flag = False
 			If $Map[$what][$x_new][$y_new + $a] = 0 Then
 				$flag = True
+			Else
+				$a *= -1
+				If $Map[$what][$x_new][$y_new + $a] = 0 Then
+					$flag = True
+				EndIf
+			EndIf
+			If $flag Then
+				ReplayRecData(21, $x_new + $dirx, $y_new + $a)
+				PrevNext($x_new + $dirx, $y_new + $a)
+				RemoveSnakeExtra() ;Same size
 			EndIf
 		EndIf
-		If $flag Then
-			PrevNext($x_new + $dirx, $y_new + $a)
-			RemoveSnakeExtra() ;Same size
-		EndIf
-
 	EndIf
 	Return $flag
 
 EndFunc   ;==>DoubleBack
 #CS INFO
-	57688 V3 8/25/2019 6:50:13 PM V2 6/20/2019 9:30:52 PM V1 6/9/2019 1:07:49 PM
-#CE INFO
+	80619 V4 11/21/2019 3:52:08 PM V3 8/25/2019 6:50:13 PM V2 6/20/2019 9:30:52 PM V1 6/9/2019 1:07:49 PM
+#CE
 
 Func PrevNext($x, $y) ;New value
 	Local $x_prv, $y_prv
@@ -2810,10 +2811,13 @@ EndFunc   ;==>DeleteData
 #CE INFO
 
 Func About()
-	Local $FormAbout = GUICreate("Snake19 - About", 615, 430, -1, -1, $ws_popup + $ws_caption)
+	Local $MyUrl, $FormAbout, $Message
+	$FormAbout = GUICreate("Snake19 - About", 615, 430, -1, -1, $ws_popup + $ws_caption)
 ;~+~+
 	;$Message &= "|
-	Local $Message = "0.104 19 Nov 2019 Replay - My Snake - Poop"
+	$Message = "0.106 21 Nov 2019 About  - Url to program site"
+	$Message &= "|0.105 21 Nov 2019 Replay - My Snake - Back on self"
+	$Message &= "|0.104 19 Nov 2019 Replay - My Snake - Poop"
 	$Message &= "|0.103 6 Nov 2019 Replay - My Snake - Food"
 	$Message &= "|0.102 4 Nov 2019 Changed Snake Lost"
 	$Message &= "|0.101 4 Nov 2019 Replay - Speed"
@@ -2844,8 +2848,12 @@ Func About()
 	GUICtrlSetFont(-1, 14, 800, 0, "MS Sans Serif")
 	GUICtrlCreateLabel("Copyright (C) 2019 -- by Phillip Forrestal", 0, 104, 620, 20, $SS_CENTER)
 	GUICtrlSetFont(-1, 10, 400, 0, "MS Sans Serif")
-	GUICtrlCreateLabel("", 0, 80, 618, 20, $SS_CENTER)
+	GUICtrlCreateLabel("", 0, 60, 618, 20, $SS_CENTER)
 	GUICtrlSetData(-1, "Snake 19 -beta but working version " & $ver)
+	GUICtrlSetFont(-1, 10, 400, 0, "MS Sans Serif")
+
+	$MyUrl = GUICtrlCreateLabel("", 0, 80, 618, 20, $SS_CENTER + $SS_NOTIFY)
+	GUICtrlSetData(-1, "https://github.com/rushlight-2019/Snake19")
 	GUICtrlSetFont(-1, 10, 400, 0, "MS Sans Serif")
 
 	GUICtrlCreateLabel("Versions", 24, 136, 70, 24)
@@ -2859,19 +2867,44 @@ Func About()
 	Local $Button1 = GUICtrlCreateButton("Click", 270, 392, 75, 25)
 	GUISetState(@SW_SHOW)
 
+	Local $set_1 = True
+	Local $set_2 = False
+	Local $array
+
 	While 1
 		Local $nMsg = GUIGetMsg()
 		Switch $nMsg
+			Case $MyUrl
+				ShellExecute("https://github.com/rushlight-2019/Snake19")
 			Case $Button1
 				ExitLoop
 		EndSwitch
+
+		;change color of label when mouse hovers it
+		$array = GUIGetCursorInfo($FormAbout)
+
+		If $array[4] = $MyUrl Then
+			dataout($array[4], $set_1)
+			If Not $set_1 Then ;avoid flickering
+				GUICtrlSetColor($MyUrl, 0xFF0000) ; RRGGBB
+				$set_1 = True
+				$set_2 = False
+			EndIf
+		Else
+			If Not $set_2 Then ;avoid flickering
+				GUICtrlSetColor($MyUrl, 0x0000FF)
+				$set_1 = False
+				$set_2 = True
+			EndIf
+		EndIf
+
 	WEnd
 
 	GUIDelete($FormAbout)
 EndFunc   ;==>About
 #CS INFO
-	189390 V15 11/19/2019 1:09:35 PM V14 11/6/2019 5:52:00 PM V13 11/5/2019 12:50:43 AM V12 11/4/2019 9:35:34 AM
-#CE INFO
+	251672 V16 11/21/2019 3:52:08 PM V15 11/19/2019 1:09:35 PM V14 11/6/2019 5:52:00 PM V13 11/5/2019 12:50:43 AM
+#CE
 
 Func SetCellSide()
 	Pause("SetCellSide")
@@ -3015,6 +3048,8 @@ Func ReplayRecData($func, $x = 0, $y = 0, $z = 0, $zz = 0)
 	;3 Food add
 	;4 Add Cell  +-x
 	;5 End of game
+	;20 Poop
+	;21 Bounce back on self
 
 	;X, Y
 	If $g_Replay <> $s_ReplayRec Then
@@ -3030,7 +3065,7 @@ Func ReplayRecData($func, $x = 0, $y = 0, $z = 0, $zz = 0)
 	Switch $func
 		Case 2             ;Func, $g_iTickCnt,  add 3 data,2 = Move
 			$g_aReplay[$g_iReplayRecInx] = $func & "|" & $g_iTickCnt & "|" & $x & "|" & $y & "|" & $z
-		Case 1, 3             ; add 2 data
+		Case 1, 3, 21             ; add 2 data
 			$g_aReplay[$g_iReplayRecInx] = $func & "|" & $g_iTickCnt & "|" & $x & "|" & $y
 		Case 4             ; add 1 data
 			$g_aReplay[$g_iReplayRecInx] = $func & "|" & $g_iTickCnt & "|" & $x
@@ -3052,8 +3087,8 @@ Func ReplayRecData($func, $x = 0, $y = 0, $z = 0, $zz = 0)
 
 EndFunc   ;==>ReplayRecData
 #CS INFO
-	81479 V8 11/19/2019 1:09:35 PM V7 11/2/2019 6:19:14 PM V6 11/1/2019 8:41:21 AM V5 10/31/2019 6:10:24 PM
-#CE INFO
+	84003 V9 11/21/2019 3:52:08 PM V8 11/19/2019 1:09:35 PM V7 11/2/2019 6:19:14 PM V6 11/1/2019 8:41:21 AM
+#CE
 
 ;$nMsg = GetReplayPlay(N)
 
@@ -3099,6 +3134,7 @@ Func GetReplayPlay($Expecting) ;~~ ~~
 
 		If $Expecting <> $a[1] Then
 			$a[0] = False
+			dataout($Expecting, $a[1])
 			Return $a
 		EndIf
 		$g_iReplayPlyInx += 1
@@ -3110,12 +3146,12 @@ Func GetReplayPlay($Expecting) ;~~ ~~
 
 EndFunc   ;==>GetReplayPlay
 #CS INFO
-	56315 V6 11/19/2019 1:09:35 PM V5 11/4/2019 9:35:34 AM V4 11/2/2019 6:19:14 PM V3 11/1/2019 7:15:17 PM
-#CE INFO
+	58531 V7 11/21/2019 3:52:08 PM V6 11/19/2019 1:09:35 PM V5 11/4/2019 9:35:34 AM V4 11/2/2019 6:19:14 PM
+#CE
 
 ;Main
 Main()
 
 Exit
 
-;~T ScriptFunc.exe V0.54a 15 May 2019 - 11/19/2019 1:13:53 PM
+;~T ScriptFunc.exe V0.54a 15 May 2019 - 11/21/2019 3:52:08 PM
