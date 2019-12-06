@@ -5,7 +5,8 @@ AutoItSetOption("MustDeclareVars", 1)
 ;Global Static $MESSAGE =  False   ;Pause will still work in script  No DataOut
 
 ; Must be Declared before _Prf_startup   ~+~+
-Global $ver = "0.106 21 Nov 2019 About - Url to program site"
+Global $ver = "0.107 6 Dec 2019 Fix pass wall endless loop"
+;Replay - My Snake - Through wall"
 
 Global $ini_ver = "10" ;Done
 
@@ -14,7 +15,7 @@ Global $ini_ver = "10" ;Done
 #include "R:\!Autoit\Blank\_prf_startup.au3"
 
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
-#AutoIt3Wrapper_Res_Fileversion=0.1.0.6
+#AutoIt3Wrapper_Res_Fileversion=0.1.0.7
 #AutoIt3Wrapper_Icon=R:\!Autoit\Ico\prf.ico
 #AutoIt3Wrapper_Res_Description=Another snake game
 #AutoIt3Wrapper_Res_LegalCopyright=© Phillip Forrestal 2019
@@ -85,6 +86,7 @@ Global $ini_ver = "10" ;Done
 	15 Alt colors, save users colors.
 
 ;~+~+
+	0.107 6 Dec 2019 Fix pass wall endless loop
 	0.106 21 Nov 2019 About  - Url to program site
 	0.105 21 Nov 2019 Replay - My Snake - Back on self
 	0.104 19 Nov 2019 Replay - My Snake - Poop
@@ -385,13 +387,6 @@ Global $g_poop[$s_PoopSize][4]
 ;0.84
 Global $g_pooprnd = True
 
-;0.91
-Global $g_PWchance[6]
-
-Global $g_PWsnkTruCnt
-Global $g_PWfoodCnt
-PassWallDefault()
-
 ;0.92
 Global $g_StartForm
 Global $g_SettingForm
@@ -399,7 +394,7 @@ Global $g_SettingForm
 ;0.98~~
 Global $g_iReplaySz = 6000
 If $TESTING Then
-	$g_iReplaySz = 50
+	$g_iReplaySz = 100
 EndIf
 Global $g_aReplay[$g_iReplaySz]
 $g_aReplay[0] = 0 ; so replay check has a value, not 10 or 11
@@ -419,6 +414,13 @@ Global $g_ReplayActive = False
 
 ;0.82 0.101
 Global $g_TickTime  ; Game Tick Time  To change Tick time in replay this has to be restored in beginning of Main Menu
+
+;0.107  Fix pass wall endless loop
+Global $g_PWsnkTruCnt
+Global $g_PWfoodCnt
+Global $g_PWchance[15]
+
+PassWallDefault()
 
 ; Main is call at end
 Func Main()
@@ -660,7 +662,6 @@ Func Game()
 	Do ;game Loop
 		Tick()
 		$g_iTickCnt += 1
-		;DataOut("Tick~~", $g_iTickCnt)
 
 		$nMsg = GUIGetMsg()
 		If $nMsg = $L_idEsc Then
@@ -758,8 +759,8 @@ Func Game()
 
 EndFunc   ;==>Game
 #CS INFO
-	397803 V62 11/19/2019 1:09:35 PM V61 11/6/2019 5:52:00 PM V60 11/4/2019 9:35:34 AM V59 11/2/2019 6:19:14 PM
-#CE INFO
+	395187 V63 12/6/2019 2:47:59 PM V62 11/19/2019 1:09:35 PM V61 11/6/2019 5:52:00 PM V60 11/4/2019 9:35:34 AM
+#CE
 
 Func Tick() ;
 	Local $fdiff
@@ -945,7 +946,7 @@ Func Extra()
 					EndIf
 
 				Else
-					If $c < $a Then ; add more poop ~~
+					If $c < $a Then ; add more poop
 						If $a > 5 Or $g_pooprnd Then
 							PoopAdd($x_new + $g_dirX, $y_new + $g_dirY)
 							$g_pooprnd = False
@@ -996,6 +997,11 @@ Func Extra()
 					Status(0, "", 0)
 
 			EndSwitch
+
+			If $TESTING Then
+				$g_gChange = 100
+			EndIf
+
 			$ls_HungerFug = 3 - Int($LS_SnakeLenLast / 20)
 			If $ls_HungerFug < 1 Then
 				$ls_HungerFug = 0
@@ -1107,10 +1113,9 @@ Func Extra()
 
 EndFunc   ;==>Extra
 #CS INFO
-	424412 V48 11/21/2019 3:52:08 PM V47 11/19/2019 1:09:35 PM V46 11/5/2019 12:50:43 AM V45 10/25/2019 12:29:56 AM
+	426891 V49 12/6/2019 2:47:59 PM V48 11/21/2019 3:52:08 PM V47 11/19/2019 1:09:35 PM V46 11/5/2019 12:50:43 AM
 #CE
 
-;~~
 Func Normal()
 	Local Static $LS_SnakeLenLast = 0
 
@@ -1311,7 +1316,7 @@ Func StartSnake()
 	Local $x, $y, $a
 
 	If $g_Replay = $s_ReplayPlay Then
-		$a = GetReplayPlay(1) ;~~
+		$a = GetReplayPlay(1)
 		$x = $a[3]
 		$y = $a[4]
 	Else
@@ -1338,8 +1343,8 @@ Func StartSnake()
 
 EndFunc   ;==>StartSnake
 #CS INFO
-	42174 V8 11/1/2019 8:41:21 AM V7 10/30/2019 2:05:21 AM V6 10/28/2019 1:14:59 PM V5 6/22/2019 7:09:09 PM
-#CE INFO
+	41863 V9 12/6/2019 2:47:59 PM V8 11/1/2019 8:41:21 AM V7 10/30/2019 2:05:21 AM V6 10/28/2019 1:14:59 PM
+#CE
 
 ; Dirx& Diry moving to wall not like Double Back which has reserves direction
 ; So they will change, I can't make them Global because I used this name as Local in a number of Function.
@@ -1400,7 +1405,7 @@ Func DoubleBackWall() ;(ByRef $dirx, ByRef $diry) ;
 EndFunc   ;==>DoubleBackWall
 #CS INFO
 	74429 V9 11/21/2019 3:52:08 PM V8 10/20/2019 12:46:58 AM V7 8/18/2019 11:56:18 AM V6 7/5/2019 4:03:49 PM
-#CE
+#CE INFO
 
 Func DoubleBack($dirx, $diry)
 	Local $a, $flag
@@ -1460,7 +1465,7 @@ Func DoubleBack($dirx, $diry)
 EndFunc   ;==>DoubleBack
 #CS INFO
 	80619 V4 11/21/2019 3:52:08 PM V3 8/25/2019 6:50:13 PM V2 6/20/2019 9:30:52 PM V1 6/9/2019 1:07:49 PM
-#CE
+#CE INFO
 
 Func PrevNext($x, $y) ;New value
 	Local $x_prv, $y_prv
@@ -2395,90 +2400,6 @@ EndFunc   ;==>ChooseColor
 	314692 V13 10/25/2019 12:29:56 AM V12 10/20/2019 1:07:26 AM V11 10/13/2019 1:37:57 PM V10 10/11/2019 3:14:30 PM
 #CE INFO
 
-Func WallTrue()     ;0.79
-	Local $direction
-	Local $foundedge     ; 0 1 or 2 if 2 found edge in both offest
-	Local $a, $flag, $x, $y, $z, $offset, $kx, $ky
-
-	$x = $x_new
-	$y = $y_new
-
-	$offset = PWrandom()
-
-	Select
-		Case $x = 1
-			$x = $g_sx
-			$y = PWedge($y, $offset, $g_sy, $foundedge)
-		Case $y = 1
-			$y = $g_sy
-			$x = PWedge($x, $offset, $g_sx, $foundedge)
-		Case $x = $g_sx
-			$x = 1
-			$y = PWedge($y, $offset, $g_sy, $foundedge)
-		Case $y = $g_sy
-			$y = 1
-			$x = PWedge($x, $offset, $g_sx, $foundedge)
-	EndSelect
-
-	$kx = $x
-	$ky = $y
-	$offset = 1
-	$direction = 1     ; 1 or -1
-	$foundedge = 0
-	While $Map[$what][$x][$y] <> $EMPTY
-		$x = $kx     ; $x or $y changes  so on start of loop they are reset
-		$y = $ky
-		Select
-			Case $x = 1
-				$y = PWedge($y, $offset * $direction, $g_sy, $foundedge)
-			Case $y = 1
-				$x = PWedge($x, $offset * $direction, $g_sx, $foundedge)
-			Case $x = $g_sx
-				$y = PWedge($y, $offset * $direction, $g_sy, $foundedge)
-			Case $y = $g_sy
-				$x = PWedge($x, $offset * $direction, $g_sx, $foundedge)
-		EndSelect
-		If $foundedge = 2 Then
-			Status(0, "Ate Wall, no way out", 1)
-			$g_endgame = True
-			Return True
-		EndIf
-		$foundedge = 0
-		If $direction = -1 Then
-			$offset += 1
-			$direction = 1
-		Else
-			$direction = -1
-		EndIf
-	WEnd
-
-	$flag = False
-
-	If $Map[$what][$x][$y] = $EMPTY Then
-
-		;$g_PWsnkTruCnt += 1
-		;$g_PWfoodCnt = 0
-
-		;$a = $g_PWsnkTruCnt
-		;If $a > 10 Then
-		;	$a = 10
-		;EndIf
-		$flag = True
-		$a = LostSnake()
-		Status(2, "Pass threw WALL: Lose " & $a, 3)
-		$g_gChange -= $a
-		PrevNext($x, $y)
-		RemoveSnakeExtra()     ;Same size
-	EndIf
-
-	;Not sure if Flag is used? 91
-	Return $flag
-
-EndFunc   ;==>WallTrue
-#CS INFO
-	108132 V6 11/19/2019 1:09:35 PM V5 11/5/2019 12:50:43 AM V4 10/24/2019 11:03:40 AM V3 10/20/2019 12:46:58 AM
-#CE INFO
-
 Func LostSnake()
 	Local $a
 
@@ -2530,7 +2451,7 @@ EndFunc   ;==>PoopRemove
 	61489 V5 11/19/2019 1:09:35 PM V4 10/20/2019 12:46:58 AM V3 8/25/2019 6:50:13 PM V2 8/25/2019 9:54:57 AM
 #CE INFO
 
-;Add poop array: Poop will replace food once this loction is empty ~~ ~~
+;Add poop array: Poop will replace food once this loction is empty
 Func PoopAdd($x, $y, $delay = $s_PoopSize / 4 + Random(0, Ceiling($s_PoopSize / 3), 1))
 
 	For $z = 0 To $s_PoopSize - 1
@@ -2815,7 +2736,8 @@ Func About()
 	$FormAbout = GUICreate("Snake19 - About", 615, 430, -1, -1, $ws_popup + $ws_caption)
 ;~+~+
 	;$Message &= "|
-	$Message = "0.106 21 Nov 2019 About  - Url to program site"
+	$Message = "0.107 6 Dec 2019 Fix pass wall endless loop"
+	$Message &= "|0.106 21 Nov 2019 About  - Url to program site"
 	$Message &= "|0.105 21 Nov 2019 Replay - My Snake - Back on self"
 	$Message &= "|0.104 19 Nov 2019 Replay - My Snake - Poop"
 	$Message &= "|0.103 6 Nov 2019 Replay - My Snake - Food"
@@ -2903,7 +2825,7 @@ Func About()
 	GUIDelete($FormAbout)
 EndFunc   ;==>About
 #CS INFO
-	251672 V16 11/21/2019 3:52:08 PM V15 11/19/2019 1:09:35 PM V14 11/6/2019 5:52:00 PM V13 11/5/2019 12:50:43 AM
+	255838 V17 12/6/2019 2:47:59 PM V16 11/21/2019 3:52:08 PM V15 11/19/2019 1:09:35 PM V14 11/6/2019 5:52:00 PM
 #CE
 
 Func SetCellSide()
@@ -2955,70 +2877,175 @@ EndFunc   ;==>HelpPassWall
 	79795 V2 10/20/2019 12:46:58 AM V1 10/18/2019 9:17:20 AM
 #CE INFO
 
-Func PWedge($dir, $offset, $far, ByRef $edge)
-	Local $flag = False
+Func WallTrue()     ;0.79 ~~
+	Local $a, $flag, $x, $y, $z, $offset, $kx, $ky, $upedge, $downedge, $direction
 
-	If $dir + $offset < 1 Then
-		$flag = True
-	EndIf
-	If $dir + $offset > $far Then
-		$flag = True
+	$x = $x_new
+	$y = $y_new
+
+	$offset = PWrandom()
+
+	$flag = False
+	;Which edge snake ran into - check to see if other side is EMPTY
+	Select
+		Case $x = 1
+			$x = $g_sx
+			$y = PWedge($y, $offset, $g_sy, $flag) ; $flag True  pass edge and return not valid
+		Case $y = 1
+			$y = $g_sy
+			$x = PWedge($x, $offset, $g_sx, $flag)
+		Case $x = $g_sx
+			$x = 1
+			$y = PWedge($y, $offset, $g_sy, $flag)
+		Case $y = $g_sy
+			$y = 1
+			$x = PWedge($x, $offset, $g_sx, $flag)
+	EndSelect
+
+;~~ Problem fails to work.
+	If $Map[$what][$x][$y] <> $EMPTY Then
+		;Pass thru wall the other side is NOT empty
+		;Move up one and check then down one and check
+		;Keep moving up down until find empty
+		;skip it at edge,  die if found both edge without and empty
+
+		;Pass edge or Not EMPTY  ~~
+		;		now +- n to find empty
+
+		$kx = $x
+		$ky = $y
+		$offset = 1
+		$direction = 1  ; 1 down -1 up
+
+		$upedge = False
+		$downedge = False
+
+		While True ;~~
+
+			$x = $kx ; $x or $y changes  so on start of loop they are reset
+			$y = $ky
+
+			If ($direction = 1 And Not $downedge) Or ($direction = -1 And Not $upedge) Then
+				Select
+					Case $x = 1
+						$y = PWedge($y, $offset * $direction, $g_sy, $flag)
+					Case $y = 1
+						$x = PWedge($x, $offset * $direction, $g_sx, $flag)
+					Case $x = $g_sx
+						$y = PWedge($y, $offset * $direction, $g_sy, $flag)
+					Case $y = $g_sy
+						$x = PWedge($x, $offset * $direction, $g_sx, $flag)
+				EndSelect
+
+				If Not $flag Then
+					If $Map[$what][$x][$y] = $EMPTY Then
+						ExitLoop
+					EndIf
+				EndIf
+
+			EndIf
+
+			If $direction = 1 And $downedge = False Then
+				$downedge = $flag
+			ElseIf $direction = -1 And $upedge = False Then
+				$upedge = $flag
+			EndIf
+
+			If $downedge And $upedge Then ;Fails - Snake Die
+				Status(0, "Ate Wall, no way out", 1)
+				$g_endgame = True
+				Return
+			EndIf
+
+			If $direction = 1 Then
+				$direction = -1
+			Else
+				$direction = 1
+				$offset += 1
+			EndIf
+
+		WEnd
 	EndIf
 
-	If $flag Then
-		$edge += 1
-		Return $dir
+	If $Map[$what][$x][$y] = $EMPTY Then
+		$a = LostSnake()
+		Status(2, "Pass threw WALL: Lose " & $a, 3)
+		$g_gChange -= $a
+		PrevNext($x, $y)
+		;		Dataout("Pass threw Wall")
+		;		Dataout($x, $y)
+		RemoveSnakeExtra()     ;Same size
+	Else
+		MsgBox(0, "ERROR", "Should next get to this point 1")
 	EndIf
-	Return $dir + $offset
+
+EndFunc   ;==>WallTrue
+#CS INFO
+	155451 V7 12/6/2019 2:47:59 PM V6 11/19/2019 1:09:35 PM V5 11/5/2019 12:50:43 AM V4 10/24/2019 11:03:40 AM
+#CE
+
+Func PWedge($xy, $offset, $far, ByRef $foundEdge)     ; 2nd output $flag True  pass edge and return not valid ~~
+	$foundEdge = False
+
+	;	dataout("PWedge", $xy)
+	;	dataout("$offset", $offset)
+	;	dataout("$xy + $offset", $xy + $offset)
+	;	dataout("$far", $far)
+
+	If $offset < 0 Then
+		If $xy + $offset < 1 Then
+			$foundEdge = True
+			Return $xy
+		EndIf
+	Else
+		If $xy + $offset > $far Then
+			$foundEdge = True
+			Return $xy
+		EndIf
+	EndIf
+
+	Return $xy + $offset
+
 EndFunc   ;==>PWedge
 #CS INFO
-	17828 V1 10/18/2019 9:17:20 AM
-#CE INFO
-
-Func PWrandom()
-	Local $a, $b, $c
-	$b = 0
-	$a = Random(1, $g_PWchance[0], 1)
-	For $y = 1 To 5
-		$b += $g_PWchance[$y]
-		If $a <= $b Then
-			$b = $y
-			ExitLoop
-		EndIf
-	Next
-
-	$a = 0
-	Switch $b
-		Case 1
-			$a = 2
-		Case 2
-			$a = 1
-		Case 4
-			$a = -1
-		Case 5
-			$a = -2
-	EndSwitch
-	Return $a
-EndFunc   ;==>PWrandom
-#CS INFO
-	17419 V1 10/18/2019 9:17:20 AM
-#CE INFO
+	33778 V2 12/6/2019 2:47:59 PM V1 10/18/2019 9:17:20 AM
+#CE
 
 Func PassWallDefault()
-	$g_PWchance[0] = 15
-	$g_PWchance[1] = 2
-	$g_PWchance[2] = 3
-	$g_PWchance[3] = 5
-	$g_PWchance[4] = 3
-	$g_PWchance[5] = 2
+	$g_PWchance[0] = -2
+	$g_PWchance[1] = -2
+	$g_PWchance[2] = -1
+	$g_PWchance[3] = -1
+	$g_PWchance[4] = -1
+	$g_PWchance[5] = 0
+	$g_PWchance[6] = 0
+	$g_PWchance[7] = 0
+	$g_PWchance[8] = 0
+	$g_PWchance[9] = 0
+	$g_PWchance[10] = 1
+	$g_PWchance[11] = 1
+	$g_PWchance[12] = 1
+	$g_PWchance[13] = 2
+	$g_PWchance[14] = 2
 
 	$g_PWsnkTruCnt = 0     ;
 	$g_PWfoodCnt = 0     ; count to 5 then -1 to $g_PWsnkTruCnt
 EndFunc   ;==>PassWallDefault
 #CS INFO
-	18344 V3 11/5/2019 12:50:43 AM V2 10/24/2019 11:03:40 AM V1 10/18/2019 9:17:20 AM
-#CE INFO
+	30967 V4 12/6/2019 2:47:59 PM V3 11/5/2019 12:50:43 AM V2 10/24/2019 11:03:40 AM V1 10/18/2019 9:17:20 AM
+#CE
 
+Func PWrandom()  ;~~
+	Local $a, $b, $c
+
+	$a = Random(0, 14, 1)     ;Dim 0-14 = 15
+	Return $g_PWchance[$a]
+EndFunc   ;==>PWrandom
+#CS INFO
+	8139 V2 12/6/2019 2:47:59 PM V1 10/18/2019 9:17:20 AM
+#CE
+
+;----------------------------------------------------
 ; In Color out Picture using color
 Func CreateJpg($color, $picture)
 	_GDIPlus_Startup()
@@ -3071,7 +3098,7 @@ Func ReplayRecData($func, $x = 0, $y = 0, $z = 0, $zz = 0)
 			$g_aReplay[$g_iReplayRecInx] = $func & "|" & $g_iTickCnt & "|" & $x
 		Case 5          ;func and tick
 			$g_aReplay[$g_iReplayRecInx] = $func & "|" & $g_iTickCnt
-		Case 10, 11   ;func
+		Case 10, 11     ;func
 			$g_aReplay[$g_iReplayRecInx] = $func
 		Case 20     ;Func, $g_iTickCnt,  add 4 data  20 = Poop extra only
 			$g_aReplay[$g_iReplayRecInx] = $func & "|" & $g_iTickCnt & "|" & $x & "|" & $y & "|" & $z & "|" & $zz
@@ -3083,12 +3110,12 @@ Func ReplayRecData($func, $x = 0, $y = 0, $z = 0, $zz = 0)
 		Return
 	EndIf
 
-	$g_aReplay[$g_iReplayRecInx] = -1 ;remove last one
+	$g_aReplay[$g_iReplayRecInx] = -1     ;remove last one
 
 EndFunc   ;==>ReplayRecData
 #CS INFO
 	84003 V9 11/21/2019 3:52:08 PM V8 11/19/2019 1:09:35 PM V7 11/2/2019 6:19:14 PM V6 11/1/2019 8:41:21 AM
-#CE
+#CE INFO
 
 ;$nMsg = GetReplayPlay(N)
 
@@ -3100,7 +3127,7 @@ EndFunc   ;==>ReplayRecData
 ;	else
 ;	EndIf
 
-Func GetReplayPlay($Expecting) ;~~ ~~
+Func GetReplayPlay($Expecting)     ;~~
 	Local $a
 
 	If $g_Replay <> $s_ReplayPlay Then
@@ -3146,7 +3173,7 @@ Func GetReplayPlay($Expecting) ;~~ ~~
 
 EndFunc   ;==>GetReplayPlay
 #CS INFO
-	58531 V7 11/21/2019 3:52:08 PM V6 11/19/2019 1:09:35 PM V5 11/4/2019 9:35:34 AM V4 11/2/2019 6:19:14 PM
+	58279 V8 12/6/2019 2:47:59 PM V7 11/21/2019 3:52:08 PM V6 11/19/2019 1:09:35 PM V5 11/4/2019 9:35:34 AM
 #CE
 
 ;Main
@@ -3154,4 +3181,4 @@ Main()
 
 Exit
 
-;~T ScriptFunc.exe V0.54a 15 May 2019 - 11/21/2019 3:52:08 PM
+;~T ScriptFunc.exe V0.54a 15 May 2019 - 12/6/2019 2:47:59 PM
