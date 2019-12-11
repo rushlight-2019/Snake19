@@ -5,7 +5,7 @@ AutoItSetOption("MustDeclareVars", 1)
 ;Global Static $MESSAGE =  False   ;Pause will still work in script  No DataOut
 
 ; Must be Declared before _Prf_startup   ~+~+
-Global $ver = "0.108 10 Dec 2019 Replay - My Snake - Through wall"
+Global $ver = "0.109 11 Dec 2019 Replay - My Snake - Changed: Too much Dead Snake"
 
 Global $ini_ver = "10" ;Done
 
@@ -14,7 +14,7 @@ Global $ini_ver = "10" ;Done
 #include "R:\!Autoit\Blank\_prf_startup.au3"
 
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
-#AutoIt3Wrapper_Res_Fileversion=0.1.0.8
+#AutoIt3Wrapper_Res_Fileversion=0.1.0.9
 #AutoIt3Wrapper_Icon=R:\!Autoit\Ico\prf.ico
 #AutoIt3Wrapper_Res_Description=Another snake game
 #AutoIt3Wrapper_Res_LegalCopyright=© Phillip Forrestal 2019
@@ -88,6 +88,7 @@ Global $ini_ver = "10" ;Done
 
 	Version
 ;~+~+
+	0.109 11 Dec 2019 Replay - My Snake - Changed: Too much Dead Snake
 	0.108 10 Dec 2019 Replay - My Snake - Through wall
 	0.107 6 Dec 2019 Fix pass wall endless loop
 	0.106 21 Nov 2019 About  - Url to program site
@@ -396,9 +397,9 @@ Global $g_SettingForm
 
 ;0.98~~
 Global $g_iReplaySz = 6000
-If $TESTING Then
-	$g_iReplaySz = 100
-EndIf
+;if $TESTING Then
+;$g_iReplaySz = 100
+;endIf
 Global $g_aReplay[$g_iReplaySz]
 $g_aReplay[0] = 0 ; so replay check has a value, not 10 or 11
 Static $s_ReplayRec = 1
@@ -466,7 +467,7 @@ Func Main()
 		;1.01
 		$g_GameWhich = IniRead($s_ini, "General", "Game", 1)
 
-		IniDelete($s_scoreini, "HighScoreExtra")
+		IniDelete($s_scoreini, "HighScoreMySnake")
 		IniDelete($s_scoreini, "HighScoreNormal")
 		IniWrite($s_scoreini, "Score", "Version", $ini_ver)
 	EndIf
@@ -488,7 +489,7 @@ Func Main()
 
 				If $TESTING Then
 					_FileWriteFromArray("Array.txt", $g_aReplay)
-					_ArrayDisplay($g_aReplay)
+					;					_ArrayDisplay($g_aReplay)
 				EndIf
 
 				Game()
@@ -499,8 +500,8 @@ Func Main()
 
 EndFunc   ;==>Main
 #CS INFO
-	126142 V38 11/2/2019 6:19:14 PM V37 11/1/2019 7:15:17 PM V36 10/31/2019 6:10:24 PM V35 10/30/2019 2:05:21 AM
-#CE INFO
+	126381 V39 12/11/2019 11:54:15 AM V38 11/2/2019 6:19:14 PM V37 11/1/2019 7:15:17 PM V36 10/31/2019 6:10:24 PM
+#CE
 
 Func Game()
 	Local $nMsg, $x, $y, $flag
@@ -752,18 +753,18 @@ Func Game()
 	EndIf
 	If $g_Replay = $s_ReplayPlay Then
 		$a = GetReplayPlay(5)
-		Dataout("REC DONE ____---------------------------------------")
+		Dataout("REC DONE ____-----------------------????----------------")
 		Pause()
 	Else
 		ReplayRecData(5) ; end of game
-		Dataout("REC DONE ____---------------------------------------")
+		Dataout("REC DONE ____-----End of Game----------------------------------")
 	EndIf
 	$g_Replay = $s_ReplayOff
 
 EndFunc   ;==>Game
 #CS INFO
-	395187 V63 12/6/2019 2:47:59 PM V62 11/19/2019 1:09:35 PM V61 11/6/2019 5:52:00 PM V60 11/4/2019 9:35:34 AM
-#CE INFO
+	396309 V64 12/11/2019 11:54:15 AM V63 12/6/2019 2:47:59 PM V62 11/19/2019 1:09:35 PM V61 11/6/2019 5:52:00 PM
+#CE
 
 Func Tick() ;
 	Local $fdiff
@@ -843,7 +844,11 @@ Func Extra()
 	Switch $Map[$what][$x_new + $g_dirX][$y_new + $g_dirY]
 		Case $DEAD
 			If $g_Ouch > 0 Then
-				$flag = DoubleBackWall()
+				;dataout("DoubleBack", $g_Ouch)
+
+				;$flag = DoubleBackWall()
+				;$flag = DoubleBack($x_new + $g_dirX,$y_new + $g_dirY)
+				$flag = DoubleBack($g_dirX, $g_dirY)
 				If $flag Then
 					Status(2, "Double back DEAD", 3)
 				Else
@@ -1116,8 +1121,8 @@ Func Extra()
 
 EndFunc   ;==>Extra
 #CS INFO
-	426950 V50 12/10/2019 8:29:16 PM V49 12/6/2019 2:47:59 PM V48 11/21/2019 3:52:08 PM V47 11/19/2019 1:09:35 PM
-#CE INFO
+	436702 V51 12/11/2019 11:54:15 AM V50 12/10/2019 8:29:16 PM V49 12/6/2019 2:47:59 PM V48 11/21/2019 3:52:08 PM
+#CE
 
 Func Normal()
 	Local Static $LS_SnakeLenLast = 0
@@ -1351,7 +1356,7 @@ EndFunc   ;==>StartSnake
 
 ; Dirx& Diry moving to wall not like Double Back which has reserves direction
 ; So they will change, I can't make them Global because I used this name as Local in a number of Function.
-Func DoubleBackWall() ;(ByRef $dirx, ByRef $diry) ;
+Func DoubleBackWall() ;(ByRef $dirx, ByRef $diry) ;;~~
 	;	$g_dirX, $g_dirY
 	Local $a, $flag
 
@@ -1407,8 +1412,8 @@ Func DoubleBackWall() ;(ByRef $dirx, ByRef $diry) ;
 
 EndFunc   ;==>DoubleBackWall
 #CS INFO
-	74429 V9 11/21/2019 3:52:08 PM V8 10/20/2019 12:46:58 AM V7 8/18/2019 11:56:18 AM V6 7/5/2019 4:03:49 PM
-#CE INFO
+	74740 V10 12/11/2019 11:54:15 AM V9 11/21/2019 3:52:08 PM V8 10/20/2019 12:46:58 AM V7 8/18/2019 11:56:18 AM
+#CE
 
 Func DoubleBack($dirx, $diry)
 	Local $a, $flag
@@ -1717,7 +1722,7 @@ Func DisplayHiScore()
 			EndIf
 		Next
 	Else
-		GUICtrlSetData($g_HiScoreWho, "High Score - Extra - My Snake")
+		GUICtrlSetData($g_HiScoreWho, "High Score - My Snake")
 		For $i = 0 To 9
 			;GUICtrlSetData($g_HiScore[$i], $i + 1 & " - " & $g_aHiScore[$i + 1][0] & " - " & $g_aHiScore[$i + 1][1] & " Length: " & $g_aHiScore[$i + 1][2] & " Food: " & $g_aHiScore[$i + 1][3] & " Turn: " & $g_aHiScore[$i + 1][4])
 			If $g_aHiScore[$i + 1][0] = 0 Then
@@ -1732,8 +1737,8 @@ Func DisplayHiScore()
 
 EndFunc   ;==>DisplayHiScore
 #CS INFO
-	103492 V8 10/20/2019 12:46:58 AM V7 7/24/2019 11:20:48 PM V6 7/24/2019 12:53:35 PM V5 7/15/2019 9:15:04 AM
-#CE INFO
+	102931 V9 12/11/2019 11:54:15 AM V8 10/20/2019 12:46:58 AM V7 7/24/2019 11:20:48 PM V6 7/24/2019 12:53:35 PM
+#CE
 
 Func UpDateHiScore()
 	Local $Form1
@@ -1785,13 +1790,13 @@ Func SaveHiScore()
 	If $g_GameWhich = 0 Then     ; 0 Normal, 1 Mine
 		$x = IniWriteSection($s_scoreini, "HighScoreNormal", $a)
 	Else
-		$x = IniWriteSection($s_scoreini, "HighScoreExtra", $a)
+		$x = IniWriteSection($s_scoreini, "HighScoreMySnake", $a)
 	EndIf
 
 EndFunc   ;==>SaveHiScore
 #CS INFO
-	33437 V6 7/24/2019 11:20:48 PM V5 7/13/2019 7:20:00 PM V4 6/16/2019 10:16:04 AM V3 6/5/2019 11:59:45 PM
-#CE INFO
+	33617 V7 12/11/2019 11:54:15 AM V6 7/24/2019 11:20:48 PM V5 7/13/2019 7:20:00 PM V4 6/16/2019 10:16:04 AM
+#CE
 
 Func IniHighFive()
 	Local $a, $c, $z, $Save
@@ -1802,7 +1807,7 @@ Func IniHighFive()
 		If $g_GameWhich = 0 Then     ; 0 Normal, 1 Mine
 			$a = IniReadSection($s_scoreini, "HighScoreNormal")
 		Else
-			$a = IniReadSection($s_scoreini, "HighScoreExtra")
+			$a = IniReadSection($s_scoreini, "HighScoreMySnake")
 		EndIf
 		If @error = 0 Then
 
@@ -1833,15 +1838,15 @@ Func IniHighFive()
 
 EndFunc   ;==>IniHighFive
 #CS INFO
-	56530 V5 11/19/2019 1:09:35 PM V4 10/8/2019 4:57:52 PM V3 7/24/2019 11:20:48 PM V2 7/13/2019 7:20:00 PM
-#CE INFO
+	56710 V6 12/11/2019 11:54:15 AM V5 11/19/2019 1:09:35 PM V4 10/8/2019 4:57:52 PM V3 7/24/2019 11:20:48 PM
+#CE
 
 Func ReadHiScore()
 	Local $a, $c, $z
 	If $g_GameWhich = 0 Then     ; 0 Normal, 1 Mine
 		$a = IniReadSection($s_scoreini, "HighScoreNormal")
 	Else
-		$a = IniReadSection($s_scoreini, "HighScoreExtra")
+		$a = IniReadSection($s_scoreini, "HighScoreMySnake")
 	EndIf
 	If @error = 0 Then
 
@@ -1869,8 +1874,8 @@ Func ReadHiScore()
 	EndIf
 EndFunc   ;==>ReadHiScore
 #CS INFO
-	55213 V8 11/19/2019 1:09:35 PM V7 10/8/2019 4:57:52 PM V6 7/24/2019 11:20:48 PM V5 7/13/2019 7:20:00 PM
-#CE INFO
+	55393 V9 12/11/2019 11:54:15 AM V8 11/19/2019 1:09:35 PM V7 10/8/2019 4:57:52 PM V6 7/24/2019 11:20:48 PM
+#CE
 
 ;Load Level from THE GAME
 ; to remove Run again
@@ -1980,12 +1985,12 @@ Func StartForm()
 	GUIStartGroup()
 	$Radio1 = GUICtrlCreateRadio("Normal Snake", $a, $b + 20, $c, 20)
 	GUICtrlSetFont(-1, 10, 800, 0, "Arial")
-	$Radio2 = GUICtrlCreateRadio("Extra - My Snake", $a, $b, $c, 20)
+	$Radio2 = GUICtrlCreateRadio("My Snake", $a, $b, $c, 20)
 	GUICtrlSetFont(-1, 10, 800, 0, "Arial")
 
 	$b += 40
 
-	$g_HiScoreWho = GUICtrlCreateLabel("High Score - Extra", $a, $b, $c + 60, 24)     ; Height is twice font size
+	$g_HiScoreWho = GUICtrlCreateLabel("High Score - My Snake", $a, $b, $c + 60, 24)     ; Height is twice font size
 	GUICtrlSetFont(-1, 10, 400, 0, "Arial")
 	$a = 50
 	$b += 20
@@ -2012,10 +2017,10 @@ Func StartForm()
 	GUICtrlSetData($Edit1, "  Food increase Snake by 1.  Score +1 per food pickup.  There is a bonus." & @CRLF, 1)
 	GUICtrlSetData($Edit1, @CRLF, 1)
 
-	GUICtrlSetData($Edit1, "Extra My Snake" & @CRLF, 1)
+	GUICtrlSetData($Edit1, "My Snake" & @CRLF, 1)
 	GUICtrlSetData($Edit1, "  Food increase Snake by 1.  A special food will get you more." & @CRLF, 1)
 	GUICtrlSetData($Edit1, @CRLF, 1)
-	GUICtrlSetData($Edit1, "Extra My Snake Bonus:" & @CRLF, 1)
+	GUICtrlSetData($Edit1, "My Snake Bonus:" & @CRLF, 1)
 	GUICtrlSetData($Edit1, " Snake can 'double back' on self. Pass threw Wall to other side. But loose X cells." & @CRLF, 1)
 	GUICtrlSetData($Edit1, " Snake does not like to Turn so, so few turns and Food increase snake & score" & @CRLF, 1)
 	GUICtrlSetData($Edit1, "  Too many turns Snake gets shorter", 1)
@@ -2068,7 +2073,7 @@ Func StartForm()
 				GUIDelete($g_StartForm)
 
 				Local $FormReplay = GUICreate("Replay Speed", 600, 200, -1, -1)
-				GUICtrlCreateLabel("Replay - Works for Normal Snake. - Runs in My Snake but not.", 20, 40, 540, 20, $SS_CENTER)
+				GUICtrlCreateLabel("Replay - Works for Normal Snake. - Testing My Snake.", 20, 40, 540, 20, $SS_CENTER)
 				GUICtrlSetFont(-1, 14, 800, 0, "Arial")
 				GUICtrlCreateLabel("ESC to stop --- Pick speed Below", 20, 60, 540, 20, $SS_CENTER)
 				GUICtrlSetFont(-1, 14, 400, 0, "Arial")
@@ -2126,8 +2131,8 @@ Func StartForm()
 
 EndFunc   ;==>StartForm
 #CS INFO
-	359890 V40 11/6/2019 6:00:26 PM V39 11/6/2019 5:52:00 PM V38 11/4/2019 9:35:34 AM V37 11/2/2019 6:19:14 PM
-#CE INFO
+	357904 V41 12/11/2019 11:54:15 AM V40 11/6/2019 6:00:26 PM V39 11/6/2019 5:52:00 PM V38 11/4/2019 9:35:34 AM
+#CE
 
 Func Settings()
 	Local $y
@@ -2739,7 +2744,8 @@ Func About()
 	$FormAbout = GUICreate("Snake19 - About", 615, 430, -1, -1, $ws_popup + $ws_caption)
 ;~+~+
 	;$Message &= "|
-	$Message = "0.108 10 Dec 2019 Replay - My Snake - Through wall"
+	$Message = "0.109 11 Dec 2019 Replay - My Snake - Changed: Too much Dead Snake"
+	$Message &= "|0.108 10 Dec 2019 Replay - My Snake - Through wall"
 	$Message &= "|0.107 6 Dec 2019 Fix pass wall endless loop"
 	$Message &= "|0.106 21 Nov 2019 About  - Url to program site"
 	$Message &= "|0.105 21 Nov 2019 Replay - My Snake - Back on self"
@@ -2818,8 +2824,8 @@ Func About()
 	GUIDelete($FormAbout)
 EndFunc   ;==>About
 #CS INFO
-	220908 V18 12/10/2019 8:29:16 PM V17 12/6/2019 2:47:59 PM V16 11/21/2019 3:52:08 PM V15 11/19/2019 1:09:35 PM
-#CE INFO
+	226508 V19 12/11/2019 11:54:15 AM V18 12/10/2019 8:29:16 PM V17 12/6/2019 2:47:59 PM V16 11/21/2019 3:52:08 PM
+#CE
 
 Func SetCellSide()
 	Pause("SetCellSide")
@@ -2870,7 +2876,7 @@ EndFunc   ;==>HelpPassWall
 	79795 V2 10/20/2019 12:46:58 AM V1 10/18/2019 9:17:20 AM
 #CE INFO
 
-Func WallTrue()     ;0.79 ~~
+Func WallTrue()
 	Local $a, $flag, $x, $y, $z, $offset, $kx, $ky, $upedge, $downedge, $direction
 
 	$x = $x_new
@@ -2895,16 +2901,7 @@ Func WallTrue()     ;0.79 ~~
 			$x = PWedge($x, $offset, $g_sx, $flag)
 	EndSelect
 
-;~~ Problem fails to work.
 	If $Map[$what][$x][$y] <> $EMPTY Then
-		;Pass thru wall the other side is NOT empty
-		;Move up one and check then down one and check
-		;Keep moving up down until find empty
-		;skip it at edge,  die if found both edge without and empty
-
-		;Pass edge or Not EMPTY  ~~
-		;		now +- n to find empty
-
 		$kx = $x
 		$ky = $y
 		$offset = 1
@@ -2913,7 +2910,7 @@ Func WallTrue()     ;0.79 ~~
 		$upedge = False
 		$downedge = False
 
-		While True ;~~
+		While True
 
 			$x = $kx ; $x or $y changes  so on start of loop they are reset
 			$y = $ky
@@ -2987,10 +2984,10 @@ Func WallTrue()     ;0.79 ~~
 
 EndFunc   ;==>WallTrue
 #CS INFO
-	176810 V8 12/10/2019 8:29:16 PM V7 12/6/2019 2:47:59 PM V6 11/19/2019 1:09:35 PM V5 11/5/2019 12:50:43 AM
-#CE INFO
+	154119 V9 12/11/2019 11:54:15 AM V8 12/10/2019 8:29:16 PM V7 12/6/2019 2:47:59 PM V6 11/19/2019 1:09:35 PM
+#CE
 
-Func PWedge($xy, $offset, $far, ByRef $foundEdge)     ; 2nd output $flag True  pass edge and return not valid ~~
+Func PWedge($xy, $offset, $far, ByRef $foundEdge)     ; 2nd output $flag True  pass edge and return not valid
 	$foundEdge = False
 
 	;	dataout("PWedge", $xy)
@@ -3014,8 +3011,8 @@ Func PWedge($xy, $offset, $far, ByRef $foundEdge)     ; 2nd output $flag True  p
 
 EndFunc   ;==>PWedge
 #CS INFO
-	33778 V2 12/6/2019 2:47:59 PM V1 10/18/2019 9:17:20 AM
-#CE INFO
+	33526 V3 12/11/2019 11:54:15 AM V2 12/6/2019 2:47:59 PM V1 10/18/2019 9:17:20 AM
+#CE
 
 Func PassWallDefault()
 	$g_PWchance[0] = -2
@@ -3041,15 +3038,15 @@ EndFunc   ;==>PassWallDefault
 	30967 V4 12/6/2019 2:47:59 PM V3 11/5/2019 12:50:43 AM V2 10/24/2019 11:03:40 AM V1 10/18/2019 9:17:20 AM
 #CE INFO
 
-Func PWrandom()  ;~~
+Func PWrandom()
 	Local $a, $b, $c
 
 	$a = Random(0, 14, 1)     ;Dim 0-14 = 15
 	Return $g_PWchance[$a]
 EndFunc   ;==>PWrandom
 #CS INFO
-	8139 V2 12/6/2019 2:47:59 PM V1 10/18/2019 9:17:20 AM
-#CE INFO
+	7828 V3 12/11/2019 11:54:15 AM V2 12/6/2019 2:47:59 PM V1 10/18/2019 9:17:20 AM
+#CE
 
 ;----------------------------------------------------
 ; In Color out Picture using color
@@ -3188,4 +3185,4 @@ Main()
 
 Exit
 
-;~T ScriptFunc.exe V0.54a 15 May 2019 - 12/10/2019 8:29:16 PM
+;~T ScriptFunc.exe V0.54a 15 May 2019 - 12/11/2019 11:54:15 AM
