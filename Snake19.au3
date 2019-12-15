@@ -5,7 +5,9 @@ AutoItSetOption("MustDeclareVars", 1)
 ;Global Static $MESSAGE =  False   ;Pause will still work in script  No DataOut
 
 ; Must be Declared before _Prf_startup   ~+~+
-Global $ver = "0.109 11 Dec 2019 Replay - My Snake - Changed: Too much Dead Snake"
+Global $ver = "0.111 15 Dec 2019 Error on long replay"
+; Color changes.  Change layout"
+;Color changes.  Change layout.  Add Green snake and Gold snake (default)  save users colors
 
 Global $ini_ver = "10" ;Done
 
@@ -14,7 +16,7 @@ Global $ini_ver = "10" ;Done
 #include "R:\!Autoit\Blank\_prf_startup.au3"
 
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
-#AutoIt3Wrapper_Res_Fileversion=0.1.0.9
+#AutoIt3Wrapper_Res_Fileversion=0.1.1.1
 #AutoIt3Wrapper_Icon=R:\!Autoit\Ico\prf.ico
 #AutoIt3Wrapper_Res_Description=Another snake game
 #AutoIt3Wrapper_Res_LegalCopyright=© Phillip Forrestal 2019
@@ -72,12 +74,11 @@ Global $ini_ver = "10" ;Done
 	6 = snake cell number (to computer size)
 
 	to do
-	Replay -The hard to cause random action
-	Pause durning game by pressing P
-	Hid game durning game by pressing H
-	Exit game by press Q and NOT Esc.   Using ESC sometime causes the game to completely exit.
+	Pause during game by pressing P
+    Hid game during game by pressing H
+    Exit game by press Q and NOT Esc.   Using ESC sometime causes the game to completely exit.
 	Color changes.  Change layout.  Add Green snake and Gold snake (default)  save users colors
-
+	Select different keys to use.
 	Save replay
 	Load replay
 	Change size of screen.  default 30x40
@@ -86,8 +87,19 @@ Global $ini_ver = "10" ;Done
 	 Save load setting
 	 Save load scores merge or clear
 
+Green snake
+Snake=0x00FF00
+Edge=0x989898
+Empty=0x000000
+Head=0xFFFF00
+Dead=0x642121
+Poop=0x963C00
+Food=0xFF0000
+
 	Version
 ;~+~+
+	0.111 15 Dec 2019 Error on long replay.  Fixed Poop not releasing right. 55 was not skipping. Still over edge error.
+	0.110 13 Dec 2019 Color changes.  Change layout"
 	0.109 11 Dec 2019 Replay - My Snake - Changed: Too much Dead Snake
 	0.108 10 Dec 2019 Replay - My Snake - Through wall
 	0.107 6 Dec 2019 Fix pass wall endless loop
@@ -381,7 +393,7 @@ Global $g_HungeryLast
 
 ;0.80
 Static $s_PoopSize = 20
-Global $g_poop[$s_PoopSize][4]
+Global $g_poop[$s_PoopSize + 1][4]
 ;0 flag, 1 x, 2 y, 3 cnt down
 ;flag
 ;0 not used
@@ -395,12 +407,9 @@ Global $g_pooprnd = True
 Global $g_StartForm
 Global $g_SettingForm
 
-;0.98~~
+;0.98
 Global $g_iReplaySz = 6000
-;if $TESTING Then
-;$g_iReplaySz = 100
-;endIf
-Global $g_aReplay[$g_iReplaySz]
+Global $g_aReplay[$g_iReplaySz + 3]
 $g_aReplay[0] = 0 ; so replay check has a value, not 10 or 11
 Static $s_ReplayRec = 1
 Static $s_ReplayPlay = 2
@@ -501,7 +510,7 @@ Func Main()
 EndFunc   ;==>Main
 #CS INFO
 	126381 V39 12/11/2019 11:54:15 AM V38 11/2/2019 6:19:14 PM V37 11/1/2019 7:15:17 PM V36 10/31/2019 6:10:24 PM
-#CE
+#CE INFO
 
 Func Game()
 	Local $nMsg, $x, $y, $flag
@@ -764,7 +773,7 @@ Func Game()
 EndFunc   ;==>Game
 #CS INFO
 	396309 V64 12/11/2019 11:54:15 AM V63 12/6/2019 2:47:59 PM V62 11/19/2019 1:09:35 PM V61 11/6/2019 5:52:00 PM
-#CE
+#CE INFO
 
 Func Tick() ;
 	Local $fdiff
@@ -827,9 +836,9 @@ EndFunc   ;==>Tick
 	66094 V17 11/4/2019 9:35:34 AM V16 8/25/2019 6:50:13 PM V15 8/22/2019 6:28:51 PM V14 7/14/2019 10:20:53 AM
 #CE INFO
 
-; $g_iscore is extra + length ~~
+; $g_iscore is extra + length
 Func Extra()
-	Local $a, $c, $z
+	Local $a, $c, $z, $b
 	Local Static $ls_SnakeLenLast
 	Local Static $ls_HungerFug
 	Local $flag
@@ -841,13 +850,13 @@ Func Extra()
 	EndIf
 
 	;EXTRA
+;~~~ CHECK [] to make sure it not outofrange ~~~
+	$x_new = CkOutsideEdgeX($x_new, $g_dirX)
+	$y_new = CkOutsideEdgeY($y_new, $g_dirX)
+
 	Switch $Map[$what][$x_new + $g_dirX][$y_new + $g_dirY]
 		Case $DEAD
 			If $g_Ouch > 0 Then
-				;dataout("DoubleBack", $g_Ouch)
-
-				;$flag = DoubleBackWall()
-				;$flag = DoubleBack($x_new + $g_dirX,$y_new + $g_dirY)
 				$flag = DoubleBack($g_dirX, $g_dirY)
 				If $flag Then
 					Status(2, "Double back DEAD", 3)
@@ -874,15 +883,20 @@ Func Extra()
 
 			Status(3, "Ate  snake POOP  Yuck! Lost " & $a & " cells of snake", 1)
 			If $g_Replay = $s_ReplayPlay Then
-				$a = GetReplayPlay(20)
-				$z = $a[5]
-				;dataout("Poop 1", $z)
-				$g_poop[$z][0] = 1
-				$g_poop[$z][1] = $a[3]
-				$g_poop[$z][2] = $a[4]
-				$g_poop[$z][3] = $a[6]
-				;		ReplayRecData(20,  $x, $y, $z, $g_poop[$Z][3])
+				$a = GetReplayPlay(20) ;55
+				dataout("55", $a[2])
+				If $a[0] Then  ; if false no poop out
+					$z = $a[5]
+					dataout("Poop 1p", $z)
+					$g_poop[$z][0] = 1
+					$g_poop[$z][1] = $a[3]
+					$g_poop[$z][2] = $a[4]
+					$g_poop[$z][3] = $a[6]
+					;		ReplayRecData(20,  $x, $y, $z, $g_poop[$Z][3])
+				EndIf
 			Else
+				dataout("Poop 1r", $z)
+
 				PoopAdd($x_new + $g_dirX, $y_new + $g_dirY, $s_PoopSize)
 			EndIf
 
@@ -944,7 +958,8 @@ Func Extra()
 				EndIf
 
 				If $g_Replay = $s_ReplayPlay Then
-					$a = GetReplayPlay(20)
+					$a = GetReplayPlay(20) ;44
+					dataout("44", $a[2])
 					If $a[0] Then  ; if false no poop out
 						$z = $a[5]
 						$g_poop[$z][0] = 1
@@ -1006,9 +1021,9 @@ Func Extra()
 
 			EndSwitch
 
-			If $TESTING Then
-				$g_gChange = 100
-			EndIf
+			;If $TESTING Then
+			;	$g_gChange = 100
+			;EndIf
 
 			$ls_HungerFug = 3 - Int($LS_SnakeLenLast / 20)
 			If $ls_HungerFug < 1 Then
@@ -1025,29 +1040,20 @@ Func Extra()
 			RemoveSnakeExtra() ;only empty cell change len
 
 		Case $FOOD2 ;Food from Food from 0
-			;$Map[$what][$x_new + $g_dirX][$y_new + $g_dirY]
-			$g_ScoreFood += 1
-			$g_gChange += 5
-
-			;			If $g_PWsnkTruCnt > 2 Then
-			;				$g_PWfoodCnt = 4
-			;				$g_PWsnkTruCnt = 3
-			;			EndIf
-
-			; 3 1= 3 4 2= 3 5 2= 3 6 2=4 7 3=4
-			If $g_PWsnkTruCnt > 2 Then
-				$g_PWfoodCnt = 4
+			If $g_PWsnkTruCnt > 3 Then
+				$g_PWfoodCnt = 5
 				$g_PWsnkTruCnt = Ceiling($g_PWsnkTruCnt / 3)
-				If $g_PWsnkTruCnt < 3 Then
-					$g_PWsnkTruCnt = 3
+				If $g_PWsnkTruCnt < 4 Then
+					$g_PWsnkTruCnt = 4
 				EndIf
 			EndIf
-			;dataout("FOOD2", $g_PWsnkTruCnt)
 
 			PrevNext($x_new + $g_dirX, $y_new + $g_dirY) ;New value
 			RemoveSnakeExtra() ;only empty cell change len
-			$g_iScore += 10
-			Status(0, "Poop Bonus Food: Score 10, Snake 5", 2)
+			$g_iScore += 50
+			$g_ScoreFood += 1
+			$g_gChange += 5
+			Status(0, "Poop Bonus Food: Score 50, Snake 5", 2)
 
 			$g_Turns = 0
 			$g_HungeryLast = 0
@@ -1116,12 +1122,24 @@ Func Extra()
 		$LS_SnakeLenLast = $a
 		$g_GameScore = $g_iScore + $g_ScoreFood + $g_SnakeMax
 
-		Status(1, StringFormat("Lenght: %4u, Max: %4u, Score: %6u,   ms/cyc %u", $a, $g_SnakeMax, $g_GameScore, $g_tc), 2)
+		;Static $s_ReplayRec = 1
+		;Static $s_ReplayPlay = 2
+		;Static $s_ReplayOff = 3
+		Switch $g_Replay
+			Case $s_ReplayOff
+				$b = ""
+			Case $s_ReplayRec
+				$b = String($g_iReplayRecInx)
+			Case $s_ReplayPlay
+				$b = String($g_iReplayPlyInx)
+		EndSwitch
+
+		Status(1, StringFormat("Lenght: %4u, Max: %4u, Score: %6u,   ms/cyc %u %6s", $a, $g_SnakeMax, $g_GameScore, $g_tc, $b), 2)
 	EndIf
 
 EndFunc   ;==>Extra
 #CS INFO
-	436702 V51 12/11/2019 11:54:15 AM V50 12/10/2019 8:29:16 PM V49 12/6/2019 2:47:59 PM V48 11/21/2019 3:52:08 PM
+	452571 V52 12/15/2019 9:48:21 AM V51 12/11/2019 11:54:15 AM V50 12/10/2019 8:29:16 PM V49 12/6/2019 2:47:59 PM
 #CE
 
 Func Normal()
@@ -1353,67 +1371,6 @@ EndFunc   ;==>StartSnake
 #CS INFO
 	41863 V9 12/6/2019 2:47:59 PM V8 11/1/2019 8:41:21 AM V7 10/30/2019 2:05:21 AM V6 10/28/2019 1:14:59 PM
 #CE INFO
-
-; Dirx& Diry moving to wall not like Double Back which has reserves direction
-; So they will change, I can't make them Global because I used this name as Local in a number of Function.
-Func DoubleBackWall() ;(ByRef $dirx, ByRef $diry) ;;~~
-	;	$g_dirX, $g_dirY
-	Local $a, $flag
-
-	Pause("DoubleBackWall()")
-	;Reverse $dirx and $g_diry here and after that they must not change.
-	$g_dirX *= -1 ;1 to -1: 0 to 0: -1 to 1
-	$g_dirY *= -1
-
-	;new+dir  is one back.
-	; Find which X or Y which is the same, then random _+ one on there
-
-	If $g_dirX = 0 Then
-		$a = Random(0, 1, 1)
-		If $a = 0 Then
-			$a = -1
-		EndIf
-		$flag = False
-		If $Map[$what][$x_new + $a][$y_new] = 0 Then
-			$flag = True
-		Else
-			$a *= -1
-			If $Map[$what][$x_new + $a][$y_new] = 0 Then
-				$flag = True
-			EndIf
-		EndIf
-		If $flag Then
-			PrevNext($x_new + $a, $y_new + $g_dirY)
-			RemoveSnakeExtra() ;Same size
-			$g_Turns += 2
-		EndIf
-	Else ;$g_diry =0
-		$a = Random(0, 1, 1)
-		If $a = 0 Then
-			$a = -1
-		EndIf
-		$flag = False
-		If $Map[$what][$x_new][$y_new + $a] = 0 Then
-			$flag = True
-		Else
-			$a *= -1
-			If $Map[$what][$x_new][$y_new + $a] = 0 Then
-				$flag = True
-			EndIf
-		EndIf
-		If $flag Then
-			PrevNext($x_new + $g_dirX, $y_new + $a)
-			RemoveSnakeExtra() ;Same size
-			$g_Turns += 2
-		EndIf
-
-	EndIf
-	Return $flag
-
-EndFunc   ;==>DoubleBackWall
-#CS INFO
-	74740 V10 12/11/2019 11:54:15 AM V9 11/21/2019 3:52:08 PM V8 10/20/2019 12:46:58 AM V7 8/18/2019 11:56:18 AM
-#CE
 
 Func DoubleBack($dirx, $diry)
 	Local $a, $flag
@@ -1738,7 +1695,7 @@ Func DisplayHiScore()
 EndFunc   ;==>DisplayHiScore
 #CS INFO
 	102931 V9 12/11/2019 11:54:15 AM V8 10/20/2019 12:46:58 AM V7 7/24/2019 11:20:48 PM V6 7/24/2019 12:53:35 PM
-#CE
+#CE INFO
 
 Func UpDateHiScore()
 	Local $Form1
@@ -1796,7 +1753,7 @@ Func SaveHiScore()
 EndFunc   ;==>SaveHiScore
 #CS INFO
 	33617 V7 12/11/2019 11:54:15 AM V6 7/24/2019 11:20:48 PM V5 7/13/2019 7:20:00 PM V4 6/16/2019 10:16:04 AM
-#CE
+#CE INFO
 
 Func IniHighFive()
 	Local $a, $c, $z, $Save
@@ -1839,7 +1796,7 @@ Func IniHighFive()
 EndFunc   ;==>IniHighFive
 #CS INFO
 	56710 V6 12/11/2019 11:54:15 AM V5 11/19/2019 1:09:35 PM V4 10/8/2019 4:57:52 PM V3 7/24/2019 11:20:48 PM
-#CE
+#CE INFO
 
 Func ReadHiScore()
 	Local $a, $c, $z
@@ -1875,7 +1832,7 @@ Func ReadHiScore()
 EndFunc   ;==>ReadHiScore
 #CS INFO
 	55393 V9 12/11/2019 11:54:15 AM V8 11/19/2019 1:09:35 PM V7 10/8/2019 4:57:52 PM V6 7/24/2019 11:20:48 PM
-#CE
+#CE INFO
 
 ;Load Level from THE GAME
 ; to remove Run again
@@ -2132,7 +2089,7 @@ Func StartForm()
 EndFunc   ;==>StartForm
 #CS INFO
 	357904 V41 12/11/2019 11:54:15 AM V40 11/6/2019 6:00:26 PM V39 11/6/2019 5:52:00 PM V38 11/4/2019 9:35:34 AM
-#CE
+#CE INFO
 
 Func Settings()
 	Local $y
@@ -2248,15 +2205,15 @@ EndFunc   ;==>ReadIni
 	17685 V2 8/16/2019 8:51:46 AM V1 8/12/2019 11:06:11 AM
 #CE INFO
 
-Func ChooseColor()
+Func ChooseColor() ;~~
 	Local $Which = 1
 	Local $a, $color, $y
 	Local $r_what[8][5]
-	Local $Form1
+	Local $FormColor
 	Local $restart = False
 	Local $hGUI
 
-	$Form1 = GUICreate("Colors", 150, 600, -1, -1, -1, -1, $g_SettingForm)
+	$FormColor = GUICreate("Colors", 150, 600, -1, -1, -1, -1, $g_SettingForm)
 	GUISetState(@SW_SHOW)
 
 	GUIStartGroup()
@@ -2370,7 +2327,7 @@ Func ChooseColor()
 				GUICtrlSetBkColor($b_change, $r_what[$Which][3])
 				GUICtrlSetData($e_value, Hex($r_what[$Which][3], 6))
 			Case $b_change
-				$r_what[$Which][4] = _ChooseColor(2, $r_what[$Which][4], 2, $Form1)
+				$r_what[$Which][4] = _ChooseColor(2, $r_what[$Which][4], 2, $FormColor)
 				GUICtrlSetBkColor($b_change, $r_what[$Which][4])
 				GUICtrlSetData($e_value, Hex($r_what[$Which][4], 6))
 			Case $b_save
@@ -2393,7 +2350,7 @@ Func ChooseColor()
 
 		EndSwitch
 	WEnd
-	GUIDelete($Form1)
+	GUIDelete($FormColor)
 	If $restart Then
 		If @Compiled Then
 			Run(@ScriptFullPath)
@@ -2405,8 +2362,8 @@ Func ChooseColor()
 	EndIf
 EndFunc   ;==>ChooseColor
 #CS INFO
-	314692 V13 10/25/2019 12:29:56 AM V12 10/20/2019 1:07:26 AM V11 10/13/2019 1:37:57 PM V10 10/11/2019 3:14:30 PM
-#CE INFO
+	316851 V14 12/15/2019 9:48:21 AM V13 10/25/2019 12:29:56 AM V12 10/20/2019 1:07:26 AM V11 10/13/2019 1:37:57 PM
+#CE
 
 Func LostSnake()
 	Local $a
@@ -2436,31 +2393,48 @@ Func PoopRemove()
 		If $g_poop[$z][0] = 2 Then
 			If $Map[$what][$g_poop[$z][1]][$g_poop[$z][2]] = $POOP Then     ;make sure poop exists
 				If $g_poop[$z][3] = 0 Then     ;delay = 0
-					$g_poop[$z][0] = 0     ;delay is time out
+					$g_poop[$z][0] = 0
 					If $z = 0 Then     ;if zero then is a super food.
+						dataout("Poop super------------add 0")
 						$Map[$what][$g_poop[$z][1]][$g_poop[$z][2]] = $FOOD2
 						GUICtrlSetImage($Map[$ctrl][$g_poop[$z][1]][$g_poop[$z][2]], $cFOOD)
 					Else
+						dataout("Poop normal --------add", $z)
 						$Map[$what][$g_poop[$z][1]][$g_poop[$z][2]] = $EMPTY     ; normal remove
 						GUICtrlSetImage($Map[$ctrl][$g_poop[$z][1]][$g_poop[$z][2]], $cEMPTY)
 					EndIf
 				Else
 					$g_poop[$z][3] -= 1     ;delay count down
 				EndIf
-			Else     ; Not Poop, clear this point if not snake
-				If $Map[$what][$g_poop[$z][1]][$g_poop[$z][2]] <> $SNAKE Then
-					$g_poop[$z][0] = 0
-				EndIf
+				;Else         ; Not Poop, clear this point if not snake
+				;	If $Map[$what][$g_poop[$z][1]][$g_poop[$z][2]] <> $SNAKE Then
+				;		dataout("Not snake", $z)
+				;		$g_poop[$z][0] = 0
+				;	EndIf
 			EndIf
 		EndIf
 	Next
 EndFunc   ;==>PoopRemove
 #CS INFO
-	61489 V5 11/19/2019 1:09:35 PM V4 10/20/2019 12:46:58 AM V3 8/25/2019 6:50:13 PM V2 8/25/2019 9:54:57 AM
-#CE INFO
+	67729 V6 12/15/2019 9:48:21 AM V5 11/19/2019 1:09:35 PM V4 10/20/2019 12:46:58 AM V3 8/25/2019 6:50:13 PM
+#CE
 
 ;Add poop array: Poop will replace food once this loction is empty
 Func PoopAdd($x, $y, $delay = $s_PoopSize / 4 + Random(0, Ceiling($s_PoopSize / 3), 1))
+	Local $a
+	For $z = 0 To $s_PoopSize - 1
+		If $g_poop[$z][0] <> 0 Then
+			$a = $Map[$what][$g_poop[$z][1]][$g_poop[$z][2]]
+			;If $z = 0 Then
+			;	dataout("KK", $g_poop[$z][0])
+			;	dataout("MM", $a)
+			;	dataout("DE", $g_poop[$z][3])
+			;EndIf
+			If Not ($a = 1 Or $a = 5) Then
+				$g_poop[$z][0] = 0
+			EndIf
+		EndIf
+	Next
 
 	For $z = 0 To $s_PoopSize - 1
 		If $g_poop[$z][0] = 0 Then
@@ -2468,17 +2442,22 @@ Func PoopAdd($x, $y, $delay = $s_PoopSize / 4 + Random(0, Ceiling($s_PoopSize / 
 				$g_poop[$z][0] = 1
 				$g_poop[$z][1] = $x
 				$g_poop[$z][2] = $y
-				$g_poop[$z][3] = $delay + Random(0, 5, 1)
+				If $z = 0 Then
+					$g_poop[$z][3] = 7 + Random(0, 5, 1)
+				Else
+					$g_poop[$z][3] = $delay + Random(0, 5, 1)
+				EndIf
 				ReplayRecData(20, $x, $y, $z, $g_poop[$z][3])
 				;Status(3, "Add Poop " & $Z & " - " & $delay, 2)
+				dataout("Add Poop " & $z & " - " & $g_poop[$z][3])
 				Return
 			EndIf
 		EndIf
 	Next
 EndFunc   ;==>PoopAdd
 #CS INFO
-	29508 V7 11/19/2019 1:09:35 PM V6 10/24/2019 11:03:40 AM V5 10/20/2019 12:46:58 AM V4 8/25/2019 6:50:13 PM
-#CE INFO
+	57204 V8 12/15/2019 9:48:21 AM V7 11/19/2019 1:09:35 PM V6 10/24/2019 11:03:40 AM V5 10/20/2019 12:46:58 AM
+#CE
 
 ;0 flag, 1 x, 2 y, 3 cnt down
 ;flag
@@ -2489,10 +2468,12 @@ EndFunc   ;==>PoopAdd
 ;This location will be poop when empty
 Func PoopShow($x, $y)
 	For $z = 0 To $s_PoopSize - 1
+
 		If $g_poop[$z][0] = 1 Then
 			If $g_poop[$z][1] = $x And $g_poop[$z][2] = $y Then
 				$g_poop[$z][0] = 2
-				;Status(3, "Show Poop " & $Z, 2)
+				dataout("Show Poop ", $z)
+
 				$Map[$what][$x][$y] = $POOP
 				GUICtrlSetImage($Map[$ctrl][$x][$y], $cPOOP)
 				Return False
@@ -2503,8 +2484,8 @@ Func PoopShow($x, $y)
 	Return True
 EndFunc   ;==>PoopShow
 #CS INFO
-	23709 V5 11/19/2019 1:09:35 PM V4 8/25/2019 6:50:13 PM V3 8/24/2019 6:38:07 PM V2 8/21/2019 10:30:33 PM
-#CE INFO
+	23609 V6 12/15/2019 9:48:21 AM V5 11/19/2019 1:09:35 PM V4 8/25/2019 6:50:13 PM V3 8/24/2019 6:38:07 PM
+#CE
 
 ;Check to see if color files exist, if not create them.
 Func CheckJpg()
@@ -2744,7 +2725,9 @@ Func About()
 	$FormAbout = GUICreate("Snake19 - About", 615, 430, -1, -1, $ws_popup + $ws_caption)
 ;~+~+
 	;$Message &= "|
-	$Message = "0.109 11 Dec 2019 Replay - My Snake - Changed: Too much Dead Snake"
+	$Message = "0.111 15 Dec 2019 Error on long replay.  Fixed Poop not releasing right, 55 was not skipping.  Still over edge error"
+	$Message &= "|0.110 13 Dec 2019 Color changes.  Change layout"
+	$Message &= "|0.109 11 Dec 2019 Replay - My Snake - Changed: Too much Dead Snake"
 	$Message &= "|0.108 10 Dec 2019 Replay - My Snake - Through wall"
 	$Message &= "|0.107 6 Dec 2019 Fix pass wall endless loop"
 	$Message &= "|0.106 21 Nov 2019 About  - Url to program site"
@@ -2806,13 +2789,13 @@ Func About()
 
 		If $array[4] = $MyUrl Then
 			;dataout($array[4], $set_1)
-			If Not $set_1 Then ;avoid flickering
-				GUICtrlSetColor($MyUrl, 0xFF0000) ; RRGGBB
+			If Not $set_1 Then     ;avoid flickering
+				GUICtrlSetColor($MyUrl, 0xFF0000)     ; RRGGBB
 				$set_1 = True
 				$set_2 = False
 			EndIf
 		Else
-			If Not $set_2 Then ;avoid flickering
+			If Not $set_2 Then     ;avoid flickering
 				GUICtrlSetColor($MyUrl, 0x0000FF)
 				$set_1 = False
 				$set_2 = True
@@ -2824,7 +2807,7 @@ Func About()
 	GUIDelete($FormAbout)
 EndFunc   ;==>About
 #CS INFO
-	226508 V19 12/11/2019 11:54:15 AM V18 12/10/2019 8:29:16 PM V17 12/6/2019 2:47:59 PM V16 11/21/2019 3:52:08 PM
+	241018 V20 12/15/2019 9:48:21 AM V19 12/11/2019 11:54:15 AM V18 12/10/2019 8:29:16 PM V17 12/6/2019 2:47:59 PM
 #CE
 
 Func SetCellSide()
@@ -2889,7 +2872,7 @@ Func WallTrue()
 	Select
 		Case $x = 1
 			$x = $g_sx
-			$y = PWedge($y, $offset, $g_sy, $flag) ; $flag True  pass edge and return not valid
+			$y = PWedge($y, $offset, $g_sy, $flag)     ; $flag True  pass edge and return not valid
 		Case $y = 1
 			$y = $g_sy
 			$x = PWedge($x, $offset, $g_sx, $flag)
@@ -2905,14 +2888,14 @@ Func WallTrue()
 		$kx = $x
 		$ky = $y
 		$offset = 1
-		$direction = 1  ; 1 down -1 up
+		$direction = 1     ; 1 down -1 up
 
 		$upedge = False
 		$downedge = False
 
 		While True
 
-			$x = $kx ; $x or $y changes  so on start of loop they are reset
+			$x = $kx     ; $x or $y changes  so on start of loop they are reset
 			$y = $ky
 
 			If ($direction = 1 And Not $downedge) Or ($direction = -1 And Not $upedge) Then
@@ -2941,7 +2924,7 @@ Func WallTrue()
 				$upedge = $flag
 			EndIf
 
-			If $downedge And $upedge Then ;Fails - Snake Die
+			If $downedge And $upedge Then     ;Fails - Snake Die
 				Status(0, "Ate Wall, no way out", 1)
 				$g_endgame = True
 				Return
@@ -2967,11 +2950,11 @@ Func WallTrue()
 				;	Dataout("Pass threw Wall")
 				;	Dataout($a[3], $a[4])
 				PrevNext($a[3], $a[4])
-				RemoveSnakeExtra() ;Same size
+				RemoveSnakeExtra()     ;Same size
 				Return True
 			EndIf
 		Else
-			ReplayRecData(30, $x, $y) ; Start cell len
+			ReplayRecData(30, $x, $y)     ; Start cell len
 		EndIf
 
 		PrevNext($x, $y)
@@ -2985,7 +2968,7 @@ Func WallTrue()
 EndFunc   ;==>WallTrue
 #CS INFO
 	154119 V9 12/11/2019 11:54:15 AM V8 12/10/2019 8:29:16 PM V7 12/6/2019 2:47:59 PM V6 11/19/2019 1:09:35 PM
-#CE
+#CE INFO
 
 Func PWedge($xy, $offset, $far, ByRef $foundEdge)     ; 2nd output $flag True  pass edge and return not valid
 	$foundEdge = False
@@ -3012,7 +2995,7 @@ Func PWedge($xy, $offset, $far, ByRef $foundEdge)     ; 2nd output $flag True  p
 EndFunc   ;==>PWedge
 #CS INFO
 	33526 V3 12/11/2019 11:54:15 AM V2 12/6/2019 2:47:59 PM V1 10/18/2019 9:17:20 AM
-#CE
+#CE INFO
 
 Func PassWallDefault()
 	$g_PWchance[0] = -2
@@ -3046,7 +3029,7 @@ Func PWrandom()
 EndFunc   ;==>PWrandom
 #CS INFO
 	7828 V3 12/11/2019 11:54:15 AM V2 12/6/2019 2:47:59 PM V1 10/18/2019 9:17:20 AM
-#CE
+#CE INFO
 
 ;----------------------------------------------------
 ; In Color out Picture using color
@@ -3072,7 +3055,7 @@ EndFunc   ;==>CreateJpg
 ; Replay
 Func ReplayRecData($func, $x = 0, $y = 0, $z = 0, $zz = 0)
 
-	;Func ~~
+	;Func
 	;1 Start Snake
 	;2 Move snake
 	;3 Food add
@@ -3118,8 +3101,8 @@ Func ReplayRecData($func, $x = 0, $y = 0, $z = 0, $zz = 0)
 
 EndFunc   ;==>ReplayRecData
 #CS INFO
-	85912 V10 12/10/2019 8:29:16 PM V9 11/21/2019 3:52:08 PM V8 11/19/2019 1:09:35 PM V7 11/2/2019 6:19:14 PM
-#CE INFO
+	85660 V11 12/15/2019 9:48:21 AM V10 12/10/2019 8:29:16 PM V9 11/21/2019 3:52:08 PM V8 11/19/2019 1:09:35 PM
+#CE
 
 ;$nMsg = GetReplayPlay(N)
 
@@ -3131,7 +3114,7 @@ EndFunc   ;==>ReplayRecData
 ;	else
 ;	EndIf
 
-Func GetReplayPlay($Expecting)     ;~~
+Func GetReplayPlay($Expecting)
 	Local $a
 
 	If $g_Replay <> $s_ReplayPlay Then
@@ -3165,7 +3148,7 @@ Func GetReplayPlay($Expecting)     ;~~
 
 		If $Expecting <> $a[1] Then
 			$a[0] = False
-			;dataout($Expecting, $a[1])
+			dataout($Expecting & " *** " & $a[2], $a[1])
 			Return $a
 		EndIf
 		$g_iReplayPlyInx += 1
@@ -3177,12 +3160,160 @@ Func GetReplayPlay($Expecting)     ;~~
 
 EndFunc   ;==>GetReplayPlay
 #CS INFO
-	58456 V9 12/10/2019 8:29:16 PM V8 12/6/2019 2:47:59 PM V7 11/21/2019 3:52:08 PM V6 11/19/2019 1:09:35 PM
-#CE INFO
+	58723 V10 12/15/2019 9:48:21 AM V9 12/10/2019 8:29:16 PM V8 12/6/2019 2:47:59 PM V7 11/21/2019 3:52:08 PM
+#CE
+
+;Check to see if the sum is inside the edge, return $nv if ok same, not ok then 0
+Func CkOutsideEdgeX($nv, $ov)
+	If $nv + $ov < 0 Then
+		dataout("EdgeX out 1", $nv + $ov)
+		Return 0
+	EndIf
+	If $nv + $ov > $g_sx + 1 Then
+		dataout("EdgeX out top", $nv + $ov)
+		Return 0
+	EndIf
+	Return $nv
+EndFunc   ;==>CkOutsideEdgeX
+#CS INFO
+	15951 V1 12/15/2019 9:48:21 AM
+#CE
+
+;Check to see if the sum is inside the edge, return $nv if ok same, not ok then 0
+Func CkOutsideEdgeY($nv, $ov)
+	If $nv + $ov < 0 Then
+		dataout("EdgeY out 1", $nv + $ov)
+		Return 0
+	EndIf
+	If $nv + $ov > $g_sy + 1 Then
+		dataout("EdgeY out top", $nv + $ov)
+		Return 0
+	EndIf
+	Return $nv
+EndFunc   ;==>CkOutsideEdgeY
+#CS INFO
+	15956 V1 12/15/2019 9:48:21 AM
+#CE
+
+Func Color2()     ;~~
+	Local $ColorForm1 = GUICreate("Change Colors", 600, 500, -1, -1)
+
+	Local $Label1 = GUICtrlCreateLabel("", 100, 40, 600 - 140, 60)
+	GUICtrlSetBkColor(-1, 0)
+	GUICtrlCreateLabel("Background", 20, 18)
+	Local $B_BACKGROUND = GUICtrlCreateLabel("", 20, 50, 40, 40)
+	GUICtrlSetBkColor(-1, 0)
+
+	Local $a = 110
+	Local $b = 75
+	GUICtrlCreateLabel("Edge", $a, 18)
+	Local $C_EDGE = GUICtrlCreateLabel("", $a, 50, 40, 40)
+	GUICtrlSetBkColor(-1, 0x989898)
+	Local $S_EDGE = GUICtrlCreateLabel("", $a, 90, 40, 5)
+	GUICtrlSetBkColor(-1, 0xFF0000)     ;~~REMOVE
+
+	$a += $b
+	GUICtrlCreateLabel("Snake Head", $a, 18)
+	Local $C_EDGE = GUICtrlCreateLabel("", $a, 50, 40, 40)
+	GUICtrlSetBkColor(-1, 0x989898)
+	Local $S_EDGE = GUICtrlCreateLabel("", $a, 90, 40, 5)
+
+	$a += $b
+	GUICtrlCreateLabel("Snake", $a, 18)
+	Local $C_EDGE = GUICtrlCreateLabel("", $a, 50, 40, 40)
+	GUICtrlSetBkColor(-1, 0x989898)
+	Local $S_EDGE = GUICtrlCreateLabel("", $a, 90, 40, 5)
+
+	$a += $b
+	GUICtrlCreateLabel("Food", $a, 18)
+	Local $C_EDGE = GUICtrlCreateLabel("", $a, 50, 40, 40)
+	GUICtrlSetBkColor(-1, 0x989898)
+	Local $S_EDGE = GUICtrlCreateLabel("", $a, 90, 40, 5)
+
+	$a += $b
+	GUICtrlCreateLabel("Dead Snake", $a, 18)
+	Local $C_EDGE = GUICtrlCreateLabel("", $a, 50, 40, 40)
+	GUICtrlSetBkColor(-1, 0x989898)
+	Local $S_EDGE = GUICtrlCreateLabel("", $a, 90, 40, 5)
+
+	$a += $b
+	GUICtrlCreateLabel("Snake Poop", $a, 18)
+	Local $C_EDGE = GUICtrlCreateLabel("", $a, 50, 40, 40)
+	GUICtrlSetBkColor(-1, 0x989898)
+	Local $S_EDGE = GUICtrlCreateLabel("", $a, 90, 40, 5)
+
+	;Local $Pic1 = GUICtrlCreatePic("", 24, 32, 65, 49)
+	;Local $Pic2 = GUICtrlCreatePic("", 112, 16, 561, 97)
+	;Local $Pic3 = GUICtrlCreatePic("", 136, 32, 65, 49)
+	;Local $Pic4 = GUICtrlCreatePic("", 216, 32, 73, 49)
+	;Local $Label1 = GUICtrlCreateLabel("Label1", 16, 104, 36, 17)
+	;Local $Label2 = GUICtrlCreateLabel("Label2", 136, 128, 36, 17)
+	;Local $Label3 = GUICtrlCreateLabel("Label3", 224, 128, 36, 17)
+	;Local $Button1 = GUICtrlCreateButton("Button1", 48, 312, 145, 57)
+	;Local $Button2 = GUICtrlCreateButton("Button2", 168, 392, 137, 57)
+	;Local $Button3 = GUICtrlCreateButton("Button3", 392, 392, 113, 57)
+	;Local $Button4 = GUICtrlCreateButton("Button4", 256, 312, 129, 65)
+	;Local $Button5 = GUICtrlCreateButton("Button5", 480, 304, 113, 65)
+	Local $Group1 = GUICtrlCreateGroup(".", 16, 152, 665, 137)
+	;Local $Button6 = GUICtrlCreateButton("Button6", 584, 176, 65, 33)
+	;Local $Button7 = GUICtrlCreateButton("Button7", 480, 176, 65, 33)
+	;Local $Button8 = GUICtrlCreateButton("Button8", 384, 184, 65, 25)
+	;Local $Button9 = GUICtrlCreateButton("Button9", 200, 168, 97, 33)
+	;Local $Input1 = GUICtrlCreateInput("Input1", 208, 224, 65, 21)
+	;Local $Input2 = GUICtrlCreateInput("Input2", 112, 224, 65, 21)
+	;Local $Input3 = GUICtrlCreateInput("Input3", 24, 224, 57, 21)
+	;Local $Label4 = GUICtrlCreateLabel("Label4", 24, 264, 36, 17)
+	;Local $Label5 = GUICtrlCreateLabel("Label5", 104, 256, 36, 17)
+	;Local $Label6 = GUICtrlCreateLabel("Label6", 200, 256, 36, 17)
+	;Local $Button10 = GUICtrlCreateButton("Button10", 48, 176, 113, 33)
+	GUICtrlCreateGroup("", -99, -99, 1, 1)
+	GUISetState(@SW_SHOW)
+
+	Sleep(10000)
+	GUIDelete($ColorForm1)
+	Return
+
+	While 1
+		Local $nMsg = GUIGetMsg()
+		Switch $nMsg
+			Case $GUI_EVENT_CLOSE
+				Exit
+
+				;Case $Pic1
+				;Case $Pic2
+				;Case $Pic3
+				;Case $Pic4
+				;Case $Label1
+				;Case $Label2
+				;Case $Label3
+				;Case $Button1
+				;Case $Button2
+				;Case $Button3
+				;Case $Button4
+				;Case $Button5
+				;Case $Button6
+				;Case $Button7
+				;Case $Button8
+				;Case $Button9
+				;Case $Input1
+				;Case $Input2
+				;Case $Input3
+				;Case $Label4
+				;Case $Label5
+				;Case $Label6
+				;Case $Button10
+		EndSwitch
+	WEnd
+EndFunc   ;==>Color2
+#CS INFO
+	243218 V1 12/15/2019 9:48:21 AM
+#CE
 
 ;Main
+;Color2()
+
 Main()
 
 Exit
 
-;~T ScriptFunc.exe V0.54a 15 May 2019 - 12/11/2019 11:54:15 AM
+;~T ScriptFunc.exe V0.54a 15 May 2019 - 12/15/2019 9:48:21 AM
