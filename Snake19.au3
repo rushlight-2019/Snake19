@@ -5,8 +5,8 @@ AutoItSetOption("MustDeclareVars", 1)
 ;Global Static $MESSAGE =  False   ;Pause will still work in script  No DataOut
 
 ; Must be Declared before _Prf_startup   ~+~+
-Global $ver = "0.115 29 Dec 2019 Color changes. Change layout. Done"
-;Color changes.  Change layout.  Add Green snake and Gold snake (default)  save users colors
+Global $ver = "0.116 30 Dec 2019 Pause during game by press P, Quit press Q. Fix Change Colors"
+;   Hid game during game by pressing H
 
 Global $ini_ver = "10" ;Done
 
@@ -15,7 +15,7 @@ Global $ini_ver = "10" ;Done
 #include "R:\!Autoit\Blank\_prf_startup.au3"
 
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
-#AutoIt3Wrapper_Res_Fileversion=0.1.1.5
+#AutoIt3Wrapper_Res_Fileversion=0.1.1.6
 #AutoIt3Wrapper_Icon=R:\!Autoit\Ico\prf.ico
 #AutoIt3Wrapper_Res_Description=Another snake game
 #AutoIt3Wrapper_Res_LegalCopyright=© Phillip Forrestal 2019
@@ -94,6 +94,7 @@ Global $ini_ver = "10" ;Done
 
 	Version
 ;~+~+
+	0.116 30 Dec 2019 Pause during game by press P, Quit press Q. Fix Change Colors
 	0.115 29 Dec 2019 Color changes. Change layout. Done
 	0.114 26 Dec 2019  Compile different"
 	0.113 22 Dec 2019 Bonus location
@@ -433,6 +434,9 @@ Global $g_PWsnkTruCnt
 Global $g_PWfoodCnt
 Global $g_PWchance[15]
 
+;0.116 pause/hid/quit
+Global $g_Pause
+
 PassWallDefault()
 
 ; Main is call at end
@@ -520,6 +524,8 @@ Func Game()
 	Local Static $L_idLeft
 	Local Static $L_idUp
 	Local Static $L_idEsc
+	Local Static $L_idPause
+	Local Static $L_idHid
 	Local $NotFirstPass
 	Local $a, $b
 
@@ -541,6 +547,9 @@ Func Game()
 		$L_idLeft = GUICtrlCreateDummy()
 		$L_idUp = GUICtrlCreateDummy()
 		$L_idEsc = GUICtrlCreateDummy()
+		$L_idPause = GUICtrlCreateDummy()
+		$L_idHid = GUICtrlCreateDummy()
+
 		GUISetState(@SW_SHOW, $g_ctrlBoard)
 
 		For $y = 0 To $g_boardy - 1
@@ -646,10 +655,6 @@ Func Game()
 	;0.91
 	PassWallDefault()
 
-	Local $aAccelKey2[][] = [["{RIGHT}", $L_idRight], ["{LEFT}", $L_idLeft], ["{DOWN}", $L_idDown], ["{UP}", $L_idUp], ["{ESC}", $L_idEsc]]
-	GUISetAccelerators($aAccelKey2, $g_ctrlBoard)
-	MouseMove(0, 0, 0)
-
 	Switch $g_GameWhich
 		Case 1 ;extra
 			$g_gChange = 2 ;Start with X so snake will not die at start
@@ -661,6 +666,10 @@ Func Game()
 			$g_Turns = -1 ; The way it start with 1 turn on start. To fix start with +1
 
 	EndSwitch
+;~~
+	Local $aAccelKey2[][] = [["{RIGHT}", $L_idRight], ["{LEFT}", $L_idLeft], ["{DOWN}", $L_idDown], ["{UP}", $L_idUp], ["q", $L_idEsc], ["p", $L_idPause], ["h", $L_idHid]]
+	GUISetAccelerators($aAccelKey2, $g_ctrlBoard)
+	MouseMove(0, 0, 0)
 
 	$g_endgame = False
 	If $g_Replay = $s_ReplayPlay Then
@@ -670,88 +679,107 @@ Func Game()
 		ReplayRecData(4, $g_gChange) ; Start cell len
 	EndIf
 
+	$g_Pause = False ;.0116
 	$g_iTickCnt = 0
 	$g_hTick = TimerInit()
 	Do ;game Loop
 		Tick()
-		$g_iTickCnt += 1
 
 		$nMsg = GUIGetMsg()
 		If $nMsg = $L_idEsc Then
 			ExitLoop
 		EndIf
 
-		If $g_Replay = $s_ReplayPlay Then
-
-			$a = GetReplayPlay(2)
-			If $a[0] Then
-				$g_dirX = $a[3]
-				$g_dirY = $a[4]
-				$g_turnNo = $a[5]
+		If $g_Pause Then ;Pause 0.116
+			If $nMsg = $L_idPause Then
+				Do
+				Until GUIGetMsg() <> $L_idPause
+				$g_Pause = False
 			EndIf
-			; ReplayRecData(2, $g_dirX, $g_dirY, $g_turnNo)
 		Else
 
-			If $nMsg > 0 Then
-				Switch $nMsg
+			$g_iTickCnt += 1 ; Must be in the unpause loop
+			If $g_Replay = $s_ReplayPlay Then
 
-					Case $L_idLeft
-						Do
-						Until GUIGetMsg() <> $L_idLeft
-						$g_turnNo = 1
-						$g_dirX = -1
-						$g_dirY = 0
-
-					Case $L_idRight
-						Do
-						Until GUIGetMsg() <> $L_idRight
-						$g_turnNo = 2
-						$g_dirX = 1
-						$g_dirY = 0
-
-					Case $L_idUp
-
-						Do
-						Until GUIGetMsg() <> $L_idUp
-						$g_turnNo = 3
-						$g_dirX = 0
-						$g_dirY = -1
-
-					Case $L_idDown
-						Do
-						Until GUIGetMsg() <> $L_idDown
-						$g_turnNo = 4
-						$g_dirX = 0
-						$g_dirY = 1
-
-				EndSwitch
-				ReplayRecData(2, $g_dirX, $g_dirY, $g_turnNo)
-
-			Else ;If $nMsg > 0 Then
-				Do
-				Until GUIGetMsg() = 0
-				If $g_dirX = 0 And $g_dirY = 0 Then
-					$g_iTickCnt = 0
-					ContinueLoop
+				$a = GetReplayPlay(2)
+				If $a[0] Then
+					$g_dirX = $a[3]
+					$g_dirY = $a[4]
+					$g_turnNo = $a[5]
 				EndIf
-			EndIf ;If $nMsg > 0 Then
+				; ReplayRecData(2, $g_dirX, $g_dirY, $g_turnNo)
+			Else
 
-		EndIf ;Replay if
+				If $nMsg > 0 Then
+					Switch $nMsg
 
-		If $g_turnNo <> $g_turnLast Then
-			$g_turnLast = $g_turnNo
-			$g_ScoreTurn += 1
-			$g_Turns += 1
+						Case $L_idLeft
+							Do
+							Until GUIGetMsg() <> $L_idLeft
+							$g_turnNo = 1
+							$g_dirX = -1
+							$g_dirY = 0
 
-		EndIf
+						Case $L_idRight
+							Do
+							Until GUIGetMsg() <> $L_idRight
+							$g_turnNo = 2
+							$g_dirX = 1
+							$g_dirY = 0
 
-		Switch $g_GameWhich
-			Case 1
-				Extra()
-			Case 0
-				Normal()
-		EndSwitch
+						Case $L_idUp
 
+							Do
+							Until GUIGetMsg() <> $L_idUp
+							$g_turnNo = 3
+							$g_dirX = 0
+							$g_dirY = -1
+
+						Case $L_idDown
+							Do
+							Until GUIGetMsg() <> $L_idDown
+							$g_turnNo = 4
+							$g_dirX = 0
+							$g_dirY = 1
+
+						Case $L_idPause
+							dataout("Pause")
+							Do
+							Until GUIGetMsg() <> $L_idPause
+							$g_Pause = True
+
+						Case $L_idHid
+							dataout("HID")
+
+					EndSwitch
+					ReplayRecData(2, $g_dirX, $g_dirY, $g_turnNo)
+
+				Else ;If $nMsg > 0 Then
+					Do
+					Until GUIGetMsg() = 0
+					If $g_dirX = 0 And $g_dirY = 0 Then
+						$g_iTickCnt = 0
+						ContinueLoop
+					EndIf
+				EndIf ;If $nMsg > 0 Then
+
+			EndIf ;Replay if
+
+			If $g_turnNo <> $g_turnLast Then
+				$g_turnLast = $g_turnNo
+				$g_ScoreTurn += 1
+				$g_Turns += 1
+
+			EndIf
+
+			Switch $g_GameWhich
+				Case 1
+					Extra()
+				Case 0
+					Normal()
+			EndSwitch
+
+		EndIf ;Pause
 	Until $g_endgame ;;game Loop
 	GUISetAccelerators(1, $g_ctrlBoard)     ; Turn off Accelerator
 
@@ -770,8 +798,8 @@ Func Game()
 
 EndFunc   ;==>Game
 #CS INFO
-	392835 V65 12/29/2019 7:10:02 PM V64 12/11/2019 11:54:15 AM V63 12/6/2019 2:47:59 PM V62 11/19/2019 1:09:35 PM
-#CE
+	427256 V66 12/30/2019 7:47:56 PM V65 12/29/2019 7:10:02 PM V64 12/11/2019 11:54:15 AM V63 12/6/2019 2:47:59 PM
+#CE INFO
 
 Func Tick() ;
 	Local $fdiff
@@ -822,6 +850,7 @@ Func Tick() ;
 			Sleep(1000)
 		WEnd
 
+		$g_Pause = False
 		Status(3, "Found Focus - Wait 2 seconds", 4)
 		Sleep(2000)
 		MouseMove(0, 0, 0)
@@ -831,7 +860,7 @@ Func Tick() ;
 	$g_hTick = TimerInit()
 EndFunc   ;==>Tick
 #CS INFO
-	66094 V17 11/4/2019 9:35:34 AM V16 8/25/2019 6:50:13 PM V15 8/22/2019 6:28:51 PM V14 7/14/2019 10:20:53 AM
+	67390 V18 12/30/2019 7:47:56 PM V17 11/4/2019 9:35:34 AM V16 8/25/2019 6:50:13 PM V15 8/22/2019 6:28:51 PM
 #CE INFO
 
 Func Extra()
@@ -1135,7 +1164,7 @@ Func Extra()
 EndFunc   ;==>Extra
 #CS INFO
 	449318 V54 12/29/2019 7:10:02 PM V53 12/22/2019 6:27:43 PM V52 12/15/2019 9:48:21 AM V51 12/11/2019 11:54:15 AM
-#CE
+#CE INFO
 
 Func Normal()
 	Local Static $LS_SnakeLenLast = 0
@@ -1297,7 +1326,7 @@ Func ShowRow($x, $y)
 EndFunc   ;==>ShowRow
 #CS INFO
 	15243 V4 12/29/2019 7:10:02 PM V3 11/19/2019 1:09:35 PM V2 6/24/2019 11:22:57 PM V1 6/16/2019 10:16:04 AM
-#CE
+#CE INFO
 
 Func Status($status, $string, $color)
 	Local $c
@@ -1425,7 +1454,7 @@ Func DoubleBack($dirx, $diry)
 EndFunc   ;==>DoubleBack
 #CS INFO
 	78694 V6 12/29/2019 7:10:02 PM V5 12/10/2019 8:29:16 PM V4 11/21/2019 3:52:08 PM V3 8/25/2019 6:50:13 PM
-#CE
+#CE INFO
 
 Func PrevNext($x, $y) ;New value
 	Local $x_prv, $y_prv
@@ -1960,7 +1989,7 @@ Func StartForm()
 
 	Local $Edit1 = GUICtrlCreateEdit("", 20, $b, 550, 230, $ES_READONLY)
 	GUICtrlSetFont($Edit1, 10, 400, 0, "Arial")
-	GUICtrlSetData($Edit1, "Press ESC to quit." & @CRLF, 1)
+	GUICtrlSetData($Edit1, "Press Q to quit. Press P to Pause.  Press H to Hid game (not working)" & @CRLF, 1)
 	GUICtrlSetData($Edit1, @CRLF, 1)
 	GUICtrlSetData($Edit1, "If you lose Focus or Minimize the game, it will PAUSE" & @CRLF, 1)
 	GUICtrlSetData($Edit1, @CRLF, 1)
@@ -2083,8 +2112,8 @@ Func StartForm()
 
 EndFunc   ;==>StartForm
 #CS INFO
-	358119 V43 12/29/2019 7:10:02 PM V42 12/27/2019 1:22:40 AM V41 12/11/2019 11:54:15 AM V40 11/6/2019 6:00:26 PM
-#CE
+	362067 V44 12/30/2019 7:47:56 PM V43 12/29/2019 7:10:02 PM V42 12/27/2019 1:22:40 AM V41 12/11/2019 11:54:15 AM
+#CE INFO
 
 Func Settings()
 	Local $y
@@ -2169,18 +2198,22 @@ Func ScreenSize()
 				IniWrite($s_ini, "General", "SizeCell", $g_Size)
 				Sleep(500)
 
-				If @Compiled Then
-					Run(@ScriptFullPath)
-					Exit
-				Else
-					Pause("Compile it would restart the program")
-				EndIf
-				Exit
+				GUIDelete($g_ctrlBoard)
+				$g_ctrlBoard = -1
+
+				; changed 0.116
+				;If @Compiled Then
+				;	Run(@ScriptFullPath)
+				;	Exit
+				;Else
+				;	Pause("Compile it would restart the program")
+				;EndIf
+				;Exit
 			EndIf
 	EndSelect
 EndFunc   ;==>ScreenSize
 #CS INFO
-	85600 V5 10/20/2019 1:07:26 AM V4 8/25/2019 6:50:13 PM V3 8/18/2019 11:15:59 PM V2 8/16/2019 8:51:46 AM
+	90410 V6 12/30/2019 7:47:56 PM V5 10/20/2019 1:07:26 AM V4 8/25/2019 6:50:13 PM V3 8/18/2019 11:15:59 PM
 #CE INFO
 
 ; Read INI setting
@@ -2247,7 +2280,7 @@ Func PoopRemove()
 EndFunc   ;==>PoopRemove
 #CS INFO
 	54916 V7 12/29/2019 7:10:02 PM V6 12/15/2019 9:48:21 AM V5 11/19/2019 1:09:35 PM V4 10/20/2019 12:46:58 AM
-#CE
+#CE INFO
 
 ;Add poop array: Poop will replace food once this loction is empty
 Func PoopAdd($x, $y, $delay = $s_PoopSize / 4 + Random(0, Ceiling($s_PoopSize / 3), 1))
@@ -2281,7 +2314,7 @@ Func PoopAdd($x, $y, $delay = $s_PoopSize / 4 + Random(0, Ceiling($s_PoopSize / 
 EndFunc   ;==>PoopAdd
 #CS INFO
 	46464 V9 12/29/2019 7:10:02 PM V8 12/15/2019 9:48:21 AM V7 11/19/2019 1:09:35 PM V6 10/24/2019 11:03:40 AM
-#CE
+#CE INFO
 
 ;0 flag, 1 x, 2 y, 3 cnt down
 ;flag
@@ -2549,7 +2582,8 @@ Func About()
 	$FormAbout = GUICreate("Snake19 - About", 615, 430, -1, -1, $ws_popup + $ws_caption)
 ;~+~+
 	;$Message &= "|
-	$Message = "0.115 29 Dec 2019 Color changes. Change layout. Done"
+	$Message = "0.116 30 Dec 2019 Pause during game by press P, Quit press Q. Fix Change Colors"
+	$Message &= "|0.115 29 Dec 2019 Color changes. Change layout. Done"
 	$Message &= "|0.114 26 Dec 2019  Compile different"
 	$Message &= "|0.113 22 Dec 2019 Bonus location"
 	$Message &= "|0.112 15 Dec 2019 Color changes.  Change layout more, not complete"
@@ -2634,8 +2668,8 @@ Func About()
 	GUIDelete($FormAbout)
 EndFunc   ;==>About
 #CS INFO
-	256521 V23 12/29/2019 7:10:02 PM V22 12/27/2019 1:22:40 AM V21 12/22/2019 6:27:43 PM V20 12/15/2019 9:48:21 AM
-#CE
+	263348 V24 12/30/2019 7:47:56 PM V23 12/29/2019 7:10:02 PM V22 12/27/2019 1:22:40 AM V21 12/22/2019 6:27:43 PM
+#CE INFO
 
 Func SetCellSide()
 	Pause("SetCellSide")
@@ -2791,7 +2825,7 @@ Func WallTrue()
 EndFunc   ;==>WallTrue
 #CS INFO
 	146890 V11 12/29/2019 7:10:02 PM V10 12/27/2019 1:22:40 AM V9 12/11/2019 11:54:15 AM V8 12/10/2019 8:29:16 PM
-#CE
+#CE INFO
 
 Func PWedge($xy, $offset, $far, ByRef $foundEdge)     ; 2nd output $flag True  pass edge and return not valid
 	$foundEdge = False
@@ -2813,7 +2847,7 @@ Func PWedge($xy, $offset, $far, ByRef $foundEdge)     ; 2nd output $flag True  p
 EndFunc   ;==>PWedge
 #CS INFO
 	24583 V4 12/29/2019 7:10:02 PM V3 12/11/2019 11:54:15 AM V2 12/6/2019 2:47:59 PM V1 10/18/2019 9:17:20 AM
-#CE
+#CE INFO
 
 Func PassWallDefault()
 	$g_PWchance[0] = -2
@@ -2970,7 +3004,7 @@ Func GetReplayPlay($Expecting)
 EndFunc   ;==>GetReplayPlay
 #CS INFO
 	41384 V11 12/29/2019 7:10:02 PM V10 12/15/2019 9:48:21 AM V9 12/10/2019 8:29:16 PM V8 12/6/2019 2:47:59 PM
-#CE
+#CE INFO
 
 ;Check to see if the sum is inside the edge, return $nv if ok same, not ok then 0
 Func CkOutsideEdgeX($nv, $ov)
@@ -3009,6 +3043,7 @@ Func ChooseColor()
 	Local $r_what[8][7]
 	Local $ColorForm1
 	Local $SelectColor = 1
+	Local $L_bok
 	Local $B_Cancel, $B_OK, $B_Current, $B_Gold, $B_Green, $B_Change
 
 	$a = IniReadSection($s_ini, "Color")
@@ -3066,7 +3101,7 @@ Func ChooseColor()
 
 		EndSelect
 	Next
-	$ColorForm1 = GUICreate("Change Colors", 600, 500, -1, -1)
+	$ColorForm1 = GUICreate("Change Colors", 570, 220, -1, -1)
 
 	;Around colors  600-140 =460
 	$r_what[0][0] = GUICtrlCreateLabel("", 90, 40, 460, 70)
@@ -3118,14 +3153,18 @@ Func ChooseColor()
 
 	GUICtrlSetBkColor($r_what[$SelectColor][6], 0xFF0000)
 
-	$B_Change = GUICtrlCreateButton("Change", 48, 176, 65, 33)
+	$B_Change = GUICtrlCreateButton("Change", 90, 120, 80, 30)
 
-	$B_Current = GUICtrlCreateButton("Current Colors", 48, 312, 145, 57)
-	$B_Gold = GUICtrlCreateButton("Gold snake", 256, 312, 129, 65)
-	$B_Green = GUICtrlCreateButton("Green snake", 480, 304, 113, 65)
+	$a = 240
+	$B_Current = GUICtrlCreateButton("Current Colors", $a, 120, 80, 30)
+	$B_Gold = GUICtrlCreateButton("Gold snake", $a + 110, 120, 80, 30)
+	$B_Green = GUICtrlCreateButton("Green snake", $a + 220, 120, 80, 30)
 
-	$B_OK = GUICtrlCreateButton("Save", 168, 392, 137, 57)
-	$B_Cancel = GUICtrlCreateButton("Cancel", 392, 392, 113, 57)
+	$B_OK = GUICtrlCreateButton("Save", 90, 170, 80, 30)
+	$B_Cancel = GUICtrlCreateButton("Cancel", $a + 220, 170, 80, 30)
+
+	GUICtrlSetState($B_OK, $GUI_HIDE)
+	$L_bok = False
 
 	GUISetState(@SW_SHOW)
 
@@ -3142,6 +3181,27 @@ Func ChooseColor()
 					ExitLoop
 				EndIf
 			Next
+
+			;Show/Hid OK - Save button
+			$a = False
+			For $x = 1 To 7
+				If $r_what[$x][4] <> $r_what[$x][5] Then
+					$a = True
+					If Not $L_bok Then
+						GUICtrlSetState($B_OK, $GUI_SHOW)
+						dataout("OK Show")
+						$L_bok = True
+					EndIf
+					ExitLoop
+				EndIf
+			Next
+			If Not $a Then
+				If $L_bok Then
+					dataout("OK Hide")
+					GUICtrlSetState($B_OK, $GUI_HIDE)
+					$L_bok = False
+				EndIf
+			EndIf
 
 			Switch $nMsg
 				Case $B_Change
@@ -3165,20 +3225,6 @@ Func ChooseColor()
 					If $flag Then
 						GUIDelete($g_ctrlBoard)
 						$g_ctrlBoard = -1
-
-						;For $y = 0 To $g_boardy - 1
-						;	For $x = 0 To $g_boardx - 1
-						;		Select
-						;			Case $x = 0 Or $x = $g_boardx - 1 Or $y = 0 Or $y = $g_boardy - 1
-						;				$Map[$what][$x][$y] = $WALL ;outside edge
-						;					GUICtrlSetImage($Map[$ctrl][$x][$y], $cEDGE)
-						;			Case Else
-						;				$Map[$what][$x][$y] = $EMPTY ; empty
-						;				GUICtrlSetImage($Map[$ctrl][$x][$y], $cEMPTY)
-						;		EndSelect
-
-						;	Next
-						;Next
 					EndIf
 					ExitLoop
 
@@ -3211,8 +3257,8 @@ Func ChooseColor()
 
 EndFunc   ;==>ChooseColor
 #CS INFO
-	357992 V2 12/29/2019 7:10:02 PM V1 12/15/2019 9:48:21 AM
-#CE
+	362707 V3 12/30/2019 7:47:56 PM V2 12/29/2019 7:10:02 PM V1 12/15/2019 9:48:21 AM
+#CE INFO
 
 ;Main
 ;ChooseColor()
@@ -3221,4 +3267,4 @@ Main()
 
 Exit
 
-;~T ScriptFunc.exe V0.54a 15 May 2019 - 12/29/2019 7:10:02 PM
+;~T ScriptFunc.exe V0.54a 15 May 2019 - 12/30/2019 7:47:56 PM
