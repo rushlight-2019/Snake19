@@ -5,7 +5,7 @@ AutoItSetOption("MustDeclareVars", 1)
 ;Global Static $MESSAGE =  False   ;Pause will still work in script  No DataOut
 
 ; Must be Declared before _Prf_startup   ~+~+
-Global $ver = "0.116 30 Dec 2019 Pause during game by press P, Quit press Q. Fix Change Colors"
+Global $ver = "0.117 31 Dec 2019 Hid, Pause now will work in Replay"
 ;   Hid game during game by pressing H
 
 Global $ini_ver = "10" ;Done
@@ -15,7 +15,7 @@ Global $ini_ver = "10" ;Done
 #include "R:\!Autoit\Blank\_prf_startup.au3"
 
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
-#AutoIt3Wrapper_Res_Fileversion=0.1.1.6
+#AutoIt3Wrapper_Res_Fileversion=0.1.1.7
 #AutoIt3Wrapper_Icon=R:\!Autoit\Ico\prf.ico
 #AutoIt3Wrapper_Res_Description=Another snake game
 #AutoIt3Wrapper_Res_LegalCopyright=© Phillip Forrestal 2019
@@ -94,6 +94,7 @@ Global $ini_ver = "10" ;Done
 
 	Version
 ;~+~+
+	0.117 31 Dec 2019 Hid, Pause now will work in Replay
 	0.116 30 Dec 2019 Pause during game by press P, Quit press Q. Fix Change Colors
 	0.115 29 Dec 2019 Color changes. Change layout. Done
 	0.114 26 Dec 2019  Compile different"
@@ -686,17 +687,29 @@ Func Game()
 		Tick()
 
 		$nMsg = GUIGetMsg()
+
 		If $nMsg = $L_idEsc Then
 			ExitLoop
 		EndIf
 
-		If $g_Pause Then ;Pause 0.116
+		If $nMsg = $L_idHid Then
+			dataout("HID")
+		EndIf
+
+		If $g_Pause Then             ;Pause 0.116
 			If $nMsg = $L_idPause Then
 				Do
 				Until GUIGetMsg() <> $L_idPause
 				$g_Pause = False
 			EndIf
 		Else
+
+			If $nMsg = $L_idPause Then
+				dataout("Pause")
+				Do
+				Until GUIGetMsg() <> $L_idPause
+				$g_Pause = True
+			EndIf
 
 			$g_iTickCnt += 1 ; Must be in the unpause loop
 			If $g_Replay = $s_ReplayPlay Then
@@ -742,14 +755,14 @@ Func Game()
 							$g_dirX = 0
 							$g_dirY = 1
 
-						Case $L_idPause
-							dataout("Pause")
-							Do
-							Until GUIGetMsg() <> $L_idPause
-							$g_Pause = True
+							;				Case $L_idPause
+							;					dataout("Pause")
+							;					Do
+							;					Until GUIGetMsg() <> $L_idPause
+							;					$g_Pause = True
 
-						Case $L_idHid
-							dataout("HID")
+							;				Case $L_idHid
+							;					dataout("HID")
 
 					EndSwitch
 					ReplayRecData(2, $g_dirX, $g_dirY, $g_turnNo)
@@ -788,8 +801,8 @@ Func Game()
 	EndIf
 	If $g_Replay = $s_ReplayPlay Then
 		$a = GetReplayPlay(5)
-		Dataout("REC DONE ____-----------------------????----------------")
-		Pause()
+		Dataout("REC DONE ____-----------------------Replay Quit-------------")
+
 	Else
 		ReplayRecData(5) ; end of game
 		Dataout("REC DONE ____-----End of Game----------------------------------")
@@ -798,8 +811,8 @@ Func Game()
 
 EndFunc   ;==>Game
 #CS INFO
-	427256 V66 12/30/2019 7:47:56 PM V65 12/29/2019 7:10:02 PM V64 12/11/2019 11:54:15 AM V63 12/6/2019 2:47:59 PM
-#CE INFO
+	438792 V67 12/31/2019 8:53:39 PM V66 12/30/2019 7:47:56 PM V65 12/29/2019 7:10:02 PM V64 12/11/2019 11:54:15 AM
+#CE
 
 Func Tick() ;
 	Local $fdiff
@@ -2582,7 +2595,8 @@ Func About()
 	$FormAbout = GUICreate("Snake19 - About", 615, 430, -1, -1, $ws_popup + $ws_caption)
 ;~+~+
 	;$Message &= "|
-	$Message = "0.116 30 Dec 2019 Pause during game by press P, Quit press Q. Fix Change Colors"
+	$Message = "0.117 31 Dec 2019 Hid, Pause now will work in Replay"
+	$Message &= "|0.116 30 Dec 2019 Pause during game by press P, Quit press Q. Fix Change Colors"
 	$Message &= "|0.115 29 Dec 2019 Color changes. Change layout. Done"
 	$Message &= "|0.114 26 Dec 2019  Compile different"
 	$Message &= "|0.113 22 Dec 2019 Bonus location"
@@ -2668,8 +2682,8 @@ Func About()
 	GUIDelete($FormAbout)
 EndFunc   ;==>About
 #CS INFO
-	263348 V24 12/30/2019 7:47:56 PM V23 12/29/2019 7:10:02 PM V22 12/27/2019 1:22:40 AM V21 12/22/2019 6:27:43 PM
-#CE INFO
+	263449 V25 12/31/2019 8:53:39 PM V24 12/30/2019 7:47:56 PM V23 12/29/2019 7:10:02 PM V22 12/27/2019 1:22:40 AM
+#CE
 
 Func SetCellSide()
 	Pause("SetCellSide")
@@ -3267,4 +3281,4 @@ Main()
 
 Exit
 
-;~T ScriptFunc.exe V0.54a 15 May 2019 - 12/30/2019 7:47:56 PM
+;~T ScriptFunc.exe V0.54a 15 May 2019 - 12/31/2019 8:53:39 PM
