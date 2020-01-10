@@ -5,8 +5,11 @@ AutoItSetOption("MustDeclareVars", 1)
 ;Global Static $MESSAGE =  False   ;Pause will still work in script  No DataOut
 
 ; Must be Declared before _Prf_startup   ~+~+
-Global $ver = "0.117 31 Dec 2019 Hid, Pause now will work in Replay"
-;   Hid game during game by pressing H
+Global $ver = "0.121 10 Jan 2020 make rest of forms open on Game center"
+; Need to keep the last Game Board location center.  If not set then center on screen (@DesktopWidth/2, @DesktopHeight/2)
+;1. Start main menu centred on that location
+
+;Hid game during game by pressing H
 
 Global $ini_ver = "10" ;Done
 
@@ -15,10 +18,10 @@ Global $ini_ver = "10" ;Done
 #include "R:\!Autoit\Blank\_prf_startup.au3"
 
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
-#AutoIt3Wrapper_Res_Fileversion=0.1.1.7
+#AutoIt3Wrapper_Res_Fileversion=0.1.2.1
 #AutoIt3Wrapper_Icon=R:\!Autoit\Ico\prf.ico
 #AutoIt3Wrapper_Res_Description=Another snake game
-#AutoIt3Wrapper_Res_LegalCopyright=© Phillip Forrestal 2019
+#AutoIt3Wrapper_Res_LegalCopyright=© Phillip Forrestal 2019-2020
 #AutoIt3Wrapper_Res_Field=Compile date|%longdate% %time%
 #AutoIt3Wrapper_Res_Field=AutoIt Version|%AutoItVer%
 #AutoIt3Wrapper_Res_Language=1033
@@ -46,7 +49,7 @@ Global $ini_ver = "10" ;Done
 #cs
 	MIT License
 
-	Copyright (c) 2019 Phillip Forrestal
+	Copyright (c) 2020 Phillip Forrestal
 
 	Permission is hereby granted, free of charge, to any person obtaining a copy
 	of this software and associated documentation files (the "Software"), to deal
@@ -94,6 +97,10 @@ Global $ini_ver = "10" ;Done
 
 	Version
 ;~+~+
+	0.121 10 Jan 2020 make rest of forms open on Game center
+	0.120 10 Jan 2020 make forms and game open saved or true center Main and Game done
+	0.119 5 Jan 2020 Remember where start open last, make forms and game open there
+	0.118 5 Jan 2020 Hid games menus.  Need to rework them
 	0.117 31 Dec 2019 Hid, Pause now will work in Replay
 	0.116 30 Dec 2019 Pause during game by press P, Quit press Q. Fix Change Colors
 	0.115 29 Dec 2019 Color changes. Change layout. Done
@@ -287,12 +294,39 @@ Static $cPOOP = $g_data & "\Poop.jpg"
 Static $MaxLost = 7 ;   5 to 10
 
 ;Global
+;Act on forms: All need to be global
+; GUIDelete($)   GUICreate("
+Global $g_FormLeft
+Global $g_FormTop
+
+;_Center($W, $H)   ;xw, yh   , $g_FormLeft, $g_FormTop)
+Global $g_GameBdCenterYH
+Global $g_GameBdCenterXW
+Global $g_ctrlBoard
+Global $g_FormStart
+Global $g_FormReplay
+Global $g_FormGameHiScore
+Global $g_FormColor
+Global $g_FormAbout
+Global $g_FormSetting
+Global $g_FormSpeed
+Global $g_PleaseWait
+
+$g_ctrlBoard = -1
+$g_FormStart = -1
+$g_FormReplay = -1
+$g_FormGameHiScore = -1
+$g_FormColor = -1
+$g_FormAbout = -1
+$g_FormSetting = -1
+$g_FormSpeed = -1
+$g_PleaseWait = -1
+
 Global $g_first = True
 Global $g_sx = 40 ;50
 Global $g_sy = 30 ;40
 Global $g_boardx = $g_sx + 2
 Global $g_boardy = $g_sy + 2
-Global $g_ctrlBoard = -1
 
 Global $g_Size = 22 ; max?20 ;min = 10
 Global $g_sizeDef = $g_Size
@@ -405,10 +439,6 @@ Global $g_poop[$s_PoopSize + 1][4]
 ;0.84
 Global $g_pooprnd = True
 
-;0.92
-Global $g_StartForm
-Global $g_SettingForm
-
 ;0.98
 Global $g_iReplaySz = 6000
 Global $g_aReplay[$g_iReplaySz + 3]
@@ -461,11 +491,12 @@ Func Main()
 		Exit
 	EndIf
 
-	;0.86
 	$g_TickTime = IniRead($s_ini, "General", "Speed", 150)
 
 	;1.01
 	$g_GameWhich = IniRead($s_ini, "General", "Game", 1)
+
+	IniCenterGameScreen(False)
 
 	;Check to see if color files exist, if not create them.
 	CheckJpg()
@@ -514,7 +545,7 @@ Func Main()
 
 EndFunc   ;==>Main
 #CS INFO
-	126381 V39 12/11/2019 11:54:15 AM V38 11/2/2019 6:19:14 PM V37 11/1/2019 7:15:17 PM V36 10/31/2019 6:10:24 PM
+	128573 V40 1/9/2020 9:18:30 PM V39 12/11/2019 11:54:15 AM V38 11/2/2019 6:19:14 PM V37 11/1/2019 7:15:17 PM
 #CE INFO
 
 Func Game()
@@ -538,10 +569,11 @@ Func Game()
 
 		$b = $g_Font * 2
 		SayClearBoard(True)
+		_Center($g_boardx * $g_Size, $g_boardy * $g_Size + $b + 2)
+		$g_ctrlBoard = GUICreate("Snake19 - " & $ver, $g_boardx * $g_Size, $g_boardy * $g_Size + $b + 2, $g_FormLeft, $g_FormTop, $ws_popup + $ws_caption)
+		GUISetState(@SW_SHOW, $g_ctrlBoard)
 
-		$g_ctrlBoard = GUICreate("Snake19 - " & $ver, $g_boardx * $g_Size, $g_boardy * $g_Size + $b + 2, -1, -1, $ws_popup + $ws_caption)
-
-		MouseMove(0, 0, 0)
+		;MouseMove(0, 0, 0)
 
 		$L_idDown = GUICtrlCreateDummy()
 		$L_idRight = GUICtrlCreateDummy()
@@ -550,8 +582,6 @@ Func Game()
 		$L_idEsc = GUICtrlCreateDummy()
 		$L_idPause = GUICtrlCreateDummy()
 		$L_idHid = GUICtrlCreateDummy()
-
-		GUISetState(@SW_SHOW, $g_ctrlBoard)
 
 		For $y = 0 To $g_boardy - 1
 			For $x = 0 To $g_boardx - 1
@@ -667,7 +697,7 @@ Func Game()
 			$g_Turns = -1 ; The way it start with 1 turn on start. To fix start with +1
 
 	EndSwitch
-;~~
+
 	Local $aAccelKey2[][] = [["{RIGHT}", $L_idRight], ["{LEFT}", $L_idLeft], ["{DOWN}", $L_idDown], ["{UP}", $L_idUp], ["q", $L_idEsc], ["p", $L_idPause], ["h", $L_idHid]]
 	GUISetAccelerators($aAccelKey2, $g_ctrlBoard)
 	MouseMove(0, 0, 0)
@@ -811,8 +841,8 @@ Func Game()
 
 EndFunc   ;==>Game
 #CS INFO
-	438792 V67 12/31/2019 8:53:39 PM V66 12/30/2019 7:47:56 PM V65 12/29/2019 7:10:02 PM V64 12/11/2019 11:54:15 AM
-#CE
+	444552 V69 1/10/2020 8:46:50 AM V68 1/9/2020 9:18:30 PM V67 12/31/2019 8:53:39 PM V66 12/30/2019 7:47:56 PM
+#CE INFO
 
 Func Tick() ;
 	Local $fdiff
@@ -887,7 +917,7 @@ Func Extra()
 	EndIf
 
 	;EXTRA
-;~~~ CHECK [] to make sure it not out of range ~~~
+;~-~ CHECK [] to make sure it not out of range ~-~
 	$x_new = CkOutsideEdgeX($x_new, $g_dirX)
 	$y_new = CkOutsideEdgeY($y_new, $g_dirX)
 
@@ -1176,7 +1206,7 @@ Func Extra()
 
 EndFunc   ;==>Extra
 #CS INFO
-	449318 V54 12/29/2019 7:10:02 PM V53 12/22/2019 6:27:43 PM V52 12/15/2019 9:48:21 AM V51 12/11/2019 11:54:15 AM
+	449156 V55 1/9/2020 9:18:30 PM V54 12/29/2019 7:10:02 PM V53 12/22/2019 6:27:43 PM V52 12/15/2019 9:48:21 AM
 #CE INFO
 
 Func Normal()
@@ -1735,11 +1765,11 @@ EndFunc   ;==>DisplayHiScore
 #CE INFO
 
 Func UpDateHiScore()
-	Local $Form1
 
 	If $g_aHiScore[10][0] < $g_GameScore Then
-		;		MsgBox($MB_TOPMOST, "High Score", "New High Score: " & $g_iScore, 5)
-		$Form1 = GUICreate("", 250, 100, -1, -1, $WS_DLGFRAME, BitOR($WS_EX_TOPMOST, $WS_EX_STATICEDGE))
+
+		_Center(250, 100)   ;xw, yh
+		$g_FormGameHiScore = GUICreate("", 250, 100, $g_FormLeft, $g_FormTop, $WS_DLGFRAME, BitOR($WS_EX_TOPMOST, $WS_EX_STATICEDGE))
 		GUICtrlCreateLabel("New High Score: " & $g_GameScore, 25, 30, 200, 25)
 		GUICtrlSetFont(-1, 12, 400, 0, "Arial")
 		GUISetState(@SW_SHOW)
@@ -1757,20 +1787,24 @@ Func UpDateHiScore()
 		_ArraySort($g_aHiScore, 1, 1, 11)
 		SaveHiScore()
 		Sleep(4000)
-		GUIDelete($Form1)
+		GUIDelete($g_FormGameHiScore)
+		$g_FormGameHiScore = 1
 		$g_GameScore = 0
 
 	ElseIf $g_GameScore > 0 Then
-		$Form1 = GUICreate("", 250, 100, -1, -1, $WS_DLGFRAME, BitOR($WS_EX_TOPMOST, $WS_EX_STATICEDGE))
+		_Center(250, 100)   ;xw, yh
+		$g_FormGameHiScore = GUICreate("", 250, 100, $g_FormLeft, $g_FormTop, $WS_DLGFRAME, BitOR($WS_EX_TOPMOST, $WS_EX_STATICEDGE))
 		GUICtrlCreateLabel("Score: " & $g_GameScore, 25, 30, 200, 25)
 		GUICtrlSetFont(-1, 12, 400, 0, "Arial")
 		GUISetState(@SW_SHOW)
 		Sleep(5000)
-		GUIDelete($Form1)
+		GUIDelete($g_FormGameHiScore)
+		$g_FormGameHiScore = 1
+
 	EndIf
 EndFunc   ;==>UpDateHiScore
 #CS INFO
-	74544 V15 11/4/2019 9:35:34 AM V14 7/24/2019 11:20:48 PM V13 7/18/2019 11:32:28 PM 123V12 7/13/2019 7:36:11 PM
+	84080 V17 1/10/2020 9:27:34 AM V16 1/9/2020 9:18:30 PM V15 11/4/2019 9:35:34 AM V14 7/24/2019 11:20:48 PM
 #CE INFO
 
 Func SaveHiScore()
@@ -1875,18 +1909,15 @@ EndFunc   ;==>ReadHiScore
 ; to remove Run again
 Func SayClearBoard($OnOff = False, $Mode = True)     ; $OnOff = True/False
 
-	Local Static $PleaseWait = 0
 	Local $x, $y, $aPos
 
 	If $OnOff Then
+		_Center(186, 92)   ;xw, yh
 		If $Mode Then
-			$PleaseWait = GUICreate("", 186, 92, -1, -1, -1, BitOR($WS_EX_TOPMOST, $WS_EX_WINDOWEDGE))
+			$g_PleaseWait = GUICreate("", 186, 92, $g_FormLeft, $g_FormTop, -1, BitOR($WS_EX_TOPMOST, $WS_EX_WINDOWEDGE))
 			GUICtrlCreateLabel("Generating  Board", 8, 8, 170, 25, $SS_CENTER)
 		Else
-			$aPos = WinGetPos($g_ctrlBoard)     ;786/708
-			$x = $aPos[0] + ((786 - 186) / 2)
-			$y = $aPos[1] + ((708 - 92) / 2)
-			$PleaseWait = GUICreate("", 186, 92, $x, $y, -1, BitOR($WS_EX_TOPMOST, $WS_EX_WINDOWEDGE))
+			$g_PleaseWait = GUICreate("", 186, 92, $g_FormLeft, $g_FormTop, -1, BitOR($WS_EX_TOPMOST, $WS_EX_WINDOWEDGE))
 			GUICtrlCreateLabel("Clearing Board", 8, 8, 170, 25, $SS_CENTER)
 		EndIf
 		GUICtrlSetFont(-1, 12, 800, 0, "Arial Black")
@@ -1895,16 +1926,16 @@ Func SayClearBoard($OnOff = False, $Mode = True)     ; $OnOff = True/False
 		GUICtrlSetFont(-1, 12, 400, 0, "Arial")
 		GUISetState(@SW_SHOW)
 	Else
-		If $PleaseWait <> 0 Then
-			GUIDelete($PleaseWait)
-			$PleaseWait = 0
+		If $g_PleaseWait <> -1 Then
+			GUIDelete($g_PleaseWait)
+			$g_PleaseWait = -1
 		EndIf
 
 	EndIf
 
 EndFunc   ;==>SayClearBoard
 #CS INFO
-	59050 V1 6/27/2019 5:39:48 PM
+	56862 V2 1/10/2020 9:27:34 AM V1 6/27/2019 5:39:48 PM
 #CE INFO
 
 ;Check to see if color files exist, if not create them.
@@ -1956,69 +1987,69 @@ Func StartForm()
 
 	Local $sMainMenuTitle = "Snake19 - Main Menu"
 
-	If $g_ctrlBoard = -1 Then
-		$g_StartForm = GUICreate($sMainMenuTitle, 600, 600, -1, -1)
+	If $g_FormStart = -1 Then
+		Dataout("Create FormStart")
 	Else
-		$gameLoc = WinGetPos($g_ctrlBoard)     ;x=0, y=1
-
-		$x = ($gameLoc[2]) / 2 - 300 + $gameLoc[0]
-		$y = ($gameLoc[3]) / 2 - 300 + $gameLoc[1]
-
-		$g_StartForm = GUICreate($sMainMenuTitle, 600, 600, $x, $y)     ;  ,-1 -1, $g_ctrlBoard)  adding this and the program crashes.
+		Dataout("Reuse FormStart")
 	EndIf
 
-	GUICtrlCreateLabel("Snake 19", 0, 0, 600, 24, $SS_CENTER)
-	GUICtrlSetFont(-1, 12, 800, 0, "Arial")
+	If $g_FormStart = -1 Then
+		_Center(600, 600)
+		$g_FormStart = GUICreate($sMainMenuTitle, 600, 600, $g_FormLeft, $g_FormTop)
 
-	GUICtrlCreateLabel($ver, 0, 18, 600, 20, $SS_CENTER)
-	GUICtrlSetFont(-1, 8, 400, 0, "Arial")
+		GUICtrlCreateLabel("Snake 19", 0, 0, 600, 24, $SS_CENTER)
+		GUICtrlSetFont(-1, 12, 800, 0, "Arial")
 
-	GUICtrlCreateLabel("Type of Game", 0, 32, 600, 20, $SS_CENTER)
-	GUICtrlSetFont(-1, 10, 900, 0, "Arial")
+		GUICtrlCreateLabel($ver, 0, 18, 600, 20, $SS_CENTER)
+		GUICtrlSetFont(-1, 8, 400, 0, "Arial")
 
-	GUIStartGroup()
-	$Radio1 = GUICtrlCreateRadio("Normal Snake", $a, $b + 20, $c, 20)
-	GUICtrlSetFont(-1, 10, 800, 0, "Arial")
-	$Radio2 = GUICtrlCreateRadio("My Snake", $a, $b, $c, 20)
-	GUICtrlSetFont(-1, 10, 800, 0, "Arial")
+		GUICtrlCreateLabel("Type of Game", 0, 32, 600, 20, $SS_CENTER)
+		GUICtrlSetFont(-1, 10, 900, 0, "Arial")
 
-	$b += 40
+		GUIStartGroup()
+		$Radio1 = GUICtrlCreateRadio("Normal Snake", $a, $b + 20, $c, 20)
+		GUICtrlSetFont(-1, 10, 800, 0, "Arial")
+		$Radio2 = GUICtrlCreateRadio("My Snake", $a, $b, $c, 20)
+		GUICtrlSetFont(-1, 10, 800, 0, "Arial")
 
-	$g_HiScoreWho = GUICtrlCreateLabel("High Score - My Snake", $a, $b, $c + 60, 24)     ; Height is twice font size
-	GUICtrlSetFont(-1, 10, 400, 0, "Arial")
-	$a = 50
-	$b += 20
+		$b += 40
 
-	For $x = 0 To 9
-		$g_HiScore[$x] = GUICtrlCreateLabel(String($x + 1), $a, $b, 500, 24)     ; Height is twice font size
-		GUICtrlSetFont($g_HiScore[$x], 10, 400, 0, "Arial")
+		$g_HiScoreWho = GUICtrlCreateLabel("High Score - My Snake", $a, $b, $c + 60, 24) ; Height is twice font size
+		GUICtrlSetFont(-1, 10, 400, 0, "Arial")
+		$a = 50
 		$b += 20
-	Next
 
-	$b_setting = GUICtrlCreateButton("Setting", 50, 550, 75, 35)
-	$b_about = GUICtrlCreateButton("About", 500, 550, 75, 35)
-	$gb_replay = GUICtrlCreateButton("Replay", 270 + 75 + 25, 550, 75, 35)
-	$b_start = GUICtrlCreateButton("GO", 270, 550, 75, 35)
+		For $x = 0 To 9
+			$g_HiScore[$x] = GUICtrlCreateLabel(String($x + 1), $a, $b, 500, 24) ; Height is twice font size
+			GUICtrlSetFont($g_HiScore[$x], 10, 400, 0, "Arial")
+			$b += 20
+		Next
 
-	Local $Edit1 = GUICtrlCreateEdit("", 20, $b, 550, 230, $ES_READONLY)
-	GUICtrlSetFont($Edit1, 10, 400, 0, "Arial")
-	GUICtrlSetData($Edit1, "Press Q to quit. Press P to Pause.  Press H to Hid game (not working)" & @CRLF, 1)
-	GUICtrlSetData($Edit1, @CRLF, 1)
-	GUICtrlSetData($Edit1, "If you lose Focus or Minimize the game, it will PAUSE" & @CRLF, 1)
-	GUICtrlSetData($Edit1, @CRLF, 1)
+		$b_setting = GUICtrlCreateButton("Setting", 50, 550, 75, 35)
+		$b_about = GUICtrlCreateButton("About", 500, 550, 75, 35)
+		$gb_replay = GUICtrlCreateButton("Replay", 270 + 75 + 25, 550, 75, 35)
+		$b_start = GUICtrlCreateButton("GO", 270, 550, 75, 35)
 
-	GUICtrlSetData($Edit1, "Normal Snake" & @CRLF, 1)
-	GUICtrlSetData($Edit1, "  Food increase Snake by 1.  Score +1 per food pickup.  There is a bonus." & @CRLF, 1)
-	GUICtrlSetData($Edit1, @CRLF, 1)
+		Local $Edit1 = GUICtrlCreateEdit("", 20, $b, 550, 230, $ES_READONLY)
+		GUICtrlSetFont($Edit1, 10, 400, 0, "Arial")
+		GUICtrlSetData($Edit1, "Press Q to quit. Press P to Pause.  Press H to Hid game (not working)" & @CRLF, 1)
+		GUICtrlSetData($Edit1, @CRLF, 1)
+		GUICtrlSetData($Edit1, "If you lose Focus or Minimize the game, it will PAUSE" & @CRLF, 1)
+		GUICtrlSetData($Edit1, @CRLF, 1)
 
-	GUICtrlSetData($Edit1, "My Snake" & @CRLF, 1)
-	GUICtrlSetData($Edit1, "  Food increase Snake by 1.  A special food will get you more." & @CRLF, 1)
-	GUICtrlSetData($Edit1, @CRLF, 1)
-	GUICtrlSetData($Edit1, "My Snake Bonus:" & @CRLF, 1)
-	GUICtrlSetData($Edit1, " Snake can 'double back' on self. Pass through Wall to other side. But loose X cells." & @CRLF, 1)
-	GUICtrlSetData($Edit1, " Snake does not like to Turn so, so few turns and Food increase snake & score" & @CRLF, 1)
-	GUICtrlSetData($Edit1, "  Too many turns Snake gets shorter", 1)
+		GUICtrlSetData($Edit1, "Normal Snake" & @CRLF, 1)
+		GUICtrlSetData($Edit1, "  Food increase Snake by 1.  Score +1 per food pickup.  There is a bonus." & @CRLF, 1)
+		GUICtrlSetData($Edit1, @CRLF, 1)
 
+		GUICtrlSetData($Edit1, "My Snake" & @CRLF, 1)
+		GUICtrlSetData($Edit1, "  Food increase Snake by 1.  A special food will get you more." & @CRLF, 1)
+		GUICtrlSetData($Edit1, @CRLF, 1)
+		GUICtrlSetData($Edit1, "My Snake Bonus:" & @CRLF, 1)
+		GUICtrlSetData($Edit1, " Snake can 'double back' on self. Pass through Wall to other side. But loose X cells." & @CRLF, 1)
+		GUICtrlSetData($Edit1, " Snake does not like to Turn so, so few turns and Food increase snake & score" & @CRLF, 1)
+		GUICtrlSetData($Edit1, "  Too many turns Snake gets shorter", 1)
+
+	EndIf
 	GUISetState(@SW_SHOW)
 
 	;restored here because Replay will change it.
@@ -2033,16 +2064,19 @@ Func StartForm()
 	While 1
 		If WinGetTitle("[ACTIVE]") <> $sMainMenuTitle Then
 			Sleep(3000)
-			ControlFocus($g_StartForm, "", $b_start)
+			ControlFocus($g_FormStart, "", $b_start)
 		EndIf
 		$nMsg = GUIGetMsg()
 		Switch $nMsg
 			Case $GUI_EVENT_CLOSE
-				GUIDelete($g_StartForm)
+				IniCenterGameScreen()
+				GUIDelete($g_FormStart)
+				$g_FormStart = -1
 				Return 0
 
 			Case $b_about
-				GUIDelete($g_StartForm)
+				GUIDelete($g_FormStart)
+				$g_FormStart = -1
 				If $g_ctrlBoard <> -1 Then
 					GUISetState(@SW_DISABLE, $g_ctrlBoard)
 				EndIf
@@ -2052,7 +2086,8 @@ Func StartForm()
 				EndIf
 				Return 2
 			Case $b_setting
-				GUIDelete($g_StartForm)
+				GUIDelete($g_FormStart)
+				$g_FormStart = -1
 				If $g_ctrlBoard <> -1 Then
 					GUISetState(@SW_DISABLE, $g_ctrlBoard)
 				EndIf
@@ -2064,9 +2099,11 @@ Func StartForm()
 
 			Case $gb_replay
 
-				GUIDelete($g_StartForm)
+				GUIDelete($g_FormStart)
+				$g_FormStart = -1
 
-				Local $FormReplay = GUICreate("Replay Speed", 600, 200, -1, -1)
+				_Center(600, 200) ;xw, yh
+				$g_FormReplay = GUICreate("Replay Speed", 600, 200, $g_FormLeft, $g_FormTop)
 				GUICtrlCreateLabel("Replay - Works for Normal Snake. - Testing My Snake.", 20, 40, 540, 20, $SS_CENTER)
 				GUICtrlSetFont(-1, 14, 800, 0, "Arial")
 				GUICtrlCreateLabel("ESC to stop --- Pick speed Below", 20, 60, 540, 20, $SS_CENTER)
@@ -2101,13 +2138,16 @@ Func StartForm()
 
 					EndSwitch
 				WEnd
-				GUIDelete($FormReplay)
+				GUIDelete($g_FormReplay)
+
 				$g_ReplayActive = True
 				$g_TickTime = $L_Tick
 				Return $done
 
 			Case $b_start
-				GUIDelete($g_StartForm)
+				GUIDelete($g_FormStart)
+				$g_FormStart = -1
+
 				Return 1
 
 			Case $Radio1     ;Normal
@@ -2125,13 +2165,14 @@ Func StartForm()
 
 EndFunc   ;==>StartForm
 #CS INFO
-	362067 V44 12/30/2019 7:47:56 PM V43 12/29/2019 7:10:02 PM V42 12/27/2019 1:22:40 AM V41 12/11/2019 11:54:15 AM
+	366235 V47 1/10/2020 9:27:34 AM V46 1/10/2020 8:46:50 AM V45 1/9/2020 9:18:30 PM V44 12/30/2019 7:47:56 PM
 #CE INFO
 
 Func Settings()
 	Local $y
 
-	$g_SettingForm = GUICreate("Change Setting", 600, 150)     ;, -1, -1, -1, -1, $g_StartForm)
+	_Center(600, 150) ;xw, yh
+	$g_FormSetting = GUICreate("Change Setting", 600, 150, $g_FormLeft, $g_FormTop)    ;, -1, -1, -1, -1, $g_FormStart)
 	GUICtrlCreateLabel("Settings", 260, 0, 80, 26, $SS_CENTER)
 	GUICtrlSetFont(-1, 14, 800, 0, "Arial")
 
@@ -2168,10 +2209,11 @@ Func Settings()
 		EndSwitch
 	WEnd
 
-	GUIDelete($g_SettingForm)
+	GUIDelete($g_FormSetting)
+	$g_FormSetting = -1
 EndFunc   ;==>Settings
 #CS INFO
-	77379 V11 10/28/2019 1:14:59 PM V10 10/20/2019 1:07:26 AM V9 10/20/2019 12:46:58 AM V8 10/18/2019 9:17:20 AM
+	82668 V13 1/10/2020 9:27:34 AM V12 1/9/2020 9:18:30 PM V11 10/28/2019 1:14:59 PM V10 10/20/2019 1:07:26 AM
 #CE INFO
 
 Func ScreenSize()
@@ -2192,7 +2234,8 @@ Func ScreenSize()
 	$s &= @CRLF & "Current cell size: " & $g_Size & @CRLF & "Desktop screen size: " & @DesktopHeight & "x" & @DesktopWidth & @CRLF & "Maximum cell size: "
 	$s &= $Math & @CRLF & @CRLF & "Use Maximum cell size or enter a smaller size."
 
-	$sInputBoxAnswer = InputBox("Cell size", $s, $Math, "", -1, -1, Default, Default, 0, $g_SettingForm)
+	_Center(250, 200) ;xw, yh
+	$sInputBoxAnswer = InputBox("Cell size", $s, $Math, "", 250, 200, $g_FormLeft, $g_FormTop, 0, $g_FormSetting)
 	$err = @error
 	Select
 		Case $err = 1     ; Cancle was pushed
@@ -2226,7 +2269,7 @@ Func ScreenSize()
 	EndSelect
 EndFunc   ;==>ScreenSize
 #CS INFO
-	90410 V6 12/30/2019 7:47:56 PM V5 10/20/2019 1:07:26 AM V4 8/25/2019 6:50:13 PM V3 8/18/2019 11:15:59 PM
+	92772 V7 1/10/2020 9:27:34 AM V6 12/30/2019 7:47:56 PM V5 10/20/2019 1:07:26 AM V4 8/25/2019 6:50:13 PM
 #CE INFO
 
 ; Read INI setting
@@ -2376,12 +2419,13 @@ EndFunc   ;==>CheckJpg
 
 Func Speed()
 	Local $last
-	Local $GUI, $Input, $x, $loc
+	Local $Input, $x, $loc
 	Local $bSlower, $bFaster, $bDefault
 	Local $bar[10]
 	;Local $nMsg
 
-	$GUI = GUICreate("Test Script", 300, 200, -1, -1, -1, -1, $g_SettingForm)
+	_Center(300, 200) ;xw, yh
+	$g_FormSpeed = GUICreate("Test Script", 300, 200, $g_FormLeft, $g_FormTop, -1, -1, $g_FormSetting)
 	GUICtrlCreateLabel("ms/cycle", 125, 25, 80, 25)
 	GUICtrlSetFont(-1, 10, 900, 0, "Arial")
 	$Input = GUICtrlCreateInput("Input1", 130, 45, 25, 25)
@@ -2399,7 +2443,7 @@ Func Speed()
 	For $x = 0 To 9
 		$bar[$x] = GUICtrlCreatePic($cEMPTY, $x * 30, 80, 30, 30)
 	Next
-	GUISetState(@SW_SHOW, $GUI)
+	GUISetState(@SW_SHOW, $g_FormSpeed)
 
 	$g_hTick = TimerInit()
 
@@ -2433,14 +2477,15 @@ Func Speed()
 		Until GUIGetMsg() = 0
 
 	WEnd
-	GUIDelete($GUI)
+	GUIDelete($g_FormSpeed)
+	$g_FormSpeed = -1
 	If $g_TickTime <> $last Then     ;no change skip save
 		$g_TickTime = $last
 		IniWrite($s_ini, "General", "Speed", $g_TickTime)
 	EndIf
 EndFunc   ;==>Speed
 #CS INFO
-	99196 V4 10/20/2019 1:07:26 AM V3 8/28/2019 11:39:16 AM V2 8/26/2019 10:02:39 AM V1 8/22/2019 6:28:51 PM
+	106266 V6 1/10/2020 9:27:34 AM V5 1/9/2020 9:18:30 PM V4 10/20/2019 1:07:26 AM V3 8/28/2019 11:39:16 AM
 #CE INFO
 
 Func TickSpeed($speed)     ;
@@ -2477,7 +2522,7 @@ Func CheckDataLoc()
 	EndIf
 
 	;Ask where to store the data
-	Local $Form1 = GUICreate("Snake19 - Setup Data - " & $ver, 615, 430, -1, -1, $ws_popup + $ws_caption)
+	Local $L_FormSetup = GUICreate("Snake19 - Setup Data - " & $ver, 615, 430, -1, -1, $ws_popup + $ws_caption)
 	GUICtrlCreateLabel("Welcome to Snake19 data setup - " & $ver, 0, 24, 610, 28, $SS_CENTER)
 	GUICtrlSetFont(-1, 14, 800, 0, "MS Sans Serif")
 	GUICtrlCreateLabel("Set Data files folder:", 32, 144, 610, 20)
@@ -2506,7 +2551,7 @@ Func CheckDataLoc()
 		Local $nMsg = GUIGetMsg()
 		Switch $nMsg
 			Case $GUI_EVENT_CLOSE, $Bexit
-				GUIDelete($Form1)
+				GUIDelete($L_FormSetup)
 				Return ""
 			Case $Radio1
 				$data = @AppDataDir & "\SNAKE19-Data"
@@ -2517,14 +2562,14 @@ Func CheckDataLoc()
 				GUICtrlSetData($DataLabel, "Data files directory: " & $data)
 				GUICtrlSetData($DeleteData, "To delete data folder:  Delete " & $data)
 			Case $Bgo
-				GUIDelete($Form1)
+				GUIDelete($L_FormSetup)
 				Return $data
 		EndSwitch
 	WEnd
 
 EndFunc   ;==>CheckDataLoc
 #CS INFO
-	173822 V3 11/19/2019 1:09:35 PM V2 10/13/2019 1:37:57 PM V1 10/11/2019 3:14:30 PM
+	175775 V4 1/9/2020 9:18:30 PM V3 11/19/2019 1:09:35 PM V2 10/13/2019 1:37:57 PM V1 10/11/2019 3:14:30 PM
 #CE INFO
 
 ;This will delete the data files and exit the game
@@ -2540,7 +2585,7 @@ Func DeleteData()
 		EndIf
 	EndIf
 
-	Local $Form1 = GUICreate("Snake19 - Remove Data - " & $ver, 615, 294, -1, -1, $ws_popup + $ws_caption, -1, $g_SettingForm)
+	Local $L_FormRemoveSetup = GUICreate("Snake19 - Remove Data - " & $ver, 615, 294, -1, -1, $ws_popup + $ws_caption, -1, $g_FormSetting)
 	GUICtrlCreateLabel("Thanks for using the Snake19 game - " & $ver, 0, 24, 610, 28, $SS_CENTER)
 	GUICtrlSetFont(-1, 14, 800, 0, "MS Sans Serif")
 	GUICtrlCreateLabel("To delete the program Snake19.exe. Go to the program folder and delete it manually.", 32, 144, 504, 20)
@@ -2566,7 +2611,7 @@ Func DeleteData()
 		Local $nMsg = GUIGetMsg()
 		Switch $nMsg
 			Case $GUI_EVENT_CLOSE, $Button2
-				GUIDelete($Form1)
+				GUIDelete($L_FormRemoveSetup)
 				Return
 			Case $Button1
 				FileDelete($s_ini)
@@ -2582,20 +2627,26 @@ Func DeleteData()
 				Exit
 		EndSwitch
 	WEnd
-	GUIDelete($Form1)
+	GUIDelete($L_FormRemoveSetup)
 
 	Exit
 EndFunc   ;==>DeleteData
 #CS INFO
-	141228 V3 11/19/2019 1:09:35 PM V2 10/20/2019 1:07:26 AM V1 10/13/2019 1:37:57 PM
+	145047 V4 1/9/2020 9:18:30 PM V3 11/19/2019 1:09:35 PM V2 10/20/2019 1:07:26 AM V1 10/13/2019 1:37:57 PM
 #CE INFO
 
 Func About()
-	Local $MyUrl, $FormAbout, $Message
-	$FormAbout = GUICreate("Snake19 - About", 615, 430, -1, -1, $ws_popup + $ws_caption)
+	Local $MyUrl, $Message
+
+	_Center(615, 430)   ;xw, yh
+	$g_FormAbout = GUICreate("Snake19 - About", 615, 430, $g_FormLeft, $g_FormTop, $ws_popup + $ws_caption)
 ;~+~+
 	;$Message &= "|
-	$Message = "0.117 31 Dec 2019 Hid, Pause now will work in Replay"
+	$Message = "0.121 10 Jan 2020 make rest of forms open on Game center"
+	$Message &= "||0.120 10 Jan 2020 make forms and game open saved or true center Main and Game done"
+	$Message &= "|0.119 5 Jan 2020 Remember where start open last"
+	$Message &= "|0.118 5 Jan 2020 Hid games menus.  Need to rework them"
+	$Message &= "|0.117 31 Dec 2019 Hid, Pause now will work in Replay"
 	$Message &= "|0.116 30 Dec 2019 Pause during game by press P, Quit press Q. Fix Change Colors"
 	$Message &= "|0.115 29 Dec 2019 Color changes. Change layout. Done"
 	$Message &= "|0.114 26 Dec 2019  Compile different"
@@ -2621,12 +2672,10 @@ Func About()
 	$Message &= "|0.94 24 Oct 2019 Main Menu"
 	$Message &= "|0.93 20 Oct 2019 Problems, removed"
 	$Message &= "|0.92 19 Oct 2019 Poop better, Other minor fixes"
-	$Message &= "|0.91 18 Oct 2019 Through wall, might not pass straight through"
-	$Message &= "|0.90 12 Oct 2019 Win 7 and up, data in Appdata.  Add start up check, if missing ask box.| Remove data from Appdata: Menu, Settings, Delete Data.  About, Version"
 
 	GUICtrlCreateLabel("Welcome to Snake19", 0, 24, 617, 28, $SS_CENTER)
 	GUICtrlSetFont(-1, 14, 800, 0, "MS Sans Serif")
-	GUICtrlCreateLabel("Copyright (C) 2019 -- by Phillip Forrestal", 0, 104, 620, 20, $SS_CENTER)
+	GUICtrlCreateLabel("Copyright (C) 2019-2020 -- by Phillip Forrestal", 0, 104, 620, 20, $SS_CENTER)
 	GUICtrlSetFont(-1, 10, 400, 0, "MS Sans Serif")
 	GUICtrlCreateLabel("", 0, 60, 618, 20, $SS_CENTER)
 	GUICtrlSetData(-1, "Snake 19 -beta but working version " & $ver)
@@ -2661,7 +2710,7 @@ Func About()
 		EndSwitch
 
 		;change color of label when mouse hovers it
-		$array = GUIGetCursorInfo($FormAbout)
+		$array = GUIGetCursorInfo($g_FormAbout)
 
 		If $array[4] = $MyUrl Then
 			If Not $set_1 Then                 ;avoid flickering
@@ -2679,11 +2728,13 @@ Func About()
 
 	WEnd
 
-	GUIDelete($FormAbout)
+	GUIDelete($g_FormAbout)
+	$g_FormAbout = -1
+
 EndFunc   ;==>About
 #CS INFO
-	263449 V25 12/31/2019 8:53:39 PM V24 12/30/2019 7:47:56 PM V23 12/29/2019 7:10:02 PM V22 12/27/2019 1:22:40 AM
-#CE
+	275520 V28 1/10/2020 9:27:34 AM V27 1/10/2020 8:46:50 AM V26 1/9/2020 9:18:30 PM V25 12/31/2019 8:53:39 PM
+#CE INFO
 
 Func SetCellSide()
 	Pause("SetCellSide")
@@ -2696,7 +2747,7 @@ EndFunc   ;==>SetCellSide
 
 Func HelpPassWall()
 	Local $a
-	Local $Form1 = GUICreate("HELP - Hitting a Wall ", 600, 210, -1, -1, $ws_popup + $ws_caption, -1, $g_StartForm)
+	Local $g_FormHelp_HW = GUICreate("HELP - Hitting a Wall ", 600, 210, -1, -1, $ws_popup + $ws_caption, -1, $g_FormStart)
 
 	$a = 20
 	GUICtrlCreateLabel("Snake Hitting a Wall", 32, $a, 550, 28)
@@ -2727,11 +2778,11 @@ Func HelpPassWall()
 		EndSwitch
 	WEnd
 
-	GUIDelete($Form1)
+	GUIDelete($g_FormHelp_HW)
 
 EndFunc   ;==>HelpPassWall
 #CS INFO
-	79795 V2 10/20/2019 12:46:58 AM V1 10/18/2019 9:17:20 AM
+	81387 V3 1/9/2020 9:18:30 PM V2 10/20/2019 12:46:58 AM V1 10/18/2019 9:17:20 AM
 #CE INFO
 
 Func WallTrue()
@@ -3055,7 +3106,6 @@ EndFunc   ;==>CkOutsideEdgeY
 Func ChooseColor()
 	Local $a, $y, $flag
 	Local $r_what[8][7]
-	Local $ColorForm1
 	Local $SelectColor = 1
 	Local $L_bok
 	Local $B_Cancel, $B_OK, $B_Current, $B_Gold, $B_Green, $B_Change
@@ -3115,7 +3165,8 @@ Func ChooseColor()
 
 		EndSelect
 	Next
-	$ColorForm1 = GUICreate("Change Colors", 570, 220, -1, -1)
+	_Center(570, 220)   ;xw, yh
+	$g_FormColor = GUICreate("Change Colors", 570, 220, $g_FormLeft, $g_FormTop)
 
 	;Around colors  600-140 =460
 	$r_what[0][0] = GUICtrlCreateLabel("", 90, 40, 460, 70)
@@ -3219,7 +3270,7 @@ Func ChooseColor()
 
 			Switch $nMsg
 				Case $B_Change
-					$r_what[$SelectColor][5] = _ChooseColor(2, $r_what[$SelectColor][5], 2, $ColorForm1)
+					$r_what[$SelectColor][5] = _ChooseColor(2, $r_what[$SelectColor][5], 2, $g_FormColor)
 					$flag = True
 
 				Case $GUI_EVENT_CLOSE, $B_Cancel
@@ -3267,12 +3318,61 @@ Func ChooseColor()
 			EndIf
 		EndIf
 	WEnd
-	GUIDelete($ColorForm1)
-
+	GUIDelete($g_FormColor)
+	$g_FormColor = -1
 EndFunc   ;==>ChooseColor
 #CS INFO
-	362707 V3 12/30/2019 7:47:56 PM V2 12/29/2019 7:10:02 PM V1 12/15/2019 9:48:21 AM
+	366457 V5 1/10/2020 9:27:34 AM V4 1/9/2020 9:18:30 PM V3 12/30/2019 7:47:56 PM V2 12/29/2019 7:10:02 PM
 #CE INFO
+
+;Read / Write INI Center of game screen
+Func IniCenterGameScreen($wr = True)
+	Local $gameLoc, $aClientSize
+
+	If $wr Then
+		If $g_ctrlBoard <> -1 Then
+			$gameLoc = WinGetPos($g_ctrlBoard) ;x=0, y=1, W=2, H=3
+			$aClientSize = WinGetClientSize($g_ctrlBoard) ;cW=o, cH=1
+
+			IniWrite($s_ini, "Center", "W", $gameLoc[0] + Int($aClientSize[0] / 2))
+			IniWrite($s_ini, "Center", "H", $gameLoc[1] + Int($aClientSize[1] / 2))
+		EndIf
+	Else
+		$g_GameBdCenterYH = Int(IniRead($s_ini, "Center", "H", -1))
+		If $g_GameBdCenterYH = -1 Then
+			$g_GameBdCenterXW = Int(@DesktopWidth / 2)
+			$g_GameBdCenterYH = Int(@DesktopHeight / 2)
+			IniWrite($s_ini, "Center", "W", $g_GameBdCenterXW)
+			IniWrite($s_ini, "Center", "H", $g_GameBdCenterYH)
+		Else
+			$g_GameBdCenterXW = Int(IniRead($s_ini, "Center", "W", -1))
+		EndIf
+	EndIf
+EndFunc   ;==>IniCenterGameScreen
+#CS INFO
+	58420 V3 1/10/2020 5:12:30 PM V2 1/10/2020 8:46:50 AM V1 1/9/2020 9:18:30 PM
+#CE
+
+Func _Center($W, $H)   ;xw, yh
+	Local $gameLoc, $aClientSize
+
+	If $g_ctrlBoard <> -1 Then
+		$gameLoc = WinGetPos($g_ctrlBoard) ;x=0, y=1, W=2, H=3
+		$aClientSize = WinGetClientSize($g_ctrlBoard) ;cW=o, cH=1
+
+		$g_GameBdCenterXW = $gameLoc[0] + Int($aClientSize[0] / 2)
+		$g_GameBdCenterYH = $gameLoc[1] + Int($aClientSize[1] / 2)
+	EndIf
+
+	$g_FormLeft = $g_GameBdCenterXW - Int($W / 2)
+	$g_FormTop = $g_GameBdCenterYH - Int($H / 2)
+
+EndFunc   ;==>_Center
+#CS INFO
+	32683 V3 1/10/2020 5:12:30 PM V2 1/10/2020 8:46:50 AM V1 1/9/2020 9:18:30 PM
+#CE
+
+; $g_PleaseWait is a form but should complete before hidding
 
 ;Main
 ;ChooseColor()
@@ -3281,4 +3381,4 @@ Main()
 
 Exit
 
-;~T ScriptFunc.exe V0.54a 15 May 2019 - 12/31/2019 8:53:39 PM
+;~T ScriptFunc.exe V0.54a 15 May 2019 - 1/10/2020 5:12:30 PM
