@@ -5,11 +5,7 @@ AutoItSetOption("MustDeclareVars", 1)
 ;Global Static $MESSAGE =  False   ;Pause will still work in script  No DataOut
 
 ; Must be Declared before _Prf_startup   ~+~+
-Global $ver = "0.121 10 Jan 2020 make rest of forms open on Game center"
-; Need to keep the last Game Board location center.  If not set then center on screen (@DesktopWidth/2, @DesktopHeight/2)
-;1. Start main menu centred on that location
-
-;Hid game during game by pressing H
+Global $ver = "0.122 15 Jan 2020 Hide game screen - Main Menu"
 
 Global $ini_ver = "10" ;Done
 
@@ -18,7 +14,7 @@ Global $ini_ver = "10" ;Done
 #include "R:\!Autoit\Blank\_prf_startup.au3"
 
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
-#AutoIt3Wrapper_Res_Fileversion=0.1.2.1
+#AutoIt3Wrapper_Res_Fileversion=0.1.2.2
 #AutoIt3Wrapper_Icon=R:\!Autoit\Ico\prf.ico
 #AutoIt3Wrapper_Res_Description=Another snake game
 #AutoIt3Wrapper_Res_LegalCopyright=© Phillip Forrestal 2019-2020
@@ -83,20 +79,16 @@ Global $ini_ver = "10" ;Done
 	6 = snake cell number (to computer size)
 
 	to do
-	Pause during game by pressing P
-    Hid game during game by pressing H
-    Exit game by press Q and NOT Esc.   Using ESC sometime causes the game to completely exit.
-	Select different keys to use.
+    Select different keys to use.
 	Save replay
 	Load replay
 	Change size of screen.  default 30x40
-
-	min button going not min game board, just Main Menu
 	 Save load setting
 	 Save load scores merge or clear
 
 	Version
 ;~+~+
+	0.122 15 Jan 2020 Hide game screen - Main Menu
 	0.121 10 Jan 2020 make rest of forms open on Game center
 	0.120 10 Jan 2020 make forms and game open saved or true center Main and Game done
 	0.119 5 Jan 2020 Remember where start open last, make forms and game open there
@@ -259,6 +251,8 @@ Global $ini_ver = "10" ;Done
 #include <EditConstants.au3>
 #include <ComboConstants.au3>
 #include <ListBoxConstants.au3>
+
+Opt("GUIEventOptions", 1)
 
 ;Static
 Global $g_data ;= @ScriptDir & "\SNAKE19-Data"
@@ -561,6 +555,8 @@ Func Game()
 	Local $NotFirstPass
 	Local $a, $b
 
+	Opt("GUIEventOptions", 0)
+
 	$NotFirstPass = True
 
 	IniWrite($s_ini, "General", "Game", $g_GameWhich)
@@ -724,6 +720,10 @@ Func Game()
 
 		If $nMsg = $L_idHid Then
 			dataout("HID")
+			Do
+			Until GUIGetMsg() <> $L_idHid
+
+			GUISetState(@SW_MINIMIZE, $g_ctrlBoard)
 		EndIf
 
 		If $g_Pause Then             ;Pause 0.116
@@ -785,19 +785,10 @@ Func Game()
 							$g_dirX = 0
 							$g_dirY = 1
 
-							;				Case $L_idPause
-							;					dataout("Pause")
-							;					Do
-							;					Until GUIGetMsg() <> $L_idPause
-							;					$g_Pause = True
-
-							;				Case $L_idHid
-							;					dataout("HID")
-
 					EndSwitch
 					ReplayRecData(2, $g_dirX, $g_dirY, $g_turnNo)
 
-				Else ;If $nMsg > 0 Then
+				Else
 					Do
 					Until GUIGetMsg() = 0
 					If $g_dirX = 0 And $g_dirY = 0 Then
@@ -838,10 +829,11 @@ Func Game()
 		Dataout("REC DONE ____-----End of Game----------------------------------")
 	EndIf
 	$g_Replay = $s_ReplayOff
+	Opt("GUIEventOptions", 1)
 
 EndFunc   ;==>Game
 #CS INFO
-	444552 V69 1/10/2020 8:46:50 AM V68 1/9/2020 9:18:30 PM V67 12/31/2019 8:53:39 PM V66 12/30/2019 7:47:56 PM
+	443945 V70 1/15/2020 10:44:49 AM V69 1/10/2020 8:46:50 AM V68 1/9/2020 9:18:30 PM V67 12/31/2019 8:53:39 PM
 #CE INFO
 
 Func Tick() ;
@@ -850,7 +842,7 @@ Func Tick() ;
 	If $TESTING Then
 		If $Map[$what][0][0] <> $M1 Then
 			Pause("Null not edge", $Map[$what][0][0])
-			$Map[$what][0][0] = -1
+			$Map[$what][0][0] = $M1
 		EndIf
 	EndIf
 
@@ -903,7 +895,7 @@ Func Tick() ;
 	$g_hTick = TimerInit()
 EndFunc   ;==>Tick
 #CS INFO
-	67390 V18 12/30/2019 7:47:56 PM V17 11/4/2019 9:35:34 AM V16 8/25/2019 6:50:13 PM V15 8/22/2019 6:28:51 PM
+	67458 V19 1/15/2020 10:44:49 AM V18 12/30/2019 7:47:56 PM V17 11/4/2019 9:35:34 AM V16 8/25/2019 6:50:13 PM
 #CE INFO
 
 Func Extra()
@@ -1978,6 +1970,7 @@ Func StartForm()
 	;Local $FormMainMenu ; , $Group1
 	Local $Radio3, $Checkbox1, $b_start, $b_setting, $b_about
 	Local $nMsg, $L_Tick
+	Local $L_MinNotflag = True
 	Local $a = 260
 	Local $b = 50
 	Local $c = 200     ;120
@@ -2032,7 +2025,7 @@ Func StartForm()
 
 		Local $Edit1 = GUICtrlCreateEdit("", 20, $b, 550, 230, $ES_READONLY)
 		GUICtrlSetFont($Edit1, 10, 400, 0, "Arial")
-		GUICtrlSetData($Edit1, "Press Q to quit. Press P to Pause.  Press H to Hid game (not working)" & @CRLF, 1)
+		GUICtrlSetData($Edit1, "Press Q to quit. Press P to Pause.  Press H to Hide game (Minimize)" & @CRLF, 1)
 		GUICtrlSetData($Edit1, @CRLF, 1)
 		GUICtrlSetData($Edit1, "If you lose Focus or Minimize the game, it will PAUSE" & @CRLF, 1)
 		GUICtrlSetData($Edit1, @CRLF, 1)
@@ -2060,12 +2053,16 @@ Func StartForm()
 	MouseMove($a[0] + (75 / 2), $a[1] + (35 / 2), 0)
 
 	NormalExtra()
+	;ControlFocus($g_FormStart, "", $b_start)
 
 	While 1
-		If WinGetTitle("[ACTIVE]") <> $sMainMenuTitle Then
-			Sleep(3000)
-			ControlFocus($g_FormStart, "", $b_start)
+		If $L_MinNotflag Then
+			If WinGetTitle("[ACTIVE]") <> $sMainMenuTitle Then
+				Sleep(3000)
+				ControlFocus($g_FormStart, "", $b_start)
+			EndIf
 		EndIf
+
 		$nMsg = GUIGetMsg()
 		Switch $nMsg
 			Case $GUI_EVENT_CLOSE
@@ -2073,6 +2070,21 @@ Func StartForm()
 				GUIDelete($g_FormStart)
 				$g_FormStart = -1
 				Return 0
+
+			Case $GUI_EVENT_MINIMIZE ;	dialog box minimized with Windows title bar button.
+				If $g_ctrlBoard <> -1 Then
+					GUISetState(@SW_HIDE, $g_ctrlBoard)
+				EndIf
+				GUISetState(@SW_MINIMIZE, $g_FormStart)
+				$L_MinNotflag = False
+
+			Case $GUI_EVENT_RESTORE
+				GUISetState(@SW_RESTORE, $g_FormStart)
+				If $g_ctrlBoard <> -1 Then
+					GUISetState(@SW_SHOW, $g_ctrlBoard)
+				EndIf
+				ControlFocus($g_FormStart, "", $b_start)
+				$L_MinNotflag = True
 
 			Case $b_about
 				GUIDelete($g_FormStart)
@@ -2165,7 +2177,7 @@ Func StartForm()
 
 EndFunc   ;==>StartForm
 #CS INFO
-	366235 V47 1/10/2020 9:27:34 AM V46 1/10/2020 8:46:50 AM V45 1/9/2020 9:18:30 PM V44 12/30/2019 7:47:56 PM
+	410260 V48 1/15/2020 10:44:49 AM V47 1/10/2020 9:27:34 AM V46 1/10/2020 8:46:50 AM V45 1/9/2020 9:18:30 PM
 #CE INFO
 
 Func Settings()
@@ -2642,7 +2654,8 @@ Func About()
 	$g_FormAbout = GUICreate("Snake19 - About", 615, 430, $g_FormLeft, $g_FormTop, $ws_popup + $ws_caption)
 ;~+~+
 	;$Message &= "|
-	$Message = "0.121 10 Jan 2020 make rest of forms open on Game center"
+	$Message = "0.122 15 Jan 2020 Hide game screen - Main Menu"
+	$Message &= "|0.121 10 Jan 2020 make rest of forms open on Game center"
 	$Message &= "||0.120 10 Jan 2020 make forms and game open saved or true center Main and Game done"
 	$Message &= "|0.119 5 Jan 2020 Remember where start open last"
 	$Message &= "|0.118 5 Jan 2020 Hid games menus.  Need to rework them"
@@ -2733,7 +2746,7 @@ Func About()
 
 EndFunc   ;==>About
 #CS INFO
-	275520 V28 1/10/2020 9:27:34 AM V27 1/10/2020 8:46:50 AM V26 1/9/2020 9:18:30 PM V25 12/31/2019 8:53:39 PM
+	279645 V29 1/15/2020 10:44:49 AM V28 1/10/2020 9:27:34 AM V27 1/10/2020 8:46:50 AM V26 1/9/2020 9:18:30 PM
 #CE INFO
 
 Func SetCellSide()
@@ -3351,7 +3364,7 @@ Func IniCenterGameScreen($wr = True)
 EndFunc   ;==>IniCenterGameScreen
 #CS INFO
 	58420 V3 1/10/2020 5:12:30 PM V2 1/10/2020 8:46:50 AM V1 1/9/2020 9:18:30 PM
-#CE
+#CE INFO
 
 Func _Center($W, $H)   ;xw, yh
 	Local $gameLoc, $aClientSize
@@ -3370,7 +3383,7 @@ Func _Center($W, $H)   ;xw, yh
 EndFunc   ;==>_Center
 #CS INFO
 	32683 V3 1/10/2020 5:12:30 PM V2 1/10/2020 8:46:50 AM V1 1/9/2020 9:18:30 PM
-#CE
+#CE INFO
 
 ; $g_PleaseWait is a form but should complete before hidding
 
@@ -3381,4 +3394,4 @@ Main()
 
 Exit
 
-;~T ScriptFunc.exe V0.54a 15 May 2019 - 1/10/2020 5:12:30 PM
+;~T ScriptFunc.exe V0.54a 15 May 2019 - 1/15/2020 10:44:49 AM

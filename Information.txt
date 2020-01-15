@@ -1,0 +1,23 @@
+0.122
+
+1) Minimize Game board by pressing H while game is active.  Restore from tray.
+2) Minimize Main Menu by pressing minimize button.  Restore from tray.   If game board is showing it will disappear.
+3) When at Main Menu and Game board is showing, click on Game board to show it for 3 seconds.
+4) When at Main Menu and Game board is showing, to see it for longer then 3 seconds, click & hold Game board title bar. 3 second after release Main Menu will return.
+5) Pause the Game, press P.  Start Game again press P. Or lose Focus and click on Game board to restore focus. Game will restart after 2 seconds.
+6) If the Game board loses focus, the game will pause.  Game will restart after 2 seconds after it return to focus.
+7) Quit the Game, press Q
+
+Found problem: If resize Game board it might be off the screen.
+
+to do
+	Select different keys to use.
+	Save replay
+	Load replay
+	Change size of screen.  default 30x40
+	Save load setting
+	Save load scores merge or clear
+
+problem:
+Still have the funny start game problem that I can't create in debug mode.  The end of the snake does not clear, snake just get longer, until you run over it. Haven't seen it in a while so I might have fixed it.
+One way to cause it: Start game, don't move, lose focus, get focus and move.  Happens rarely. 
