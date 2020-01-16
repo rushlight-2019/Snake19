@@ -5,7 +5,7 @@ AutoItSetOption("MustDeclareVars", 1)
 ;Global Static $MESSAGE =  False   ;Pause will still work in script  No DataOut
 
 ; Must be Declared before _Prf_startup   ~+~+
-Global $ver = "0.122 15 Jan 2020 Hide game screen - Main Menu"
+Global $ver = "0.123 16 Jan 2020 Resize game board, Main Menu make sure its on screen on top"
 
 Global $ini_ver = "10" ;Done
 
@@ -14,7 +14,7 @@ Global $ini_ver = "10" ;Done
 #include "R:\!Autoit\Blank\_prf_startup.au3"
 
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
-#AutoIt3Wrapper_Res_Fileversion=0.1.2.2
+#AutoIt3Wrapper_Res_Fileversion=0.1.2.3
 #AutoIt3Wrapper_Icon=R:\!Autoit\Ico\prf.ico
 #AutoIt3Wrapper_Res_Description=Another snake game
 #AutoIt3Wrapper_Res_LegalCopyright=© Phillip Forrestal 2019-2020
@@ -76,18 +76,18 @@ Global $ini_ver = "10" ;Done
 	3 = previous Y
 	4 = next X
 	5 = next Y
-	6 = snake cell number (to computer size)
+	6 = snake cell number (to compute size)
 
-	to do
+to do
+	Score: clear all, clear all but highest
     Select different keys to use.
-	Save replay
-	Load replay
-	Change size of screen.  default 30x40
-	 Save load setting
-	 Save load scores merge or clear
+	Save/Load replay save to user Document
+	Save load scores/setting  for Change of size
+	Change size of screen.  default 30x40  in blocks of 5
 
 	Version
 ;~+~+
+	0.123 16 Jan 2020 Resize game board, Main Menu make sure its on screen on top
 	0.122 15 Jan 2020 Hide game screen - Main Menu
 	0.121 10 Jan 2020 make rest of forms open on Game center
 	0.120 10 Jan 2020 make forms and game open saved or true center Main and Game done
@@ -228,13 +228,6 @@ Global $ini_ver = "10" ;Done
 	0.01 28 May 2019 Start form
 	Version end
 
-	Extra:
-	$g_iScore + $g_ScoreFood + $g_SnakeMax
-
-	iScore added only when Snake increase max length
-	Lenght decrease when to many turns between food, eat dead snake, eat poop
-	Poop added when eat poop.
-
 #ce ----------------------------------------------------------------------------
 
 ;StringFormat
@@ -338,8 +331,7 @@ Static $prY = 3 ;	3 = previous Y
 Static $nxX = 4 ;	4 = next X
 Static $nxY = 5 ;	5 = next Y
 Static $num = 6 ;	6 = snake cell number
-Global $Map[7][$g_boardx][$g_boardy]
-;$Map[$what][x][y]
+Global $Map[7][$g_boardx][$g_boardy]  ;$Map[$what][x][y]
 
 Global $g_SnakeCount
 Global $x_new
@@ -356,7 +348,7 @@ Global $g_StatusOff = 2
 Global $g_aHiScore[12][6] ; data load by INI.  10 =  score,  date, len.food, turns, Max
 Global $g_iScore
 
-Global $g_GameWhich = 1 ; 0 Norma, 1 Mine
+Global $g_GameWhich = 1 ; 0 Normal, 1 Mine
 Global $g_HiScoreWho ;ctrl
 Global $g_HiScore[10]
 
@@ -436,7 +428,7 @@ Global $g_pooprnd = True
 ;0.98
 Global $g_iReplaySz = 6000
 Global $g_aReplay[$g_iReplaySz + 3]
-$g_aReplay[0] = 0 ; so replay check has a value, not 10 or 11
+$g_aReplay[0] = 0 ; so replay check has a value
 Static $s_ReplayRec = 1
 Static $s_ReplayPlay = 2
 Static $s_ReplayOff = 3
@@ -561,15 +553,14 @@ Func Game()
 
 	IniWrite($s_ini, "General", "Game", $g_GameWhich)
 
-	If $g_ctrlBoard = -1 Then
+	If $g_ctrlBoard = -1 Then  ;Generate game board form
 
 		$b = $g_Font * 2
 		SayClearBoard(True)
-		_Center($g_boardx * $g_Size, $g_boardy * $g_Size + $b + 2)
+		_Center($g_boardx * $g_Size, $g_boardy * $g_Size + $b + 2, True)
+
 		$g_ctrlBoard = GUICreate("Snake19 - " & $ver, $g_boardx * $g_Size, $g_boardy * $g_Size + $b + 2, $g_FormLeft, $g_FormTop, $ws_popup + $ws_caption)
 		GUISetState(@SW_SHOW, $g_ctrlBoard)
-
-		;MouseMove(0, 0, 0)
 
 		$L_idDown = GUICtrlCreateDummy()
 		$L_idRight = GUICtrlCreateDummy()
@@ -691,7 +682,6 @@ Func Game()
 		Case 0 ;			Normal
 			$g_gChange = 1
 			$g_Turns = -1 ; The way it start with 1 turn on start. To fix start with +1
-
 	EndSwitch
 
 	Local $aAccelKey2[][] = [["{RIGHT}", $L_idRight], ["{LEFT}", $L_idLeft], ["{DOWN}", $L_idDown], ["{UP}", $L_idUp], ["q", $L_idEsc], ["p", $L_idPause], ["h", $L_idHid]]
@@ -719,7 +709,7 @@ Func Game()
 		EndIf
 
 		If $nMsg = $L_idHid Then
-			dataout("HID")
+			dataout("HIDE")
 			Do
 			Until GUIGetMsg() <> $L_idHid
 
@@ -833,8 +823,8 @@ Func Game()
 
 EndFunc   ;==>Game
 #CS INFO
-	443945 V70 1/15/2020 10:44:49 AM V69 1/10/2020 8:46:50 AM V68 1/9/2020 9:18:30 PM V67 12/31/2019 8:53:39 PM
-#CE INFO
+	445410 V71 1/16/2020 2:54:39 AM V70 1/15/2020 10:44:49 AM V69 1/10/2020 8:46:50 AM V68 1/9/2020 9:18:30 PM
+#CE
 
 Func Tick() ;
 	Local $fdiff
@@ -2177,8 +2167,8 @@ Func StartForm()
 
 EndFunc   ;==>StartForm
 #CS INFO
-	410260 V48 1/15/2020 10:44:49 AM V47 1/10/2020 9:27:34 AM V46 1/10/2020 8:46:50 AM V45 1/9/2020 9:18:30 PM
-#CE INFO
+	406413 V49 1/16/2020 2:54:39 AM V48 1/15/2020 10:44:49 AM V47 1/10/2020 9:27:34 AM V46 1/10/2020 8:46:50 AM
+#CE
 
 Func Settings()
 	Local $y
@@ -2268,21 +2258,12 @@ Func ScreenSize()
 
 				GUIDelete($g_ctrlBoard)
 				$g_ctrlBoard = -1
-
-				; changed 0.116
-				;If @Compiled Then
-				;	Run(@ScriptFullPath)
-				;	Exit
-				;Else
-				;	Pause("Compile it would restart the program")
-				;EndIf
-				;Exit
 			EndIf
 	EndSelect
 EndFunc   ;==>ScreenSize
 #CS INFO
-	92772 V7 1/10/2020 9:27:34 AM V6 12/30/2019 7:47:56 PM V5 10/20/2019 1:07:26 AM V4 8/25/2019 6:50:13 PM
-#CE INFO
+	82337 V8 1/16/2020 2:54:39 AM V7 1/10/2020 9:27:34 AM V6 12/30/2019 7:47:56 PM V5 10/20/2019 1:07:26 AM
+#CE
 
 ; Read INI setting
 Func ReadIni()
@@ -2654,7 +2635,8 @@ Func About()
 	$g_FormAbout = GUICreate("Snake19 - About", 615, 430, $g_FormLeft, $g_FormTop, $ws_popup + $ws_caption)
 ;~+~+
 	;$Message &= "|
-	$Message = "0.122 15 Jan 2020 Hide game screen - Main Menu"
+	$Message = "0.123 16 Jan 2020 Resize game board, Main Menu make sure its on screen on top"
+	$Message &= "|0.122 15 Jan 2020 Hide game screen - Main Menu"
 	$Message &= "|0.121 10 Jan 2020 make rest of forms open on Game center"
 	$Message &= "||0.120 10 Jan 2020 make forms and game open saved or true center Main and Game done"
 	$Message &= "|0.119 5 Jan 2020 Remember where start open last"
@@ -2683,8 +2665,6 @@ Func About()
 	$Message &= "|0.96 28 Oct 2019 Fixed Go Mouse pointer"
 	$Message &= "|0.95 25 Oct 2019 Make color jpg without using capture"
 	$Message &= "|0.94 24 Oct 2019 Main Menu"
-	$Message &= "|0.93 20 Oct 2019 Problems, removed"
-	$Message &= "|0.92 19 Oct 2019 Poop better, Other minor fixes"
 
 	GUICtrlCreateLabel("Welcome to Snake19", 0, 24, 617, 28, $SS_CENTER)
 	GUICtrlSetFont(-1, 14, 800, 0, "MS Sans Serif")
@@ -2746,8 +2726,8 @@ Func About()
 
 EndFunc   ;==>About
 #CS INFO
-	279645 V29 1/15/2020 10:44:49 AM V28 1/10/2020 9:27:34 AM V27 1/10/2020 8:46:50 AM V26 1/9/2020 9:18:30 PM
-#CE INFO
+	278498 V30 1/16/2020 2:54:39 AM V29 1/15/2020 10:44:49 AM V28 1/10/2020 9:27:34 AM V27 1/10/2020 8:46:50 AM
+#CE
 
 Func SetCellSide()
 	Pause("SetCellSide")
@@ -3366,7 +3346,7 @@ EndFunc   ;==>IniCenterGameScreen
 	58420 V3 1/10/2020 5:12:30 PM V2 1/10/2020 8:46:50 AM V1 1/9/2020 9:18:30 PM
 #CE INFO
 
-Func _Center($W, $H)   ;xw, yh
+Func _Center($W, $H, $G = False) ;xw, yh  $G= game board
 	Local $gameLoc, $aClientSize
 
 	If $g_ctrlBoard <> -1 Then
@@ -3380,10 +3360,29 @@ Func _Center($W, $H)   ;xw, yh
 	$g_FormLeft = $g_GameBdCenterXW - Int($W / 2)
 	$g_FormTop = $g_GameBdCenterYH - Int($H / 2)
 
+	If $G Then ;make sure game board in on the screen
+		If $g_FormLeft < 0 Then
+			$g_GameBdCenterXW = $g_GameBdCenterXW + $g_FormLeft
+			$g_FormLeft = 0
+		EndIf
+		If $g_FormTop < 0 Then
+			$g_GameBdCenterYH = $g_GameBdCenterYH + $g_FormTop
+			$g_FormTop = 0
+		EndIf
+	EndIf
+
+	; make sure any form is on screen
+	If $g_FormLeft < 0 Then
+		$g_FormLeft = 0
+	EndIf
+	If $g_FormTop < 0 Then
+		$g_FormTop = 0
+	EndIf
+
 EndFunc   ;==>_Center
 #CS INFO
-	32683 V3 1/10/2020 5:12:30 PM V2 1/10/2020 8:46:50 AM V1 1/9/2020 9:18:30 PM
-#CE INFO
+	62929 V4 1/16/2020 2:54:39 AM V3 1/10/2020 5:12:30 PM V2 1/10/2020 8:46:50 AM V1 1/9/2020 9:18:30 PM
+#CE
 
 ; $g_PleaseWait is a form but should complete before hidding
 
@@ -3394,4 +3393,4 @@ Main()
 
 Exit
 
-;~T ScriptFunc.exe V0.54a 15 May 2019 - 1/15/2020 10:44:49 AM
+;~T ScriptFunc.exe V0.54a 15 May 2019 - 1/16/2020 2:54:39 AM
