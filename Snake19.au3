@@ -5,16 +5,23 @@ AutoItSetOption("MustDeclareVars", 1)
 ;Global Static $MESSAGE =  False   ;Pause will still work in script  No DataOut
 
 ; Must be Declared before _Prf_startup   ~+~+
-Global $ver = "0.123 16 Jan 2020 Resize game board, Main Menu make sure its on screen on top"
+Global $ver = "0.127 24 Jan 2020 Save/Load Replay - Load Highscore and current replay"
+;Next save score to array
+; Save highest score.
+; Save user selected in data or doc
+; select load auto select last
+; select highest
+; select user at location.
 
-Global $ini_ver = "10" ;Done
+Global $ini_ver = "11"  ;changed at 0.127
+Global $g_replayVer = "1"
 
 ;Global $TESTING = False
 
 #include "R:\!Autoit\Blank\_prf_startup.au3"
 
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
-#AutoIt3Wrapper_Res_Fileversion=0.1.2.3
+#AutoIt3Wrapper_Res_Fileversion=0.1.2.7
 #AutoIt3Wrapper_Icon=R:\!Autoit\Ico\prf.ico
 #AutoIt3Wrapper_Res_Description=Another snake game
 #AutoIt3Wrapper_Res_LegalCopyright=© Phillip Forrestal 2019-2020
@@ -87,6 +94,10 @@ to do
 
 	Version
 ;~+~+
+0.127 24 Jan 2020 Save/Load Replay - Load Highscore and current replay
+0.126 23 Jan 2020 Save/Load Replay - Save highest score replay
+0.125 22 Jan 2020 Save/Load Replay - Change how replay dim is stored
+0.124 22 Jan 2020 Save/Load Replay
 	0.123 16 Jan 2020 Resize game board, Main Menu make sure its on screen on top
 	0.122 15 Jan 2020 Hide game screen - Main Menu
 	0.121 10 Jan 2020 make rest of forms open on Game center
@@ -249,34 +260,34 @@ Opt("GUIEventOptions", 1)
 
 ;Static
 Global $g_data ;= @ScriptDir & "\SNAKE19-Data"
-$g_data = CheckDataLoc() ;find data folder
+$g_data = CheckDataLoc() & "\" ;find data folder
 If $g_data = "" Then
 	Exit
 EndIf
 
-Static $s_ini = $g_data & "\snake.ini"
-Static $s_scoreini = $g_data & "\score.ini"
+Static $s_ini = $g_data & "snake.ini"
+Static $s_scoreini = $g_data & "score.ini"
 
 Static $WALL = -1
-Static $cEDGE = $g_data & "\Edge.jpg"
+Static $cEDGE = $g_data & "Edge.jpg"
 
 Static $EMPTY = 0
-Static $cEMPTY = $g_data & "\empty.jpg"
+Static $cEMPTY = $g_data & "empty.jpg"
 
 Static $SNAKE = 1
-Static $cSNAKE = $g_data & "\snake.jpg"
+Static $cSNAKE = $g_data & "snake.jpg"
 Static $HEAD = 1
-Static $cHEAD = $g_data & "\Head.jpg"
+Static $cHEAD = $g_data & "Head.jpg"
 
 Static $FOOD = 2
 Static $FOOD2 = 7 ; from 0
-Static $cFOOD = $g_data & "\Food.jpg"
+Static $cFOOD = $g_data & "Food.jpg"
 
 Static $DEAD = 3
-Static $cDEAD = $g_data & "\Dead.jpg"
+Static $cDEAD = $g_data & "Dead.jpg"
 
 Static $POOP = 5
-Static $cPOOP = $g_data & "\Poop.jpg"
+Static $cPOOP = $g_data & "Poop.jpg"
 
 Static $MaxLost = 7 ;   5 to 10
 
@@ -315,7 +326,7 @@ Global $g_sy = 30 ;40
 Global $g_boardx = $g_sx + 2
 Global $g_boardy = $g_sy + 2
 
-Global $g_Size = 22 ; max?20 ;min = 10
+Global $g_Size = 22 ; max? ;min = 10
 Global $g_sizeDef = $g_Size
 Global $g_Font = 24
 Global $g_hTick
@@ -352,7 +363,7 @@ Global $g_GameWhich = 1 ; 0 Normal, 1 Mine
 Global $g_HiScoreWho ;ctrl
 Global $g_HiScore[10]
 
-Global $Radio1, $Radio2
+Global $g_Radio1, $g_Radio2
 Global $g_ScoreTurn
 Global $g_ScoreFood
 Global $g_SnakeMax
@@ -425,16 +436,28 @@ Global $g_poop[$s_PoopSize + 1][4]
 ;0.84
 Global $g_pooprnd = True
 
-;0.98
-Global $g_iReplaySz = 6000
-Global $g_aReplay[$g_iReplaySz + 3]
-$g_aReplay[0] = 0 ; so replay check has a value
+;~~
+
+;0.98 changed 0.125  from fix size to redim increase size see ReplayRecData
+;0 length
+;1 $g_GameWhich
+;2	$g_GameScore  - added at end of game
+;3	$g_replayVer
+;4	$ver
+;5	_Now()
+;6	$g_sx
+;7	$g_sy
+
+Global $g_aReplay[2] ;   Last one is -1.  New data increase one add -1 to end
+$g_aReplay[0] = 1 ; size
+
 Static $s_ReplayRec = 1
 Static $s_ReplayPlay = 2
 Static $s_ReplayOff = 3
-Global $g_Replay = $s_ReplayOff
-Global $gb_replay
-Global $g_iReplayRecInx = 0
+Global $g_ReplayStatus = $s_ReplayOff
+
+Global $gb_replay  ; Replay Button  before 0.124 it was hidden.
+
 Global $g_iReplayPlyInx = 0
 
 ;0.99
@@ -511,17 +534,14 @@ Func Main()
 				ExitLoop
 			Case 1 ; start game
 				Game()
+				ReplaySave()
+
 			Case 2 ;Loop back to start form
 
 			Case 3 ;replay
-				$g_Replay = $s_ReplayPlay
+				$g_ReplayStatus = $s_ReplayPlay
 				$g_iReplayPlyInx = 0
 				$g_iTickCnt = 0
-
-				If $TESTING Then
-					_FileWriteFromArray("Array.txt", $g_aReplay)
-					;					_ArrayDisplay($g_aReplay)
-				EndIf
 
 				Game()
 
@@ -531,8 +551,8 @@ Func Main()
 
 EndFunc   ;==>Main
 #CS INFO
-	128573 V40 1/9/2020 9:18:30 PM V39 12/11/2019 11:54:15 AM V38 11/2/2019 6:19:14 PM V37 11/1/2019 7:15:17 PM
-#CE INFO
+	122317 V43 1/24/2020 1:30:56 AM V42 1/23/2020 7:11:42 PM V41 1/22/2020 5:09:10 PM V40 1/9/2020 9:18:30 PM
+#CE
 
 Func Game()
 	Local $nMsg, $x, $y, $flag
@@ -623,26 +643,43 @@ Func Game()
 	EndIf
 
 	;Replay reset game to record
-	If $g_Replay = $s_ReplayPlay Then
+	If $g_ReplayStatus = $s_ReplayPlay Then
 		$g_iTickCnt = 0
 		If $g_iReplayPlyInx <> 0 Then
 			$g_iReplayPlyInx = 0
 		EndIf
 	Else
-		$g_Replay = $s_ReplayRec
-		$g_iReplayRecInx = 0
+		$g_ReplayStatus = $s_ReplayRec
+		$g_aReplay[0] = 0
 		$g_iReplayPlyInx = 0
 		$g_iTickCnt = 0
-	EndIf
+		Dim $g_aReplay[1] ;
+		$g_aReplay[0] = 0 ; size
+		;		_ArrayDisplay($g_aReplay)
 
-	Switch $g_GameWhich
-		Case 1
-			ReplayRecData(11)
-		Case 0
-			ReplayRecData(10)
-	EndSwitch
-	If $g_Replay = $s_ReplayPlay Then  ;skip first record
-		$g_iReplayPlyInx += 1
+		;Size of array
+		;which game
+		; score -- add at end of game
+		; replay ver
+		;Ver of game
+		;date
+		;board size X (future)
+		;board size Y (future)
+
+		ReplayRecData(99, $g_GameWhich)
+		ReplayRecData(99, $g_GameScore)
+		ReplayRecData(99, $g_replayVer)
+		ReplayRecData(99, $ver)
+		ReplayRecData(99, _Now())
+		ReplayRecData(99, $g_sx)
+		ReplayRecData(99, $g_sy)
+		;		dataout("Skip play records", $g_aReplay[0]+1)
+		;		pause("Skip play records", $g_aReplay[0]+1)
+	EndIf
+;~~
+
+	If $g_ReplayStatus = $s_ReplayPlay Then ;skip first records
+		$g_iReplayPlyInx += 8
 	EndIf
 
 	StartSnake()
@@ -689,7 +726,7 @@ Func Game()
 	MouseMove(0, 0, 0)
 
 	$g_endgame = False
-	If $g_Replay = $s_ReplayPlay Then
+	If $g_ReplayStatus = $s_ReplayPlay Then
 		$a = GetReplayPlay(4)
 		$g_gChange = $a[3]
 	Else
@@ -732,7 +769,7 @@ Func Game()
 			EndIf
 
 			$g_iTickCnt += 1 ; Must be in the unpause loop
-			If $g_Replay = $s_ReplayPlay Then
+			If $g_ReplayStatus = $s_ReplayPlay Then
 
 				$a = GetReplayPlay(2)
 				If $a[0] Then
@@ -810,7 +847,7 @@ Func Game()
 	If $g_ReplayActive = False Then
 		UpDateHiScore()
 	EndIf
-	If $g_Replay = $s_ReplayPlay Then
+	If $g_ReplayStatus = $s_ReplayPlay Then
 		$a = GetReplayPlay(5)
 		Dataout("REC DONE ____-----------------------Replay Quit-------------")
 
@@ -818,13 +855,14 @@ Func Game()
 		ReplayRecData(5) ; end of game
 		Dataout("REC DONE ____-----End of Game----------------------------------")
 	EndIf
-	$g_Replay = $s_ReplayOff
+	$g_ReplayStatus = $s_ReplayOff
+
 	Opt("GUIEventOptions", 1)
 
 EndFunc   ;==>Game
 #CS INFO
-	445410 V71 1/16/2020 2:54:39 AM V70 1/15/2020 10:44:49 AM V69 1/10/2020 8:46:50 AM V68 1/9/2020 9:18:30 PM
-#CE
+	483295 V73 1/23/2020 7:11:42 PM V72 1/22/2020 5:09:10 PM V71 1/16/2020 2:54:39 AM V70 1/15/2020 10:44:49 AM
+#CE INFO
 
 Func Tick() ;
 	Local $fdiff
@@ -931,7 +969,7 @@ Func Extra()
 			PrevNext($x_new + $g_dirX, $y_new + $g_dirY) ;New value
 
 			Status(3, "Ate  snake POOP  Yuck! Lost " & $a & " cells of snake", 1)
-			If $g_Replay = $s_ReplayPlay Then
+			If $g_ReplayStatus = $s_ReplayPlay Then
 				$a = GetReplayPlay(20) ;55
 				dataout("55", $a[2])
 				If $a[0] Then  ; if false no poop out
@@ -1006,7 +1044,7 @@ Func Extra()
 					$a = 5
 				EndIf
 
-				If $g_Replay = $s_ReplayPlay Then
+				If $g_ReplayStatus = $s_ReplayPlay Then
 					$a = GetReplayPlay(20) ;44
 					dataout("44", $a[2])
 					If $a[0] Then  ; if false no poop out
@@ -1174,11 +1212,11 @@ Func Extra()
 		;Static $s_ReplayRec = 1
 		;Static $s_ReplayPlay = 2
 		;Static $s_ReplayOff = 3
-		Switch $g_Replay
+		Switch $g_ReplayStatus
 			Case $s_ReplayOff
 				$b = ""
 			Case $s_ReplayRec
-				$b = String($g_iReplayRecInx)
+				$b = String($g_aReplay[0])
 			Case $s_ReplayPlay
 				$b = String($g_iReplayPlyInx)
 		EndSwitch
@@ -1188,7 +1226,7 @@ Func Extra()
 
 EndFunc   ;==>Extra
 #CS INFO
-	449156 V55 1/9/2020 9:18:30 PM V54 12/29/2019 7:10:02 PM V53 12/22/2019 6:27:43 PM V52 12/15/2019 9:48:21 AM
+	450727 V56 1/23/2020 7:11:42 PM V55 1/9/2020 9:18:30 PM V54 12/29/2019 7:10:02 PM V53 12/22/2019 6:27:43 PM
 #CE INFO
 
 Func Normal()
@@ -1390,7 +1428,7 @@ EndFunc   ;==>Status
 Func StartSnake()
 	Local $x, $y, $a
 
-	If $g_Replay = $s_ReplayPlay Then
+	If $g_ReplayStatus = $s_ReplayPlay Then
 		$a = GetReplayPlay(1)
 		$x = $a[3]
 		$y = $a[4]
@@ -1418,7 +1456,7 @@ Func StartSnake()
 
 EndFunc   ;==>StartSnake
 #CS INFO
-	41863 V9 12/6/2019 2:47:59 PM V8 11/1/2019 8:41:21 AM V7 10/30/2019 2:05:21 AM V6 10/28/2019 1:14:59 PM
+	42507 V10 1/23/2020 7:11:42 PM V9 12/6/2019 2:47:59 PM V8 11/1/2019 8:41:21 AM V7 10/30/2019 2:05:21 AM
 #CE INFO
 
 Func DoubleBack($dirx, $diry)
@@ -1426,7 +1464,7 @@ Func DoubleBack($dirx, $diry)
 	;new+dir  is one back.
 	; Find which X or Y which is the same, then random -+ one on there
 
-	If $g_Replay = $s_ReplayPlay Then
+	If $g_ReplayStatus = $s_ReplayPlay Then
 		$a = GetReplayPlay(21)
 		If $a[0] Then              ; if false not at location
 			PrevNext($a[3], $a[4])
@@ -1478,7 +1516,7 @@ Func DoubleBack($dirx, $diry)
 
 EndFunc   ;==>DoubleBack
 #CS INFO
-	78694 V6 12/29/2019 7:10:02 PM V5 12/10/2019 8:29:16 PM V4 11/21/2019 3:52:08 PM V3 8/25/2019 6:50:13 PM
+	79338 V7 1/23/2020 7:11:42 PM V6 12/29/2019 7:10:02 PM V5 12/10/2019 8:29:16 PM V4 11/21/2019 3:52:08 PM
 #CE INFO
 
 Func PrevNext($x, $y) ;New value
@@ -1575,7 +1613,7 @@ Func AddFood($start = False)
 
 		Local $len, $x1, $y1, $mid, $len2, $x2, $y2
 
-		If $g_Replay = $s_ReplayPlay Then
+		If $g_ReplayStatus = $s_ReplayPlay Then
 			$a = GetReplayPlay(3) ;normal
 			$x = $a[3]
 			$y = $a[4]
@@ -1620,7 +1658,7 @@ Func AddFood($start = False)
 		EndIf
 
 	Else ;MyGame
-		If $g_Replay = $s_ReplayPlay Then
+		If $g_ReplayStatus = $s_ReplayPlay Then
 			$a = GetReplayPlay(3) ;extra
 			$x = $a[3]
 			$y = $a[4]
@@ -1638,7 +1676,7 @@ Func AddFood($start = False)
 
 EndFunc   ;==>AddFood
 #CS INFO
-	105394 V20 11/19/2019 1:09:35 PM V19 11/6/2019 5:52:00 PM V18 11/5/2019 12:50:43 AM V17 11/1/2019 8:41:21 AM
+	106682 V21 1/23/2020 7:11:42 PM V20 11/19/2019 1:09:35 PM V19 11/6/2019 5:52:00 PM V18 11/5/2019 12:50:43 AM
 #CE INFO
 
 Func ClearBoard()
@@ -1687,31 +1725,16 @@ EndFunc   ;==>NormalPoop
 
 Func NormalExtra()
 	If $g_GameWhich = 0 Then     ; 0 Normal, 1 Mine
-		GUICtrlSetState($Radio1, $GUI_CHECKED)
-
-		If $g_iReplayRecInx = 0 Or $g_aReplay[0] <> 10 Then
-			GUICtrlSetState($gb_replay, $GUI_HIDE)
-		Else
-			GUICtrlSetState($gb_replay, $GUI_SHOW)
-		EndIf
+		GUICtrlSetState($g_Radio1, $GUI_CHECKED)
 	Else
-		GUICtrlSetState($Radio2, $GUI_CHECKED)
-		If $g_iReplayRecInx = 0 Or $g_aReplay[0] <> 11 Then
-			GUICtrlSetState($gb_replay, $GUI_HIDE)
-		Else
-			;If $TESTING = False Then
-			;	GUICtrlSetState($gb_replay, $GUI_HIDE)
-			;Else
-			GUICtrlSetState($gb_replay, $GUI_SHOW)
-			;EndIf
-		EndIf
+		GUICtrlSetState($g_Radio2, $GUI_CHECKED)
 	EndIf
 	ReadHiScore()
 	DisplayHiScore()
 EndFunc   ;==>NormalExtra
 #CS INFO
-	44352 V6 11/6/2019 6:00:26 PM V5 11/2/2019 6:19:14 PM V4 10/30/2019 2:05:21 AM V3 8/11/2019 11:35:36 PM
-#CE INFO
+	16545 V9 1/24/2020 1:30:56 AM V8 1/23/2020 7:11:42 PM V7 1/22/2020 5:09:10 PM V6 11/6/2019 6:00:26 PM
+#CE
 
 Func DisplayHiScore()
 	Local $s
@@ -1747,6 +1770,7 @@ EndFunc   ;==>DisplayHiScore
 #CE INFO
 
 Func UpDateHiScore()
+	$g_aReplay[2] = $g_GameScore
 
 	If $g_aHiScore[10][0] < $g_GameScore Then
 
@@ -1786,7 +1810,7 @@ Func UpDateHiScore()
 	EndIf
 EndFunc   ;==>UpDateHiScore
 #CS INFO
-	84080 V17 1/10/2020 9:27:34 AM V16 1/9/2020 9:18:30 PM V15 11/4/2019 9:35:34 AM V14 7/24/2019 11:20:48 PM
+	86447 V18 1/23/2020 7:11:42 PM V17 1/10/2020 9:27:34 AM V16 1/9/2020 9:18:30 PM V15 11/4/2019 9:35:34 AM
 #CE INFO
 
 Func SaveHiScore()
@@ -1928,7 +1952,7 @@ Func CheckColorJpg($filename, $color)     ; $color is only the default color if 
 
 	$a = IniRead($s_ini, "Color", $filename, "X")
 
-	If FileExists($g_data & "\" & $filename & ".jpg") = 0 Then     ;Not found
+	If FileExists($g_data & $filename & ".jpg") = 0 Then      ;Not found
 
 		If $a <> "X" Then     ; if INI exist then use INI
 			$color = $a
@@ -1944,16 +1968,16 @@ Func CheckColorJpg($filename, $color)     ; $color is only the default color if 
 
 EndFunc   ;==>CheckColorJpg
 #CS INFO
-	35555 V4 10/11/2019 3:14:30 PM V3 8/16/2019 8:51:46 AM V2 7/14/2019 10:10:20 PM V1 7/14/2019 10:20:53 AM
+	35357 V5 1/22/2020 5:09:10 PM V4 10/11/2019 3:14:30 PM V3 8/16/2019 8:51:46 AM V2 7/14/2019 10:10:20 PM
 #CE INFO
 
 ;Create Color file and write INI
 Func CreateColorJpg($filename, $color)
-	CreateJpg($color, $g_data & "\" & $filename & ".jpg")
+	CreateJpg($color, $g_data & $filename & ".jpg")
 	IniWrite($s_ini, "Color", $filename, "0x" & Hex($color, 6))
 EndFunc   ;==>CreateColorJpg
 #CS INFO
-	13853 V8 10/25/2019 12:29:56 AM V7 10/13/2019 1:37:57 PM V6 10/11/2019 3:14:30 PM V5 8/22/2019 8:37:33 AM
+	13655 V9 1/22/2020 5:09:10 PM V8 10/25/2019 12:29:56 AM V7 10/13/2019 1:37:57 PM V6 10/11/2019 3:14:30 PM
 #CE INFO
 
 Func StartForm()
@@ -1964,7 +1988,7 @@ Func StartForm()
 	Local $a = 260
 	Local $b = 50
 	Local $c = 200     ;120
-	Local $gameLoc, $x, $y, $done
+	Local $gameLoc, $x, $y, $done, $GameName
 
 	$g_ReplayActive = False
 
@@ -1989,10 +2013,10 @@ Func StartForm()
 		GUICtrlCreateLabel("Type of Game", 0, 32, 600, 20, $SS_CENTER)
 		GUICtrlSetFont(-1, 10, 900, 0, "Arial")
 
-		GUIStartGroup()
-		$Radio1 = GUICtrlCreateRadio("Normal Snake", $a, $b + 20, $c, 20)
+		GUIStartGroup($g_FormStart)
+		$g_Radio1 = GUICtrlCreateRadio("Normal Snake", $a, $b + 20, $c, 20)
 		GUICtrlSetFont(-1, 10, 800, 0, "Arial")
-		$Radio2 = GUICtrlCreateRadio("My Snake", $a, $b, $c, 20)
+		$g_Radio2 = GUICtrlCreateRadio("My Snake", $a, $b, $c, 20)
 		GUICtrlSetFont(-1, 10, 800, 0, "Arial")
 
 		$b += 40
@@ -2035,6 +2059,8 @@ Func StartForm()
 	EndIf
 	GUISetState(@SW_SHOW)
 
+;~~
+
 	;restored here because Replay will change it.
 	$g_TickTime = IniRead($s_ini, "General", "Speed", 150)
 
@@ -2076,6 +2102,14 @@ Func StartForm()
 				ControlFocus($g_FormStart, "", $b_start)
 				$L_MinNotflag = True
 
+			Case $g_Radio1     ;Normal
+				$g_GameWhich = 0
+				NormalExtra()
+
+			Case $g_Radio2     ; Extra
+				$g_GameWhich = 1
+				NormalExtra()
+
 			Case $b_about
 				GUIDelete($g_FormStart)
 				$g_FormStart = -1
@@ -2100,65 +2134,100 @@ Func StartForm()
 				Return 2
 
 			Case $gb_replay
+				If $g_GameWhich = 0 Then     ; 0 Normal, 1 Mine
+					$GameName = "Nor-"
+				Else
+					$GameName = "My-"
+				EndIf
 
-				GUIDelete($g_FormStart)
-				$g_FormStart = -1
+				If FileExists($g_data & $GameName & "Current.Snk19") = 1 Then
 
-				_Center(600, 200) ;xw, yh
-				$g_FormReplay = GUICreate("Replay Speed", 600, 200, $g_FormLeft, $g_FormTop)
-				GUICtrlCreateLabel("Replay - Works for Normal Snake. - Testing My Snake.", 20, 40, 540, 20, $SS_CENTER)
-				GUICtrlSetFont(-1, 14, 800, 0, "Arial")
-				GUICtrlCreateLabel("ESC to stop --- Pick speed Below", 20, 60, 540, 20, $SS_CENTER)
-				GUICtrlSetFont(-1, 14, 400, 0, "Arial")
-				Local $b_rpStd = GUICtrlCreateButton("Std 150ms", 40, 150, 100, 40)
-				Local $b_rp200 = GUICtrlCreateButton("200ms", 180, 150, 100, 40)
-				Local $b_rp100 = GUICtrlCreateButton("100ms", 300, 150, 100, 40)
-				Local $b_rpfull = GUICtrlCreateButton("Full", 420, 150, 100, 40)
-				GUISetState(@SW_SHOW)
+					GUIDelete($g_FormStart)
+					$g_FormStart = -1
+;~~
+					_Center(600, 200) ;xw, yh
+					$g_FormReplay = GUICreate("Replay Speed", 600, 200, $g_FormLeft, $g_FormTop)
+					GUICtrlCreateLabel("Replay - Works for Normal Snake. - Testing My Snake.", 20, 20, 540, 20, $SS_CENTER)
+					GUICtrlSetFont(-1, 14, 800, 0, "Arial")
+					GUICtrlCreateLabel("Pick speed Below", 20, 40, 540, 20, $SS_CENTER)
+					GUICtrlSetFont(-1, 14, 400, 0, "Arial")
 
-				$L_Tick = 150
-				$done = 3     ; start replay
+					Local $l_title = GUICtrlCreateLabel("", 20, 70, 540, 20, $SS_CENTER)
+					Local $datename = "Current"
+					GUICtrlSetFont(-1, 12, 400, 0, "Arial")
+					Local $b_rpLast = GUICtrlCreateButton("Current", 60, 100, 100, 40)
+					Local $b_rpHigh = GUICtrlCreateButton("Highest", 180, 100, 100, 40)
+					Local $b_Load = GUICtrlCreateButton("Load Docs", 300, 100, 100, 40) ; load from docs
+					Local $b_Save = GUICtrlCreateButton("Save Docs", 420, 100, 100, 40) ; or save docs  snake19
 
-				While 1
-					Local $nMsg = GUIGetMsg()
-					Switch $nMsg
-						Case $GUI_EVENT_CLOSE
-							$done = 2     ;restart Start Form
-							ExitLoop
-						Case $b_rpStd
-							$L_Tick = 150
-							ExitLoop
-						Case $b_rp200
-							$L_Tick = 200
-							ExitLoop
-						Case $b_rp100
-							$L_Tick = 100
-							ExitLoop
-						Case $b_rpfull
-							$L_Tick = 0
-							ExitLoop
+					Local $b_rpStd = GUICtrlCreateButton("Std 150ms", 60, 150, 100, 40)
+					Local $b_rp200 = GUICtrlCreateButton("200ms", 180, 150, 100, 40)
+					Local $b_rp100 = GUICtrlCreateButton("100ms", 300, 150, 100, 40)
+					Local $b_rpfull = GUICtrlCreateButton("Full", 420, 150, 100, 40)
+					GUISetState(@SW_SHOW)
 
-					EndSwitch
-				WEnd
-				GUIDelete($g_FormReplay)
+					$L_Tick = 150
+					$done = 3 ; start replay
 
-				$g_ReplayActive = True
-				$g_TickTime = $L_Tick
-				Return $done
+					If $g_aReplay[0] = 1 Then
+						_FileReadToArray($g_data & $GameName & "Current.Snk19", $g_aReplay, 0)
+						$datename = "Current"
+					EndIf
 
+					GUICtrlSetData($l_title, $datename & " - " & $g_aReplay[5])  ; outside of loop so it won't flicker
+
+					While 1
+						Local $nMsg = GUIGetMsg()
+						Switch $nMsg
+
+							Case $GUI_EVENT_CLOSE
+								$done = 2 ;restart Start Form
+								ExitLoop
+							Case $b_rpHigh
+								If FileExists($g_data & $GameName & "Highest.Snk19") = 1 Then
+									_FileReadToArray($g_data & $GameName & "Highest.Snk19", $g_aReplay, 0)
+									$datename = "Highest"
+									GUICtrlSetData($l_title, $datename & " - " & $g_aReplay[5])
+								EndIf
+
+							Case $b_rpLast
+								_FileReadToArray($g_data & $GameName & "Current.Snk19", $g_aReplay, 0)
+								$datename = "Current"
+								GUICtrlSetData($l_title, $datename & " - " & $g_aReplay[5])
+
+							Case $b_Load
+								;Do
+								;$datename = "User"
+								;								GUICtrlSetData($l_title, $datename & " - " & $g_aReplay[5])
+
+							Case $b_Save
+							Case $b_rpStd ;~~
+								$L_Tick = 150
+								ExitLoop
+							Case $b_rp200
+								$L_Tick = 200
+								ExitLoop
+							Case $b_rp100
+								$L_Tick = 100
+								ExitLoop
+							Case $b_rpfull
+								$L_Tick = 0
+								ExitLoop
+
+						EndSwitch
+					WEnd
+					GUIDelete($g_FormReplay)
+
+					$g_ReplayActive = True
+					$g_TickTime = $L_Tick
+					Return $done
+
+				EndIf
 			Case $b_start
 				GUIDelete($g_FormStart)
 				$g_FormStart = -1
 
 				Return 1
-
-			Case $Radio1     ;Normal
-				$g_GameWhich = 0
-				NormalExtra()
-
-			Case $Radio2     ; Extra
-				$g_GameWhich = 1
-				NormalExtra()
 
 		EndSwitch
 	WEnd
@@ -2167,7 +2236,7 @@ Func StartForm()
 
 EndFunc   ;==>StartForm
 #CS INFO
-	406413 V49 1/16/2020 2:54:39 AM V48 1/15/2020 10:44:49 AM V47 1/10/2020 9:27:34 AM V46 1/10/2020 8:46:50 AM
+	508236 V52 1/24/2020 1:30:56 AM V51 1/23/2020 7:11:42 PM V50 1/22/2020 5:09:10 PM V49 1/16/2020 2:54:39 AM
 #CE
 
 Func Settings()
@@ -2263,7 +2332,7 @@ Func ScreenSize()
 EndFunc   ;==>ScreenSize
 #CS INFO
 	82337 V8 1/16/2020 2:54:39 AM V7 1/10/2020 9:27:34 AM V6 12/30/2019 7:47:56 PM V5 10/20/2019 1:07:26 AM
-#CE
+#CE INFO
 
 ; Read INI setting
 Func ReadIni()
@@ -2635,7 +2704,11 @@ Func About()
 	$g_FormAbout = GUICreate("Snake19 - About", 615, 430, $g_FormLeft, $g_FormTop, $ws_popup + $ws_caption)
 ;~+~+
 	;$Message &= "|
-	$Message = "0.123 16 Jan 2020 Resize game board, Main Menu make sure its on screen on top"
+	$Message = "0.127 24 Jan 2020 Save/Load Replay - Load Highscore and current replay"
+	$Message &= "|0.126 23 Jan 2020 Save/Load Replay - Save highest score replay"
+	$Message &= "|0.125 22 Jan 2020 Save/Load Replay - Change how replay dim is stored"
+	$Message &= "|0.124 22 Jan 2020 Save/Load Replay"
+	$Message &= "|0.123 16 Jan 2020 Resize game board, Main Menu make sure its on screen on top"
 	$Message &= "|0.122 15 Jan 2020 Hide game screen - Main Menu"
 	$Message &= "|0.121 10 Jan 2020 make rest of forms open on Game center"
 	$Message &= "||0.120 10 Jan 2020 make forms and game open saved or true center Main and Game done"
@@ -2661,10 +2734,6 @@ Func About()
 	$Message &= "|0.100 2 Nov 2019 Replay - crashes on end"
 	$Message &= "||0.99 1 Nov 2019 Replay try 2"
 	$Message &= "|0.98 31 Oct 2019 Str 28 Oct Replay Failed removing"
-	$Message &= "|0.97 28 Oct 2019 Change Main Menu to work with Replay"
-	$Message &= "|0.96 28 Oct 2019 Fixed Go Mouse pointer"
-	$Message &= "|0.95 25 Oct 2019 Make color jpg without using capture"
-	$Message &= "|0.94 24 Oct 2019 Main Menu"
 
 	GUICtrlCreateLabel("Welcome to Snake19", 0, 24, 617, 28, $SS_CENTER)
 	GUICtrlSetFont(-1, 14, 800, 0, "MS Sans Serif")
@@ -2726,7 +2795,7 @@ Func About()
 
 EndFunc   ;==>About
 #CS INFO
-	278498 V30 1/16/2020 2:54:39 AM V29 1/15/2020 10:44:49 AM V28 1/10/2020 9:27:34 AM V27 1/10/2020 8:46:50 AM
+	283425 V32 1/24/2020 1:30:56 AM V31 1/23/2020 7:11:42 PM V30 1/16/2020 2:54:39 AM V29 1/15/2020 10:44:49 AM
 #CE
 
 Func SetCellSide()
@@ -2863,7 +2932,7 @@ Func WallTrue()
 		Status(2, "Pass through WALL: Lose " & $a, 3)
 		$g_gChange -= $a
 
-		If $g_Replay = $s_ReplayPlay Then
+		If $g_ReplayStatus = $s_ReplayPlay Then
 			$a = GetReplayPlay(30)
 			If $a[0] Then          ; if false not at location
 				PrevNext($a[3], $a[4])
@@ -2882,7 +2951,7 @@ Func WallTrue()
 
 EndFunc   ;==>WallTrue
 #CS INFO
-	146890 V11 12/29/2019 7:10:02 PM V10 12/27/2019 1:22:40 AM V9 12/11/2019 11:54:15 AM V8 12/10/2019 8:29:16 PM
+	147534 V12 1/23/2020 7:11:42 PM V11 12/29/2019 7:10:02 PM V10 12/27/2019 1:22:40 AM V9 12/11/2019 11:54:15 AM
 #CE INFO
 
 Func PWedge($xy, $offset, $far, ByRef $foundEdge)     ; 2nd output $flag True  pass edge and return not valid
@@ -2964,7 +3033,6 @@ EndFunc   ;==>CreateJpg
 ;-----------------------------------------
 ; Replay
 Func ReplayRecData($func, $x = 0, $y = 0, $z = 0, $zz = 0)
-
 	;Func
 	;1 Start Snake
 	;2 Move snake
@@ -2976,48 +3044,46 @@ Func ReplayRecData($func, $x = 0, $y = 0, $z = 0, $zz = 0)
 	;30 Pass through wall
 
 	;X, Y
-	If $g_Replay <> $s_ReplayRec Then
+
+	dataout("ReplayRecData", $func)
+	Local $a
+
+	If $g_ReplayStatus <> $s_ReplayRec Then
 		Return
 	EndIf
 
-	If $g_iReplayRecInx >= $g_iReplaySz Then
-		$g_Replay = $s_ReplayOff
+	$a = $g_aReplay[0] + 1
 
-		Return
-	EndIf
+	ReDim $g_aReplay[$a + 1] ;plus 1 because it zero base
+	$g_aReplay[0] += 1
+	;_ArrayDisplay($g_aReplay)
 
 	Switch $func
+		Case 99     ;func text-info
+			$g_aReplay[$a] = $x
 		Case 2             ;Func, $g_iTickCnt,  add 3 data,2 = Move
-			$g_aReplay[$g_iReplayRecInx] = $func & "|" & $g_iTickCnt & "|" & $x & "|" & $y & "|" & $z
+			$g_aReplay[$a] = $func & "|" & $g_iTickCnt & "|" & $x & "|" & $y & "|" & $z
 		Case 1, 3, 21, 30            ; add 2 data
-			$g_aReplay[$g_iReplayRecInx] = $func & "|" & $g_iTickCnt & "|" & $x & "|" & $y
+			$g_aReplay[$a] = $func & "|" & $g_iTickCnt & "|" & $x & "|" & $y
 		Case 4             ; add 1 data
-			$g_aReplay[$g_iReplayRecInx] = $func & "|" & $g_iTickCnt & "|" & $x
+			$g_aReplay[$a] = $func & "|" & $g_iTickCnt & "|" & $x
 		Case 5          ;func and tick
-			$g_aReplay[$g_iReplayRecInx] = $func & "|" & $g_iTickCnt
-		Case 10, 11     ;func
-			$g_aReplay[$g_iReplayRecInx] = $func
+			$g_aReplay[$a] = $func & "|" & $g_iTickCnt
 		Case 20     ;Func, $g_iTickCnt,  add 4 data  20 = Poop extra only
-			$g_aReplay[$g_iReplayRecInx] = $func & "|" & $g_iTickCnt & "|" & $x & "|" & $y & "|" & $z & "|" & $zz
+			$g_aReplay[$a] = $func & "|" & $g_iTickCnt & "|" & $x & "|" & $y & "|" & $z & "|" & $zz
+		Case Else
+			MsgBox(0, "ERROR ReplayRecData", $func & " Func number not found")
 	EndSwitch
-	$g_iReplayRecInx += 1
-	If $g_iReplayRecInx >= $g_iReplaySz Then
-		$g_Replay = $s_ReplayOff
-		Pause("End of array")
-		Return
-	EndIf
-
-	$g_aReplay[$g_iReplayRecInx] = -1     ;remove last one
 
 EndFunc   ;==>ReplayRecData
 #CS INFO
-	85660 V11 12/15/2019 9:48:21 AM V10 12/10/2019 8:29:16 PM V9 11/21/2019 3:52:08 PM V8 11/19/2019 1:09:35 PM
-#CE INFO
+	76050 V14 1/24/2020 1:30:56 AM V13 1/23/2020 7:11:42 PM V12 1/22/2020 5:09:10 PM V11 12/15/2019 9:48:21 AM
+#CE
 
 ;$nMsg = GetReplayPlay(N)
 
 ;Local $a
-;	If $g_Replay = $s_ReplayPlay Then
+;	If $g_ReplayStatus = $s_ReplayPlay Then
 ;	$a=GetReplayPlay(func)
 ;$x = $a[3]
 ;		$y = $a[4]
@@ -3027,11 +3093,11 @@ EndFunc   ;==>ReplayRecData
 Func GetReplayPlay($Expecting)
 	Local $a
 
-	If $g_Replay <> $s_ReplayPlay Then
+	If $g_ReplayStatus <> $s_ReplayPlay Then
 		Return
 	EndIf
-	If $g_iReplayPlyInx >= $g_iReplayRecInx Then
-		$g_Replay = $s_ReplayOff
+	If $g_iReplayPlyInx >= $g_aReplay[0] Then
+		$g_ReplayStatus = $s_ReplayOff
 		$g_endgame = True
 		$a = "5|0|0|0|0"
 	Else
@@ -3044,7 +3110,7 @@ Func GetReplayPlay($Expecting)
 	If $g_iTickCnt >= $a[2] Then
 
 		If $a[1] = 5 Then
-			$g_Replay = $s_ReplayOff
+			$g_ReplayStatus = $s_ReplayOff
 			$g_endgame = True
 		EndIf
 
@@ -3061,7 +3127,7 @@ Func GetReplayPlay($Expecting)
 
 EndFunc   ;==>GetReplayPlay
 #CS INFO
-	41384 V11 12/29/2019 7:10:02 PM V10 12/15/2019 9:48:21 AM V9 12/10/2019 8:29:16 PM V8 12/6/2019 2:47:59 PM
+	42955 V12 1/23/2020 7:11:42 PM V11 12/29/2019 7:10:02 PM V10 12/15/2019 9:48:21 AM V9 12/10/2019 8:29:16 PM
 #CE INFO
 
 ;Check to see if the sum is inside the edge, return $nv if ok same, not ok then 0
@@ -3382,9 +3448,48 @@ Func _Center($W, $H, $G = False) ;xw, yh  $G= game board
 EndFunc   ;==>_Center
 #CS INFO
 	62929 V4 1/16/2020 2:54:39 AM V3 1/10/2020 5:12:30 PM V2 1/10/2020 8:46:50 AM V1 1/9/2020 9:18:30 PM
-#CE
+#CE INFO
 
-; $g_PleaseWait is a form but should complete before hidding
+;_FileWriteFromArray("Array.txt", $g_aReplay)
+;$g_data
+
+Func ReplaySave()
+	; replay save current as last file, check to see it score is highest
+	; my-current.snk19
+	; nor-current.snk19
+	; my- or nor- highest.snk19
+	; user store in User Doc as my- or nor- replay date-time.snk19
+
+	Local $GameName, $H
+	Local Static $RPhighscore = 0
+
+	If $g_GameWhich = 0 Then  ; 0 Normal, 1 Mine
+		$GameName = "Nor-"
+	Else
+		$GameName = "My-"
+	EndIf
+
+	If $RPhighscore = 0 Then
+		If FileExists($g_data & $GameName & "Highest.Snk19") = 1 Then
+			_FileReadToArray($g_data & $GameName & "Highest.Snk19", $H, 0)
+			$RPhighscore = $H[2]
+			$H = 0 ;clear array
+		EndIf
+	EndIf
+
+	If $g_aReplay[0] > 20 Then  ; which means it  was not aborted
+		_FileWriteFromArray($g_data & $GameName & "Current.Snk19", $g_aReplay)
+		;		_ArrayDisplay($g_aReplay)
+
+		If $g_aReplay[2] > $RPhighscore Then
+			_FileWriteFromArray($g_data & $GameName & "Highest.Snk19", $g_aReplay)
+			$RPhighscore = $g_aReplay[2]
+		EndIf
+	EndIf
+EndFunc   ;==>ReplaySave
+#CS INFO
+	69619 V3 1/24/2020 1:30:56 AM V2 1/23/2020 7:11:42 PM V1 1/22/2020 5:09:10 PM
+#CE
 
 ;Main
 ;ChooseColor()
@@ -3393,4 +3498,4 @@ Main()
 
 Exit
 
-;~T ScriptFunc.exe V0.54a 15 May 2019 - 1/16/2020 2:54:39 AM
+;~T ScriptFunc.exe V0.54a 15 May 2019 - 1/24/2020 1:30:56 AM

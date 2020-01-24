@@ -1,5 +1,8 @@
-0.123 Make sure all windows are on the screen.
+0.127 Redid Replay: Save/Load Replay - Load Highscore and current replay
 
+Note: When starting this version for the first time the highscores are clear.
+
+----------------
 Two versions of the snake game:
 My Snake - hard to die.  
   Food increase Snake by 1.  A special food will get you more.
@@ -14,11 +17,17 @@ My Snake - hard to die.
     Snake does not like to Turn so, so few turns and Food increase snake & score
       Too many turns Snake gets shorter
 
+Normal Snake 
+  Food increase Snake by 1.  Score +1 per food pickup.  There is a bonus.
+    Will die if Snake eat itself, eat a wall.
+
+----------------
 Special keys:
  P = Pause game
  Q = Quit game
  M = Minimize game.  Restore from program tray.
 
+----------------
 Score line in 
  My Snake: 
   Length of snake
@@ -30,15 +39,13 @@ Score line in
  Normal Snake: Length of snake.
 
 	
-
+----------------
 Replay:
-  You can replay the last game played.  At different speeds. Default speed, 200ms, 100ms, Full (no delay in loop)
+You can replay the highest score game played and the last game played.  
+At different speeds. Default speed, 200ms, 100ms, Full (no delay in loop)
 
 
-Normal Snake 
-  Food increase Snake by 1.  Score +1 per food pickup.  There is a bonus.
-    Will die if Snake eat itself, eat a wall.
-
+----------------
 1) Minimize Game board by pressing H while game is active.  Restore from tray.
 2) Minimize Main Menu by pressing minimize button.  Restore from tray.   If game board is showing it will disappear.
 3) When at Main Menu and Game board is showing, click on Game board to show it for 3 seconds.
@@ -47,6 +54,7 @@ Normal Snake
 6) If the Game board loses focus, the game will pause.  Game will restart after 2 seconds after it return to focus.
 7) Quit the Game, press Q
 
+----------------
 Settings:
 1) About
 2) Screen Size: Changes Cell size from 10x10 to maximum screen can hold.
@@ -59,12 +67,17 @@ X) Remove data files from computer.
 
 
 to do
+  Save/Load replay save to user Document  Current and Highest replay are now saved.
+
   Score: clear all, clear all but highest
   Select different keys to use.
-  Save/Load replay save to user Document
   Save load scores/setting  for Change of size
   Change size of screen.  default 30x40  in blocks of 5
 
 problem:
-Still have the funny start game problem that I can't create in debug mode.  The end of the snake does not clear, snake just get longer, until you run over it. Haven't seen it in a while so I might have fixed it.
+Long: Still have the funny start game problem that I can't create in debug mode.  The end of the snake does not clear, snake just get longer, until you run over it. Haven't seen it in a while so I might have fixed it.  No, did twice since last upload.
+
 One way to cause it: Start game, don't move, lose focus, get focus and move.  Happens rarely. Now that I wrote it down and happen twice.  I'll active debug trace and I won't be able to get it to happen.
+
+24 Jan 2020
+The replay ends when replay see the end code not when it get to the end code in the array.  
