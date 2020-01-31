@@ -1,6 +1,8 @@
-0.127 Redid Replay: Save/Load Replay - Load Highscore and current replay
+0.128 31 Jan 2020 Fixed the replay end, start with old score
 
-Note: When starting this version for the first time the highscores are clear.
+Fix the replay now ends on the end not one move before.
+Sometime quitting the game before a move would create a high score with previous with previous score with no moves
+M to Minimize not H to Hide
 
 ----------------
 Two versions of the snake game:
@@ -9,7 +11,7 @@ My Snake - hard to die.
   My Snake Bonus:
     Snake can 'double back' on self.  
 
-    Will not die if snake eat itseft, could cause part of its end to die.
+    Will not die if snake eat itself, could cause part of its end to die.
 
     Pass through Wall to other side. But loose X cells.
       Will pass through the walls so long as there nothing on the other side.
@@ -31,22 +33,20 @@ Special keys:
 Score line in 
  My Snake: 
   Length of snake
-  Maximun length 
+  Maximum length 
   Score
   ms/cyc: time it take to do a game loop on this computer. My desktop about 12ms, Win 10 notebook about 85ms.
   test number: number of replay cells used.  Max 6,000
   
  Normal Snake: Length of snake.
 
-	
 ----------------
 Replay:
 You can replay the highest score game played and the last game played.  
 At different speeds. Default speed, 200ms, 100ms, Full (no delay in loop)
 
-
 ----------------
-1) Minimize Game board by pressing H while game is active.  Restore from tray.
+1) Minimize Game board by pressing M while game is active.  Restore from tray. While game is minimize it will pause.
 2) Minimize Main Menu by pressing minimize button.  Restore from tray.   If game board is showing it will disappear.
 3) When at Main Menu and Game board is showing, click on Game board to show it for 3 seconds.
 4) When at Main Menu and Game board is showing, to see it for longer then 3 seconds, click & hold Game board title bar. 3 second after release Main Menu will return.
@@ -58,8 +58,8 @@ At different speeds. Default speed, 200ms, 100ms, Full (no delay in loop)
 Settings:
 1) About
 2) Screen Size: Changes Cell size from 10x10 to maximum screen can hold.
-3) Channg Colors: 2 pre-define color layout.  You can pick any color you want.
-4) Speed:  Change the speed of the movement of snake.  Defaut is 150 ms per loop, up or down by 10 ms.
+3) Change Colors: 2 per-define color layout.  You can pick any color you want.
+4) Speed:  Change the speed of the movement of snake.  Default is 150 ms per loop, up or down by 10 ms.
 X) Remove data files from computer. 
 
 
@@ -67,17 +67,15 @@ X) Remove data files from computer.
 
 
 to do
-  Save/Load replay save to user Document  Current and Highest replay are now saved.
+  Save/Load replay save to user Document Current and Highest replay are now saved.
 
   Score: clear all, clear all but highest
   Select different keys to use.
-  Save load scores/setting  for Change of size
+  Save load scores/setting for Change of size
   Change size of screen.  default 30x40  in blocks of 5
 
 problem:
-Long: Still have the funny start game problem that I can't create in debug mode.  The end of the snake does not clear, snake just get longer, until you run over it. Haven't seen it in a while so I might have fixed it.  No, did twice since last upload.
+Long: Still have the funny start game problem that I can't create in debug mode.  The end of the snake does not clear, snake just get longer, until you run over it. Haven't seen it in a while so I might have fixed it.  No, did twice since last upload. none since 0.127
 
-One way to cause it: Start game, don't move, lose focus, get focus and move.  Happens rarely. Now that I wrote it down and happen twice.  I'll active debug trace and I won't be able to get it to happen.
+One way to cause it: Start game, don't move, lose focus, get focus and move. I'll active debug trace and I not able to get it to happen.
 
-24 Jan 2020
-The replay ends when replay see the end code not when it get to the end code in the array.  

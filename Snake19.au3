@@ -5,7 +5,10 @@ AutoItSetOption("MustDeclareVars", 1)
 ;Global Static $MESSAGE =  False   ;Pause will still work in script  No DataOut
 
 ; Must be Declared before _Prf_startup   ~+~+
-Global $ver = "0.127 24 Jan 2020 Save/Load Replay - Load Highscore and current replay"
+Global $ver = "0.128 31 Jan 2020 Fixed the replay end, start with old score"
+
+;0.128 ? Save/Load Replay - Load/Save User replay
+
 ;Next save score to array
 ; Save highest score.
 ; Save user selected in data or doc
@@ -21,7 +24,7 @@ Global $g_replayVer = "1"
 #include "R:\!Autoit\Blank\_prf_startup.au3"
 
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
-#AutoIt3Wrapper_Res_Fileversion=0.1.2.7
+#AutoIt3Wrapper_Res_Fileversion=0.1.2.8
 #AutoIt3Wrapper_Icon=R:\!Autoit\Ico\prf.ico
 #AutoIt3Wrapper_Res_Description=Another snake game
 #AutoIt3Wrapper_Res_LegalCopyright=© Phillip Forrestal 2019-2020
@@ -94,10 +97,11 @@ to do
 
 	Version
 ;~+~+
-0.127 24 Jan 2020 Save/Load Replay - Load Highscore and current replay
-0.126 23 Jan 2020 Save/Load Replay - Save highest score replay
-0.125 22 Jan 2020 Save/Load Replay - Change how replay dim is stored
-0.124 22 Jan 2020 Save/Load Replay
+	0.128 31 Jan 2020 Fixed the replay end, start with old score
+	0.127 24 Jan 2020 Save/Load Replay - Load Highscore and current replay
+	0.126 23 Jan 2020 Save/Load Replay - Save highest score replay
+	0.125 22 Jan 2020 Save/Load Replay - Change how replay dim is stored
+	0.124 22 Jan 2020 Save/Load Replay
 	0.123 16 Jan 2020 Resize game board, Main Menu make sure its on screen on top
 	0.122 15 Jan 2020 Hide game screen - Main Menu
 	0.121 10 Jan 2020 make rest of forms open on Game center
@@ -552,7 +556,7 @@ Func Main()
 EndFunc   ;==>Main
 #CS INFO
 	122317 V43 1/24/2020 1:30:56 AM V42 1/23/2020 7:11:42 PM V41 1/22/2020 5:09:10 PM V40 1/9/2020 9:18:30 PM
-#CE
+#CE INFO
 
 Func Game()
 	Local $nMsg, $x, $y, $flag
@@ -639,7 +643,7 @@ Func Game()
 	Status(3, "", 0)
 
 	If $NotFirstPass Then
-		ClearBoard() ; Change how create is done not need on fist pass
+		ClearBoard() ; Change how create is done not need on first pass
 	EndIf
 
 	;Replay reset game to record
@@ -676,7 +680,6 @@ Func Game()
 		;		dataout("Skip play records", $g_aReplay[0]+1)
 		;		pause("Skip play records", $g_aReplay[0]+1)
 	EndIf
-;~~
 
 	If $g_ReplayStatus = $s_ReplayPlay Then ;skip first records
 		$g_iReplayPlyInx += 8
@@ -697,6 +700,7 @@ Func Game()
 	$g_turnLast = 0
 	$g_ScoreTurn = 0
 	$g_ScoreFood = 0
+	$g_GameScore = 0
 	$g_SnakeMax = 0
 	$g_SnakeCount = 1
 	$g_iScore = 0
@@ -721,7 +725,7 @@ Func Game()
 			$g_Turns = -1 ; The way it start with 1 turn on start. To fix start with +1
 	EndSwitch
 
-	Local $aAccelKey2[][] = [["{RIGHT}", $L_idRight], ["{LEFT}", $L_idLeft], ["{DOWN}", $L_idDown], ["{UP}", $L_idUp], ["q", $L_idEsc], ["p", $L_idPause], ["h", $L_idHid]]
+	Local $aAccelKey2[][] = [["{RIGHT}", $L_idRight], ["{LEFT}", $L_idLeft], ["{DOWN}", $L_idDown], ["{UP}", $L_idUp], ["q", $L_idEsc], ["p", $L_idPause], ["m", $L_idHid]]
 	GUISetAccelerators($aAccelKey2, $g_ctrlBoard)
 	MouseMove(0, 0, 0)
 
@@ -861,7 +865,7 @@ Func Game()
 
 EndFunc   ;==>Game
 #CS INFO
-	483295 V73 1/23/2020 7:11:42 PM V72 1/22/2020 5:09:10 PM V71 1/16/2020 2:54:39 AM V70 1/15/2020 10:44:49 AM
+	484327 V74 1/31/2020 5:20:55 PM V73 1/23/2020 7:11:42 PM V72 1/22/2020 5:09:10 PM V71 1/16/2020 2:54:39 AM
 #CE INFO
 
 Func Tick() ;
@@ -1734,7 +1738,7 @@ Func NormalExtra()
 EndFunc   ;==>NormalExtra
 #CS INFO
 	16545 V9 1/24/2020 1:30:56 AM V8 1/23/2020 7:11:42 PM V7 1/22/2020 5:09:10 PM V6 11/6/2019 6:00:26 PM
-#CE
+#CE INFO
 
 Func DisplayHiScore()
 	Local $s
@@ -1795,7 +1799,6 @@ Func UpDateHiScore()
 		Sleep(4000)
 		GUIDelete($g_FormGameHiScore)
 		$g_FormGameHiScore = 1
-		$g_GameScore = 0
 
 	ElseIf $g_GameScore > 0 Then
 		_Center(250, 100)   ;xw, yh
@@ -1810,7 +1813,7 @@ Func UpDateHiScore()
 	EndIf
 EndFunc   ;==>UpDateHiScore
 #CS INFO
-	86447 V18 1/23/2020 7:11:42 PM V17 1/10/2020 9:27:34 AM V16 1/9/2020 9:18:30 PM V15 11/4/2019 9:35:34 AM
+	85218 V19 1/31/2020 5:20:55 PM V18 1/23/2020 7:11:42 PM V17 1/10/2020 9:27:34 AM V16 1/9/2020 9:18:30 PM
 #CE INFO
 
 Func SaveHiScore()
@@ -2039,7 +2042,7 @@ Func StartForm()
 
 		Local $Edit1 = GUICtrlCreateEdit("", 20, $b, 550, 230, $ES_READONLY)
 		GUICtrlSetFont($Edit1, 10, 400, 0, "Arial")
-		GUICtrlSetData($Edit1, "Press Q to quit. Press P to Pause.  Press H to Hide game (Minimize)" & @CRLF, 1)
+		GUICtrlSetData($Edit1, "Press Q to quit. Press P to Pause.  Press M to Minimize game" & @CRLF, 1)
 		GUICtrlSetData($Edit1, @CRLF, 1)
 		GUICtrlSetData($Edit1, "If you lose Focus or Minimize the game, it will PAUSE" & @CRLF, 1)
 		GUICtrlSetData($Edit1, @CRLF, 1)
@@ -2059,8 +2062,6 @@ Func StartForm()
 	EndIf
 	GUISetState(@SW_SHOW)
 
-;~~
-
 	;restored here because Replay will change it.
 	$g_TickTime = IniRead($s_ini, "General", "Speed", 150)
 
@@ -2076,6 +2077,7 @@ Func StartForm()
 			If WinGetTitle("[ACTIVE]") <> $sMainMenuTitle Then
 				Sleep(3000)
 				ControlFocus($g_FormStart, "", $b_start)
+				;	  MouseMove()  Should not force mouse move, drives users nuts
 			EndIf
 		EndIf
 
@@ -2144,7 +2146,7 @@ Func StartForm()
 
 					GUIDelete($g_FormStart)
 					$g_FormStart = -1
-;~~
+
 					_Center(600, 200) ;xw, yh
 					$g_FormReplay = GUICreate("Replay Speed", 600, 200, $g_FormLeft, $g_FormTop)
 					GUICtrlCreateLabel("Replay - Works for Normal Snake. - Testing My Snake.", 20, 20, 540, 20, $SS_CENTER)
@@ -2159,14 +2161,13 @@ Func StartForm()
 					Local $b_rpHigh = GUICtrlCreateButton("Highest", 180, 100, 100, 40)
 					Local $b_Load = GUICtrlCreateButton("Load Docs", 300, 100, 100, 40) ; load from docs
 					Local $b_Save = GUICtrlCreateButton("Save Docs", 420, 100, 100, 40) ; or save docs  snake19
-
-					Local $b_rpStd = GUICtrlCreateButton("Std 150ms", 60, 150, 100, 40)
+					$L_Tick = IniRead($s_ini, "General", "Speed", 150)
+					Local $b_rpStd = GUICtrlCreateButton("Game " & $L_Tick & "ms", 60, 150, 100, 40)
 					Local $b_rp200 = GUICtrlCreateButton("200ms", 180, 150, 100, 40)
 					Local $b_rp100 = GUICtrlCreateButton("100ms", 300, 150, 100, 40)
 					Local $b_rpfull = GUICtrlCreateButton("Full", 420, 150, 100, 40)
 					GUISetState(@SW_SHOW)
 
-					$L_Tick = 150
 					$done = 3 ; start replay
 
 					If $g_aReplay[0] = 1 Then
@@ -2195,30 +2196,33 @@ Func StartForm()
 								$datename = "Current"
 								GUICtrlSetData($l_title, $datename & " - " & $g_aReplay[5])
 
+;~~
 							Case $b_Load
 								;Do
 								;$datename = "User"
 								;								GUICtrlSetData($l_title, $datename & " - " & $g_aReplay[5])
-
 							Case $b_Save
-							Case $b_rpStd ;~~
-								$L_Tick = 150
+
+							Case $b_rpStd
+								$g_ReplayActive = True
 								ExitLoop
 							Case $b_rp200
 								$L_Tick = 200
+								$g_ReplayActive = True
 								ExitLoop
 							Case $b_rp100
 								$L_Tick = 100
+								$g_ReplayActive = True
 								ExitLoop
 							Case $b_rpfull
 								$L_Tick = 0
+								$g_ReplayActive = True
 								ExitLoop
 
 						EndSwitch
 					WEnd
 					GUIDelete($g_FormReplay)
 
-					$g_ReplayActive = True
 					$g_TickTime = $L_Tick
 					Return $done
 
@@ -2236,8 +2240,8 @@ Func StartForm()
 
 EndFunc   ;==>StartForm
 #CS INFO
-	508236 V52 1/24/2020 1:30:56 AM V51 1/23/2020 7:11:42 PM V50 1/22/2020 5:09:10 PM V49 1/16/2020 2:54:39 AM
-#CE
+	521330 V53 1/31/2020 5:20:55 PM V52 1/24/2020 1:30:56 AM V51 1/23/2020 7:11:42 PM V50 1/22/2020 5:09:10 PM
+#CE INFO
 
 Func Settings()
 	Local $y
@@ -2704,7 +2708,8 @@ Func About()
 	$g_FormAbout = GUICreate("Snake19 - About", 615, 430, $g_FormLeft, $g_FormTop, $ws_popup + $ws_caption)
 ;~+~+
 	;$Message &= "|
-	$Message = "0.127 24 Jan 2020 Save/Load Replay - Load Highscore and current replay"
+	$Message = "0.128 31 Jan 2020 Fixed the replay end, start with old score"
+	$Message &= "|0.127 24 Jan 2020 Save/Load Replay - Load Highscore and current replay"
 	$Message &= "|0.126 23 Jan 2020 Save/Load Replay - Save highest score replay"
 	$Message &= "|0.125 22 Jan 2020 Save/Load Replay - Change how replay dim is stored"
 	$Message &= "|0.124 22 Jan 2020 Save/Load Replay"
@@ -2733,7 +2738,6 @@ Func About()
 	$Message &= "|0.101 4 Nov 2019 Replay - Speed"
 	$Message &= "|0.100 2 Nov 2019 Replay - crashes on end"
 	$Message &= "||0.99 1 Nov 2019 Replay try 2"
-	$Message &= "|0.98 31 Oct 2019 Str 28 Oct Replay Failed removing"
 
 	GUICtrlCreateLabel("Welcome to Snake19", 0, 24, 617, 28, $SS_CENTER)
 	GUICtrlSetFont(-1, 14, 800, 0, "MS Sans Serif")
@@ -2795,8 +2799,8 @@ Func About()
 
 EndFunc   ;==>About
 #CS INFO
-	283425 V32 1/24/2020 1:30:56 AM V31 1/23/2020 7:11:42 PM V30 1/16/2020 2:54:39 AM V29 1/15/2020 10:44:49 AM
-#CE
+	284346 V33 1/31/2020 5:20:55 PM V32 1/24/2020 1:30:56 AM V31 1/23/2020 7:11:42 PM V30 1/16/2020 2:54:39 AM
+#CE INFO
 
 Func SetCellSide()
 	Pause("SetCellSide")
@@ -3078,7 +3082,7 @@ Func ReplayRecData($func, $x = 0, $y = 0, $z = 0, $zz = 0)
 EndFunc   ;==>ReplayRecData
 #CS INFO
 	76050 V14 1/24/2020 1:30:56 AM V13 1/23/2020 7:11:42 PM V12 1/22/2020 5:09:10 PM V11 12/15/2019 9:48:21 AM
-#CE
+#CE INFO
 
 ;$nMsg = GetReplayPlay(N)
 
@@ -3096,7 +3100,7 @@ Func GetReplayPlay($Expecting)
 	If $g_ReplayStatus <> $s_ReplayPlay Then
 		Return
 	EndIf
-	If $g_iReplayPlyInx >= $g_aReplay[0] Then
+	If $g_iReplayPlyInx > $g_aReplay[0] Then
 		$g_ReplayStatus = $s_ReplayOff
 		$g_endgame = True
 		$a = "5|0|0|0|0"
@@ -3127,7 +3131,7 @@ Func GetReplayPlay($Expecting)
 
 EndFunc   ;==>GetReplayPlay
 #CS INFO
-	42955 V12 1/23/2020 7:11:42 PM V11 12/29/2019 7:10:02 PM V10 12/15/2019 9:48:21 AM V9 12/10/2019 8:29:16 PM
+	42894 V13 1/31/2020 5:20:55 PM V12 1/23/2020 7:11:42 PM V11 12/29/2019 7:10:02 PM V10 12/15/2019 9:48:21 AM
 #CE INFO
 
 ;Check to see if the sum is inside the edge, return $nv if ok same, not ok then 0
@@ -3489,7 +3493,7 @@ Func ReplaySave()
 EndFunc   ;==>ReplaySave
 #CS INFO
 	69619 V3 1/24/2020 1:30:56 AM V2 1/23/2020 7:11:42 PM V1 1/22/2020 5:09:10 PM
-#CE
+#CE INFO
 
 ;Main
 ;ChooseColor()
@@ -3498,4 +3502,4 @@ Main()
 
 Exit
 
-;~T ScriptFunc.exe V0.54a 15 May 2019 - 1/24/2020 1:30:56 AM
+;~T ScriptFunc.exe V0.54a 15 May 2019 - 1/31/2020 5:20:55 PM
