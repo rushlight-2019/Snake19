@@ -1,8 +1,9 @@
-0.128 31 Jan 2020 Fixed the replay end, start with old score
+0.129 6 Feb 2020 Save/Load Replay - Load/Save User replay
 
-Fix the replay now ends on the end not one move before.
-Sometime quitting the game before a move would create a high score with previous with previous score with no moves
-M to Minimize not H to Hide
+Replay files now can be stored in User Documents in Snake19 folder
+Files named YearMonthDayTimeAM
+.M-Snk19 My Snake games
+.N-Snk19 Normal Snake games
 
 ----------------
 Two versions of the snake game:
@@ -36,7 +37,7 @@ Score line in
   Maximum length 
   Score
   ms/cyc: time it take to do a game loop on this computer. My desktop about 12ms, Win 10 notebook about 85ms.
-  test number: number of replay cells used.  Max 6,000
+  test number: number of replay cells used.
   
  Normal Snake: Length of snake.
 
@@ -44,6 +45,16 @@ Score line in
 Replay:
 You can replay the highest score game played and the last game played.  
 At different speeds. Default speed, 200ms, 100ms, Full (no delay in loop)
+
+Replay files now can be stored in User Documents in Snake19 folder
+Files named YearMonthDayTimeAM
+.M-Snk19  My Snake games
+.N-Snk19  Normal Snake games
+
+To rename a file: Press Load Doc, select file and rename it.  F2, new name. 
+
+To delete a file, Press Load Doc, select file and press delete.
+Or go to the Document folder Snake19 and delete the file.
 
 ----------------
 1) Minimize Game board by pressing M while game is active.  Restore from tray. While game is minimize it will pause.
@@ -62,20 +73,18 @@ Settings:
 4) Speed:  Change the speed of the movement of snake.  Default is 150 ms per loop, up or down by 10 ms.
 X) Remove data files from computer. 
 
+----------------
 
-
-
-
-to do
-  Save/Load replay save to user Document Current and Highest replay are now saved.
-
+To do
   Score: clear all, clear all but highest
   Select different keys to use.
   Save load scores/setting for Change of size
   Change size of screen.  default 30x40  in blocks of 5
 
-problem:
-Long: Still have the funny start game problem that I can't create in debug mode.  The end of the snake does not clear, snake just get longer, until you run over it. Haven't seen it in a while so I might have fixed it.  No, did twice since last upload. none since 0.127
+Problem:
+Long: Still have the funny start game problem that I can't create in debug mode.  The end of the snake does not clear, snake just get longer, until you run over it. 
+
+Saw it in version 0.129
 
 One way to cause it: Start game, don't move, lose focus, get focus and move. I'll active debug trace and I not able to get it to happen.
 

@@ -5,16 +5,8 @@ AutoItSetOption("MustDeclareVars", 1)
 ;Global Static $MESSAGE =  False   ;Pause will still work in script  No DataOut
 
 ; Must be Declared before _Prf_startup   ~+~+
-Global $ver = "0.128 31 Jan 2020 Fixed the replay end, start with old score"
+Global $ver = "0.129 6 Feb 2020 Save/Load Replay - Load/Save User replay"
 
-;0.128 ? Save/Load Replay - Load/Save User replay
-
-;Next save score to array
-; Save highest score.
-; Save user selected in data or doc
-; select load auto select last
-; select highest
-; select user at location.
 
 Global $ini_ver = "11"  ;changed at 0.127
 Global $g_replayVer = "1"
@@ -24,7 +16,7 @@ Global $g_replayVer = "1"
 #include "R:\!Autoit\Blank\_prf_startup.au3"
 
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
-#AutoIt3Wrapper_Res_Fileversion=0.1.2.8
+#AutoIt3Wrapper_Res_Fileversion=0.1.2.9
 #AutoIt3Wrapper_Icon=R:\!Autoit\Ico\prf.ico
 #AutoIt3Wrapper_Res_Description=Another snake game
 #AutoIt3Wrapper_Res_LegalCopyright=© Phillip Forrestal 2019-2020
@@ -91,12 +83,12 @@ Global $g_replayVer = "1"
 to do
 	Score: clear all, clear all but highest
     Select different keys to use.
-	Save/Load replay save to user Document
 	Save load scores/setting  for Change of size
 	Change size of screen.  default 30x40  in blocks of 5
 
 	Version
 ;~+~+
+0.129 6 Feb 2020 Save/Load Replay - Load/Save User replay"
 	0.128 31 Jan 2020 Fixed the replay end, start with old score
 	0.127 24 Jan 2020 Save/Load Replay - Load Highscore and current replay
 	0.126 23 Jan 2020 Save/Load Replay - Save highest score replay
@@ -262,12 +254,14 @@ to do
 
 Opt("GUIEventOptions", 1)
 
-;Static
 Global $g_data ;= @ScriptDir & "\SNAKE19-Data"
 $g_data = CheckDataLoc() & "\" ;find data folder
 If $g_data = "" Then
 	Exit
 EndIf
+
+;@MyDocumentsDir
+Global $MyDoc = @MyDocumentsDir & "\Snake19"
 
 Static $s_ini = $g_data & "snake.ini"
 Static $s_scoreini = $g_data & "score.ini"
@@ -865,7 +859,7 @@ Func Game()
 
 EndFunc   ;==>Game
 #CS INFO
-	484327 V74 1/31/2020 5:20:55 PM V73 1/23/2020 7:11:42 PM V72 1/22/2020 5:09:10 PM V71 1/16/2020 2:54:39 AM
+	484332 V75 2/6/2020 10:18:39 AM V74 1/31/2020 5:20:55 PM V73 1/23/2020 7:11:42 PM V72 1/22/2020 5:09:10 PM
 #CE INFO
 
 Func Tick() ;
@@ -1988,6 +1982,7 @@ Func StartForm()
 	Local $Radio3, $Checkbox1, $b_start, $b_setting, $b_about
 	Local $nMsg, $L_Tick
 	Local $L_MinNotflag = True
+	Local $filename, $GameName
 	Local $a = 260
 	Local $b = 50
 	Local $c = 200     ;120
@@ -2170,9 +2165,16 @@ Func StartForm()
 
 					$done = 3 ; start replay
 
+					If IsArray($g_aReplay) = 0 Then
+						dataout("$g_aReplay not an array", @ScriptLineNumber)
+						Dim $g_aReplay[1] ;
+						$g_aReplay[0] = 1 ; size
+					EndIf
+
 					If $g_aReplay[0] = 1 Then
-						_FileReadToArray($g_data & $GameName & "Current.Snk19", $g_aReplay, 0)
-						$datename = "Current"
+						If _FileReadToArray($g_data & $GameName & "Current.Snk19", $g_aReplay, 0) Then
+							$datename = "Current"
+						EndIf
 					EndIf
 
 					GUICtrlSetData($l_title, $datename & " - " & $g_aReplay[5])  ; outside of loop so it won't flicker
@@ -2186,22 +2188,58 @@ Func StartForm()
 								ExitLoop
 							Case $b_rpHigh
 								If FileExists($g_data & $GameName & "Highest.Snk19") = 1 Then
-									_FileReadToArray($g_data & $GameName & "Highest.Snk19", $g_aReplay, 0)
-									$datename = "Highest"
-									GUICtrlSetData($l_title, $datename & " - " & $g_aReplay[5])
+									If _FileReadToArray($g_data & $GameName & "Highest.Snk19", $g_aReplay, 0) Then
+										$datename = "Highest"
+										GUICtrlSetData($l_title, $datename & " - " & $g_aReplay[5])
+									EndIf
 								EndIf
 
 							Case $b_rpLast
-								_FileReadToArray($g_data & $GameName & "Current.Snk19", $g_aReplay, 0)
-								$datename = "Current"
-								GUICtrlSetData($l_title, $datename & " - " & $g_aReplay[5])
-
+								If _FileReadToArray($g_data & $GameName & "Current.Snk19", $g_aReplay, 0) Then
+									$datename = "Current"
+									GUICtrlSetData($l_title, $datename & " - " & $g_aReplay[5])
+								EndIf
 ;~~
 							Case $b_Load
-								;Do
-								;$datename = "User"
-								;								GUICtrlSetData($l_title, $datename & " - " & $g_aReplay[5])
+								If Not FileExists($MyDoc) Then
+									DirCreate($MyDoc)
+								EndIf
+								If $g_GameWhich = 0 Then ; 0 Normal, 1 Mine
+									$GameName = "N-"
+								Else
+									$GameName = "M-"
+								EndIf
+								dataout("LOAD")
+								$filename = FileOpenDialog("Load Replay", $MyDoc, "Snake Replay (*." & $GameName & "snk19)", 1, "", $g_FormReplay)
+								If @error = 0 Then
+									If _FileReadToArray($filename, $g_aReplay, 0) Then
+										$datename = "User"
+										GUICtrlSetData($l_title, $filename & " - " & $g_aReplay[5])
+									EndIf
+								EndIf
+								$filename = ""
 							Case $b_Save
+								If Not FileExists($MyDoc) Then
+									DirCreate($MyDoc)
+								EndIf
+								If $g_GameWhich = 0 Then ; 0 Normal, 1 Mine
+									$GameName = "N-"
+								Else
+									$GameName = "M-"
+								EndIf
+								$filename = _Now() & "." & $GameName & "Snk19"
+								$filename = StringReplace($filename, ":", "")
+								$filename = StringReplace($filename, "/", "")
+								$filename = StringReplace($filename, " ", "")
+								$filename = $MyDoc & "\" & $filename
+								;		MsgBox(262144, 'Debug line ~' & @ScriptLineNumber, 'Selection:' & @CRLF & '$filename' & @CRLF & @CRLF & 'Return:' & @CRLF & $filename) ;### Debug MSGBOX
+								;	$filename = $MyDoc & "\" & "Test.n-snk19"
+								;	MsgBox(262144, 'Debug line ~' & @ScriptLineNumber, 'Selection:' & @CRLF & '$filename' & @CRLF & @CRLF & 'Return:' & @CRLF & $filename) ;### Debug MSGBOX
+								_FileWriteFromArray($filename, $g_aReplay)
+								;								@error
+								;		MsgBox(262144, 'Debug line ~' & @ScriptLineNumber, 'Selection:' & @CRLF & '@error' & @CRLF & @CRLF & 'Return:' & @CRLF & @error) ;### Debug MSGBOX
+
+								$filename = ""
 
 							Case $b_rpStd
 								$g_ReplayActive = True
@@ -2240,8 +2278,8 @@ Func StartForm()
 
 EndFunc   ;==>StartForm
 #CS INFO
-	521330 V53 1/31/2020 5:20:55 PM V52 1/24/2020 1:30:56 AM V51 1/23/2020 7:11:42 PM V50 1/22/2020 5:09:10 PM
-#CE INFO
+	629477 V55 2/6/2020 2:46:20 PM V54 2/6/2020 10:18:39 AM V53 1/31/2020 5:20:55 PM V52 1/24/2020 1:30:56 AM
+#CE
 
 Func Settings()
 	Local $y
@@ -2708,7 +2746,8 @@ Func About()
 	$g_FormAbout = GUICreate("Snake19 - About", 615, 430, $g_FormLeft, $g_FormTop, $ws_popup + $ws_caption)
 ;~+~+
 	;$Message &= "|
-	$Message = "0.128 31 Jan 2020 Fixed the replay end, start with old score"
+	$Message = "0.129 6 Feb 2020 Save/Load Replay - Load/Save User replay"
+	$Message &= "|0.128 31 Jan 2020 Fixed the replay end, start with old score"
 	$Message &= "|0.127 24 Jan 2020 Save/Load Replay - Load Highscore and current replay"
 	$Message &= "|0.126 23 Jan 2020 Save/Load Replay - Save highest score replay"
 	$Message &= "|0.125 22 Jan 2020 Save/Load Replay - Change how replay dim is stored"
@@ -2799,7 +2838,7 @@ Func About()
 
 EndFunc   ;==>About
 #CS INFO
-	284346 V33 1/31/2020 5:20:55 PM V32 1/24/2020 1:30:56 AM V31 1/23/2020 7:11:42 PM V30 1/16/2020 2:54:39 AM
+	289545 V34 2/6/2020 10:18:39 AM V33 1/31/2020 5:20:55 PM V32 1/24/2020 1:30:56 AM V31 1/23/2020 7:11:42 PM
 #CE INFO
 
 Func SetCellSide()
@@ -3481,7 +3520,7 @@ Func ReplaySave()
 		EndIf
 	EndIf
 
-	If $g_aReplay[0] > 20 Then  ; which means it  was not aborted
+	If $g_aReplay[0] > 8 Then  ; which means it  was not aborted
 		_FileWriteFromArray($g_data & $GameName & "Current.Snk19", $g_aReplay)
 		;		_ArrayDisplay($g_aReplay)
 
@@ -3492,8 +3531,8 @@ Func ReplaySave()
 	EndIf
 EndFunc   ;==>ReplaySave
 #CS INFO
-	69619 V3 1/24/2020 1:30:56 AM V2 1/23/2020 7:11:42 PM V1 1/22/2020 5:09:10 PM
-#CE INFO
+	69577 V4 2/6/2020 2:46:20 PM V3 1/24/2020 1:30:56 AM V2 1/23/2020 7:11:42 PM V1 1/22/2020 5:09:10 PM
+#CE
 
 ;Main
 ;ChooseColor()
@@ -3502,4 +3541,4 @@ Main()
 
 Exit
 
-;~T ScriptFunc.exe V0.54a 15 May 2019 - 1/31/2020 5:20:55 PM
+;~T ScriptFunc.exe V0.54a 15 May 2019 - 2/6/2020 2:46:20 PM
