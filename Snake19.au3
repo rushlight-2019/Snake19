@@ -5,8 +5,7 @@ AutoItSetOption("MustDeclareVars", 1)
 ;Global Static $MESSAGE =  False   ;Pause will still work in script  No DataOut
 
 ; Must be Declared before _Prf_startup   ~+~+
-Global $ver = "0.129 6 Feb 2020 Save/Load Replay - Load/Save User replay"
-
+Global $ver = "0.130 9 Feb 2020 Score: clear all, clear all but highest"
 
 Global $ini_ver = "11"  ;changed at 0.127
 Global $g_replayVer = "1"
@@ -16,7 +15,7 @@ Global $g_replayVer = "1"
 #include "R:\!Autoit\Blank\_prf_startup.au3"
 
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
-#AutoIt3Wrapper_Res_Fileversion=0.1.2.9
+#AutoIt3Wrapper_Res_Fileversion=0.1.3.0
 #AutoIt3Wrapper_Icon=R:\!Autoit\Ico\prf.ico
 #AutoIt3Wrapper_Res_Description=Another snake game
 #AutoIt3Wrapper_Res_LegalCopyright=© Phillip Forrestal 2019-2020
@@ -88,7 +87,8 @@ to do
 
 	Version
 ;~+~+
-0.129 6 Feb 2020 Save/Load Replay - Load/Save User replay"
+	0.130 9 Feb 2020 Score: clear all, clear all but highest
+	0.129 6 Feb 2020 Save/Load Replay - Load/Save User replay
 	0.128 31 Jan 2020 Fixed the replay end, start with old score
 	0.127 24 Jan 2020 Save/Load Replay - Load Highscore and current replay
 	0.126 23 Jan 2020 Save/Load Replay - Save highest score replay
@@ -251,6 +251,8 @@ to do
 #include <EditConstants.au3>
 #include <ComboConstants.au3>
 #include <ListBoxConstants.au3>
+#include <UpDownConstants.au3>
+#include <ColorConstants.au3>
 
 Opt("GUIEventOptions", 1)
 
@@ -307,6 +309,7 @@ Global $g_FormAbout
 Global $g_FormSetting
 Global $g_FormSpeed
 Global $g_PleaseWait
+Global $g_FormScore
 
 $g_ctrlBoard = -1
 $g_FormStart = -1
@@ -317,6 +320,7 @@ $g_FormAbout = -1
 $g_FormSetting = -1
 $g_FormSpeed = -1
 $g_PleaseWait = -1
+$g_FormScore = -1
 
 Global $g_first = True
 Global $g_sx = 40 ;50
@@ -474,6 +478,8 @@ Global $g_PWchance[15]
 
 ;0.116 pause/hid/quit
 Global $g_Pause
+;0130
+Global $g_SaveExit
 
 PassWallDefault()
 
@@ -498,10 +504,9 @@ Func Main()
 		Exit
 	EndIf
 
-	$g_TickTime = IniRead($s_ini, "General", "Speed", 150)
-
-	;1.01
-	$g_GameWhich = IniRead($s_ini, "General", "Game", 1)
+	$g_TickTime = Int(IniRead($s_ini, "General", "Speed", 150))
+	$g_SaveExit = Int(IniRead($s_ini, "General", "SaveExit", 8))
+	$g_GameWhich = Int(IniRead($s_ini, "General", "Game", 1))
 
 	IniCenterGameScreen(False)
 
@@ -549,8 +554,8 @@ Func Main()
 
 EndFunc   ;==>Main
 #CS INFO
-	122317 V43 1/24/2020 1:30:56 AM V42 1/23/2020 7:11:42 PM V41 1/22/2020 5:09:10 PM V40 1/9/2020 9:18:30 PM
-#CE INFO
+	127460 V44 2/9/2020 12:20:38 AM V43 1/24/2020 1:30:56 AM V42 1/23/2020 7:11:42 PM V41 1/22/2020 5:09:10 PM
+#CE
 
 Func Game()
 	Local $nMsg, $x, $y, $flag
@@ -1843,7 +1848,7 @@ Func IniHighFive()
 		If @error = 0 Then
 
 			For $i = 1 To 10
-				If $i > 8 Then
+				If $i > $g_SaveExit Then
 					$g_aHiScore[$i][0] = 0     ;
 					$g_aHiScore[$i][1] = ""     ;date
 					$g_aHiScore[$i][2] = ""     ;len
@@ -1869,8 +1874,8 @@ Func IniHighFive()
 
 EndFunc   ;==>IniHighFive
 #CS INFO
-	56710 V6 12/11/2019 11:54:15 AM V5 11/19/2019 1:09:35 PM V4 10/8/2019 4:57:52 PM V3 7/24/2019 11:20:48 PM
-#CE INFO
+	57697 V7 2/9/2020 12:20:38 AM V6 12/11/2019 11:54:15 AM V5 11/19/2019 1:09:35 PM V4 10/8/2019 4:57:52 PM
+#CE
 
 Func ReadHiScore()
 	Local $a, $c, $z
@@ -2279,7 +2284,7 @@ Func StartForm()
 EndFunc   ;==>StartForm
 #CS INFO
 	629477 V55 2/6/2020 2:46:20 PM V54 2/6/2020 10:18:39 AM V53 1/31/2020 5:20:55 PM V52 1/24/2020 1:30:56 AM
-#CE
+#CE INFO
 
 Func Settings()
 	Local $y
@@ -2289,14 +2294,14 @@ Func Settings()
 	GUICtrlCreateLabel("Settings", 260, 0, 80, 26, $SS_CENTER)
 	GUICtrlSetFont(-1, 14, 800, 0, "Arial")
 
-	;47,183,320,456  - 50 100
 	Local $b_about = GUICtrlCreateButton("About", 47, 50, 97, 33)
 	Local $b_ScreenSize = GUICtrlCreateButton("Screen Size", 183, 50, 97, 33)
 	Local $b_Color = GUICtrlCreateButton("Colors", 320, 50, 97, 33)
 	Local $b_speed = GUICtrlCreateButton("Speed", 456, 50, 97, 33)
 
-	;Local $b_Adj = GUICtrlCreateButton("Adjust Values", 320, 100, 97, 33) see below
 	Local $b_Uni = GUICtrlCreateButton("Delete Data", 456, 100, 97, 33)
+	Local $b_score = GUICtrlCreateButton("Score", 320, 100, 97, 33)
+
 	GUISetState(@SW_SHOW)
 
 	While 1
@@ -2310,6 +2315,8 @@ Func Settings()
 				ExitLoop
 			Case $b_ScreenSize
 				ScreenSize()
+			Case $b_score
+				SettingScore()
 			Case $b_Color
 				ChooseColor()
 			Case $b_speed
@@ -2326,8 +2333,8 @@ Func Settings()
 	$g_FormSetting = -1
 EndFunc   ;==>Settings
 #CS INFO
-	82668 V13 1/10/2020 9:27:34 AM V12 1/9/2020 9:18:30 PM V11 10/28/2019 1:14:59 PM V10 10/20/2019 1:07:26 AM
-#CE INFO
+	82708 V14 2/9/2020 12:20:38 AM V13 1/10/2020 9:27:34 AM V12 1/9/2020 9:18:30 PM V11 10/28/2019 1:14:59 PM
+#CE
 
 Func ScreenSize()
 	Local $sInputBoxAnswer, $keep, $s, $mathW, $mathH, $Math
@@ -2746,7 +2753,8 @@ Func About()
 	$g_FormAbout = GUICreate("Snake19 - About", 615, 430, $g_FormLeft, $g_FormTop, $ws_popup + $ws_caption)
 ;~+~+
 	;$Message &= "|
-	$Message = "0.129 6 Feb 2020 Save/Load Replay - Load/Save User replay"
+	$Message = "0.130 9 Feb 2020 Score: clear all, clear all but highest"
+	$Message &= "||0.129 6 Feb 2020 Save/Load Replay - Load/Save User replay"
 	$Message &= "|0.128 31 Jan 2020 Fixed the replay end, start with old score"
 	$Message &= "|0.127 24 Jan 2020 Save/Load Replay - Load Highscore and current replay"
 	$Message &= "|0.126 23 Jan 2020 Save/Load Replay - Save highest score replay"
@@ -2775,8 +2783,6 @@ Func About()
 	$Message &= "|0.103 6 Nov 2019 Replay - My Snake - Food"
 	$Message &= "|0.102 4 Nov 2019 Changed Snake Lost"
 	$Message &= "|0.101 4 Nov 2019 Replay - Speed"
-	$Message &= "|0.100 2 Nov 2019 Replay - crashes on end"
-	$Message &= "||0.99 1 Nov 2019 Replay try 2"
 
 	GUICtrlCreateLabel("Welcome to Snake19", 0, 24, 617, 28, $SS_CENTER)
 	GUICtrlSetFont(-1, 14, 800, 0, "MS Sans Serif")
@@ -2838,8 +2844,8 @@ Func About()
 
 EndFunc   ;==>About
 #CS INFO
-	289545 V34 2/6/2020 10:18:39 AM V33 1/31/2020 5:20:55 PM V32 1/24/2020 1:30:56 AM V31 1/23/2020 7:11:42 PM
-#CE INFO
+	288093 V35 2/9/2020 12:20:38 AM V34 2/6/2020 10:18:39 AM V33 1/31/2020 5:20:55 PM V32 1/24/2020 1:30:56 AM
+#CE
 
 Func SetCellSide()
 	Pause("SetCellSide")
@@ -3455,6 +3461,8 @@ EndFunc   ;==>IniCenterGameScreen
 	58420 V3 1/10/2020 5:12:30 PM V2 1/10/2020 8:46:50 AM V1 1/9/2020 9:18:30 PM
 #CE INFO
 
+;	$g_FormLeft = -1
+;	$g_FormTop = -1
 Func _Center($W, $H, $G = False) ;xw, yh  $G= game board
 	Local $gameLoc, $aClientSize
 
@@ -3532,13 +3540,109 @@ Func ReplaySave()
 EndFunc   ;==>ReplaySave
 #CS INFO
 	69577 V4 2/6/2020 2:46:20 PM V3 1/24/2020 1:30:56 AM V2 1/23/2020 7:11:42 PM V1 1/22/2020 5:09:10 PM
+#CE INFO
+
+Func SettingScore()
+	Local $idInput
+	Local $butHi
+	Local $clrscore, $ok, $cancel, $doclr, $a, $c, $cnt
+
+	$doclr = False
+	_Center(280, 265)   ;xw, yh
+	$g_FormScore = GUICreate("Score Clear - Adjust", 280, 265, $g_FormLeft, $g_FormTop)
+	GUICtrlCreateLabel("Score settings", 0, 10, 280, 17, $SS_CENTER)
+	GUICtrlSetFont(-1, 12, 800, 0, "Arial")
+	GUICtrlCreateLabel("Number of scores to save at exit.", 0, 30, 280, 17, $SS_CENTER)
+	GUICtrlSetFont(-1, 10, 400, 0, "Arial")
+	GUICtrlCreateLabel("Default is 8.  High scores is always saved.", 0, 50, 280, 17, $SS_CENTER)
+	GUICtrlSetFont(-1, 10, 400, 0, "Arial")
+
+	$idInput = GUICtrlCreateInput($g_SaveExit, (280 - 50) / 2, 80, 50, 30, $ES_CENTER)
+	GUICtrlSetFont(-1, 12, 400, 0, "Arial")
+	Local $updown = GUICtrlCreateUpdown($idInput, BitOR($GUI_SS_DEFAULT_UPDOWN, $UDS_ARROWKEYS))
+	GUICtrlSetLimit($updown, 10, 1)
+	;GUICtrlRead($idInput)
+
+	$butHi = GUICtrlCreateCheckbox("But Hightest", 155, 120, 100, 50)
+	GUICtrlSetFont(-1, 12, 400, 0, "Arial")
+	GUICtrlSetState(-1, $GUI_CHECKED)
+
+	$clrscore = GUICtrlCreateButton("Clear Scores", 34, 120, 90, 50)
+	$ok = GUICtrlCreateButton("OK", 34, 200, 90, 50)
+	$cancel = GUICtrlCreateButton("Cancel", 155, 200, 90, 50)
+	GUISetState(@SW_SHOW)
+
+	While 1
+		Switch GUIGetMsg()
+			Case $GUI_EVENT_CLOSE, $cancel
+				ExitLoop
+
+			Case $clrscore
+				$doclr = Not $doclr
+				If $doclr Then
+					GUICtrlSetBkColor($clrscore, $COLOR_GREEN)
+				Else
+					GUICtrlSetBkColor($clrscore, $COLOR_RED)
+				EndIf
+			Case $ok
+				$a = Int(GUICtrlRead($idInput))
+				If $a <> $g_SaveExit Then
+					$g_SaveExit = $a
+					IniWrite($s_ini, "General", "SaveExit", $g_SaveExit)
+				EndIf
+
+				;Clear score
+				If $doclr Then
+					If BitAND(GUICtrlRead($butHi), $GUI_CHECKED) = $GUI_CHECKED Then
+						$cnt = 1
+					Else
+						$cnt = 0
+					EndIf
+					If $g_GameWhich = 0 Then     ; 0 Normal, 1 Mine
+						$a = IniReadSection($s_scoreini, "HighScoreNormal")
+					Else
+						$a = IniReadSection($s_scoreini, "HighScoreMySnake")
+					EndIf
+					If @error = 0 Then
+
+						For $i = 1 To 10
+							If $i > $cnt Then
+								pause($i, "EMPTY")
+								$g_aHiScore[$i][0] = 0     ;
+								$g_aHiScore[$i][1] = ""     ;date
+								$g_aHiScore[$i][2] = ""     ;len
+								$g_aHiScore[$i][3] = ""     ;food
+								$g_aHiScore[$i][4] = ""     ;turns
+								$g_aHiScore[$i][5] = ""     ;Max
+							Else
+								$c = StringSplit($a[$i][1], "|")
+								pause($i, $c[1])
+								$g_aHiScore[$i][0] = Int($c[1])
+								$g_aHiScore[$i][1] = $c[2]
+								$g_aHiScore[$i][2] = $c[3]
+								$g_aHiScore[$i][3] = $c[4]
+								$g_aHiScore[$i][4] = $c[5]
+								$g_aHiScore[$i][5] = $c[6]
+							EndIf
+						Next
+						SaveHiScore()
+					EndIf
+				EndIf
+				ExitLoop
+
+		EndSwitch
+	WEnd
+	GUIDelete($g_FormScore)
+EndFunc   ;==>SettingScore
+#CS INFO
+	176850 V2 2/9/2020 12:20:38 AM V1 2/8/2020 10:59:02 PM
 #CE
 
 ;Main
-;ChooseColor()
+;SettingScore()
 
 Main()
 
 Exit
 
-;~T ScriptFunc.exe V0.54a 15 May 2019 - 2/6/2020 2:46:20 PM
+;~T ScriptFunc.exe V0.54a 15 May 2019 - 2/9/2020 12:20:38 AM

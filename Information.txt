@@ -1,9 +1,7 @@
-0.129 6 Feb 2020 Save/Load Replay - Load/Save User replay
+0.130 9 Feb 2020 Score: clear all, clear all but highest
 
-Replay files now can be stored in User Documents in Snake19 folder
-Files named YearMonthDayTimeAM
-.M-Snk19 My Snake games
-.N-Snk19 Normal Snake games
+Can clear scores, and change the number of save scores are exit.  
+Push Settings in Main Menu, then Score.
 
 ----------------
 Two versions of the snake game:
@@ -71,17 +69,19 @@ Settings:
 2) Screen Size: Changes Cell size from 10x10 to maximum screen can hold.
 3) Change Colors: 2 per-define color layout.  You can pick any color you want.
 4) Speed:  Change the speed of the movement of snake.  Default is 150 ms per loop, up or down by 10 ms.
+5) Score: Clear and reset save on exit,
 X) Remove data files from computer. 
 
 ----------------
 
 To do
-  Score: clear all, clear all but highest
   Select different keys to use.
   Save load scores/setting for Change of size
   Change size of screen.  default 30x40  in blocks of 5
 
 Problem:
+Replay User Load if you don’t select anything, and close window by the upper right X.  Sometimes you get a program fail.  Saying Array problem. I need to rewrite the menu.
+
 Long: Still have the funny start game problem that I can't create in debug mode.  The end of the snake does not clear, snake just get longer, until you run over it. 
 
 Saw it in version 0.129
