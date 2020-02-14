@@ -1,7 +1,11 @@
-0.130 9 Feb 2020 Score: clear all, clear all but highest
+0.135 14 Feb 2020 Select different keys to use. Not complete, but main keys work, numpad does not.
 
-Can clear scores, and change the number of save scores are exit.  
-Push Settings in Main Menu, then Score.
+Select keys.  Change which keys to use in the game.  
+Works for the keys one the main area.  A-Z 0-9 and -=\[];',./`
+The A-Z will display as upper case when changed.  The game uses the lower case
+But not the numpad will not work.  
+
+Still needs work.  I went through 5 version to do this. Toss out 2 and returned 1.
 
 ----------------
 Two versions of the snake game:
@@ -46,8 +50,8 @@ At different speeds. Default speed, 200ms, 100ms, Full (no delay in loop)
 
 Replay files now can be stored in User Documents in Snake19 folder
 Files named YearMonthDayTimeAM
-.M-Snk19  My Snake games
-.N-Snk19  Normal Snake games
+.M-Snk19 My Snake games
+.N-Snk19 Normal Snake games
 
 To rename a file: Press Load Doc, select file and rename it.  F2, new name. 
 
@@ -69,22 +73,22 @@ Settings:
 2) Screen Size: Changes Cell size from 10x10 to maximum screen can hold.
 3) Change Colors: 2 per-define color layout.  You can pick any color you want.
 4) Speed:  Change the speed of the movement of snake.  Default is 150 ms per loop, up or down by 10 ms.
-5) Score: Clear and reset save on exit,
+5) Keys:  Select keys to use in the game.  No complete but works. 14-Feb-2020
+6) Score: Clear and reset save on exit,
 X) Remove data files from computer. 
 
 ----------------
 
 To do
-  Select different keys to use.
+  Select different keys to use.  3 tries.  works not complete need way to do numpad
   Save load scores/setting for Change of size
-  Change size of screen.  default 30x40  in blocks of 5
+  Change size of screen.  default 30x40 in blocks of 5
 
 Problem:
-Replay User Load if you don’t select anything, and close window by the upper right X.  Sometimes you get a program fail.  Saying Array problem. I need to rewrite the menu.
 
 Long: Still have the funny start game problem that I can't create in debug mode.  The end of the snake does not clear, snake just get longer, until you run over it. 
 
-Saw it in version 0.129
+Saw it in version 0.129, 
 
 One way to cause it: Start game, don't move, lose focus, get focus and move. I'll active debug trace and I not able to get it to happen.
 

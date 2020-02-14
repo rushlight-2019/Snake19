@@ -5,7 +5,7 @@ AutoItSetOption("MustDeclareVars", 1)
 ;Global Static $MESSAGE =  False   ;Pause will still work in script  No DataOut
 
 ; Must be Declared before _Prf_startup   ~+~+
-Global $ver = "0.130 9 Feb 2020 Score: clear all, clear all but highest"
+Global $ver = "0.135 14 Feb 2020 Select different keys to use. Not complete, but main keys work, numpad does not"
 
 Global $ini_ver = "11"  ;changed at 0.127
 Global $g_replayVer = "1"
@@ -15,7 +15,7 @@ Global $g_replayVer = "1"
 #include "R:\!Autoit\Blank\_prf_startup.au3"
 
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
-#AutoIt3Wrapper_Res_Fileversion=0.1.3.0
+#AutoIt3Wrapper_Res_Fileversion=0.1.3.5
 #AutoIt3Wrapper_Icon=R:\!Autoit\Ico\prf.ico
 #AutoIt3Wrapper_Res_Description=Another snake game
 #AutoIt3Wrapper_Res_LegalCopyright=© Phillip Forrestal 2019-2020
@@ -80,13 +80,20 @@ Global $g_replayVer = "1"
 	6 = snake cell number (to compute size)
 
 to do
-	Score: clear all, clear all but highest
-    Select different keys to use.
+Clear high score does not clear high replay 0209
+Remove game does not clear replays in data folder 0210
+
 	Save load scores/setting  for Change of size
 	Change size of screen.  default 30x40  in blocks of 5
 
 	Version
 ;~+~+
+	0.135 14 Feb 2020 Select different keys to use. Not complete, but main keys work, numpad does not
+	0.134 12 Feb 2020 Select different keys to use. Went back to version .032.  Because using way Autoit works and made it more complex and gain nothing.
+	0.133 12 Feb 2020 Select different keys to use. Try 2, read keys different. -- more complex and gain nothing
+
+	0.132 11 Feb 2020 Select different keys to use. Program: didn't work. Worked of A-Z0-9 not arrows
+	0.131 10 Feb 2020 Select different keys to use. Set up form
 	0.130 9 Feb 2020 Score: clear all, clear all but highest
 	0.129 6 Feb 2020 Save/Load Replay - Load/Save User replay
 	0.128 31 Jan 2020 Fixed the replay end, start with old score
@@ -310,6 +317,7 @@ Global $g_FormSetting
 Global $g_FormSpeed
 Global $g_PleaseWait
 Global $g_FormScore
+Global $g_FormKey
 
 $g_ctrlBoard = -1
 $g_FormStart = -1
@@ -321,6 +329,7 @@ $g_FormSetting = -1
 $g_FormSpeed = -1
 $g_PleaseWait = -1
 $g_FormScore = -1
+$g_FormKey = -1
 
 Global $g_first = True
 Global $g_sx = 40 ;50
@@ -438,8 +447,6 @@ Global $g_poop[$s_PoopSize + 1][4]
 ;0.84
 Global $g_pooprnd = True
 
-;~~
-
 ;0.98 changed 0.125  from fix size to redim increase size see ReplayRecData
 ;0 length
 ;1 $g_GameWhich
@@ -481,6 +488,17 @@ Global $g_Pause
 ;0130
 Global $g_SaveExit
 
+;0131
+Global $tbMyInputNumber
+Global $g_KeyIn = ""
+Global $g_keypause
+Global $g_keymin
+Global $g_keyquit
+Global $g_keyup
+Global $g_keydown
+Global $g_keyleft
+Global $g_keyright
+
 PassWallDefault()
 
 ; Main is call at end
@@ -507,6 +525,18 @@ Func Main()
 	$g_TickTime = Int(IniRead($s_ini, "General", "Speed", 150))
 	$g_SaveExit = Int(IniRead($s_ini, "General", "SaveExit", 8))
 	$g_GameWhich = Int(IniRead($s_ini, "General", "Game", 1))
+
+;~~
+	;0.131
+	$g_keypause = IniRead($s_ini, "Key", "Pause", "p")
+	$g_keymin = IniRead($s_ini, "Key", "Minimize", "m")
+	$g_keyquit = IniRead($s_ini, "Key", "Quit", "q")
+	$g_keyup = IniRead($s_ini, "Key", "Up", "{UP}")
+	$g_keydown = IniRead($s_ini, "Key", "Down", "{DOWN}")
+	$g_keyleft = IniRead($s_ini, "Key", "Left", "{LEFT}")
+	$g_keyright = IniRead($s_ini, "Key", "Right", "{RIGHT}")
+	; $aAccelKey2[][] = [["{RIGHT}", $L_idRight], ["{LEFT}", $L_idLeft], ["{DOWN}", $L_idDown], ["{UP}", $L_idUp], ["q", $L_idEsc], ["p", $L_idPause], ["m", $L_idHid]]
+	;$aAccelKey2[][] = [[$g_keyright, $L_idRight], [$g_keyleft, $L_idLeft], [$g_keydown, $L_idDown], [$g_keyup, $L_idUp], [$g_keyquit, $L_idEsc], [$g_keypause,$L_idPause], [$g_keymin, $L_idHid]]
 
 	IniCenterGameScreen(False)
 
@@ -554,8 +584,8 @@ Func Main()
 
 EndFunc   ;==>Main
 #CS INFO
-	127460 V44 2/9/2020 12:20:38 AM V43 1/24/2020 1:30:56 AM V42 1/23/2020 7:11:42 PM V41 1/22/2020 5:09:10 PM
-#CE
+	182541 V45 2/12/2020 9:01:54 AM V44 2/9/2020 12:20:38 AM V43 1/24/2020 1:30:56 AM V42 1/23/2020 7:11:42 PM
+#CE INFO
 
 Func Game()
 	Local $nMsg, $x, $y, $flag
@@ -724,7 +754,14 @@ Func Game()
 			$g_Turns = -1 ; The way it start with 1 turn on start. To fix start with +1
 	EndSwitch
 
-	Local $aAccelKey2[][] = [["{RIGHT}", $L_idRight], ["{LEFT}", $L_idLeft], ["{DOWN}", $L_idDown], ["{UP}", $L_idUp], ["q", $L_idEsc], ["p", $L_idPause], ["m", $L_idHid]]
+;~~
+	;pause($g_keypause)
+	;$g_keypause = "{NUMPADADD}"
+	;0.131
+	; $aAccelKey2[][] = [["{RIGHT}", $L_idRight], ["{LEFT}", $L_idLeft], ["{DOWN}", $L_idDown], ["{UP}", $L_idUp], ["q", $L_idEsc], ["p", $L_idPause], ["m", $L_idHid]]
+	Local $aAccelKey2[][] = [[$g_keyright, $L_idRight], [$g_keyleft, $L_idLeft], [$g_keydown, $L_idDown], [$g_keyup, $L_idUp], [$g_keyquit, $L_idEsc], [$g_keypause, $L_idPause], [$g_keymin, $L_idHid]]
+
+	;	Local $aAccelKey2[][] = [["{RIGHT}", $L_idRight], ["{LEFT}", $L_idLeft], ["{DOWN}", $L_idDown], ["{UP}", $L_idUp], ["q", $L_idEsc], ["p", $L_idPause], ["m", $L_idHid]]
 	GUISetAccelerators($aAccelKey2, $g_ctrlBoard)
 	MouseMove(0, 0, 0)
 
@@ -864,8 +901,8 @@ Func Game()
 
 EndFunc   ;==>Game
 #CS INFO
-	484332 V75 2/6/2020 10:18:39 AM V74 1/31/2020 5:20:55 PM V73 1/23/2020 7:11:42 PM V72 1/22/2020 5:09:10 PM
-#CE INFO
+	517170 V77 2/14/2020 9:46:03 AM V76 2/12/2020 9:01:54 AM V75 2/6/2020 10:18:39 AM V74 1/31/2020 5:20:55 PM
+#CE
 
 Func Tick() ;
 	Local $fdiff
@@ -1875,7 +1912,7 @@ Func IniHighFive()
 EndFunc   ;==>IniHighFive
 #CS INFO
 	57697 V7 2/9/2020 12:20:38 AM V6 12/11/2019 11:54:15 AM V5 11/19/2019 1:09:35 PM V4 10/8/2019 4:57:52 PM
-#CE
+#CE INFO
 
 Func ReadHiScore()
 	Local $a, $c, $z
@@ -2204,7 +2241,7 @@ Func StartForm()
 									$datename = "Current"
 									GUICtrlSetData($l_title, $datename & " - " & $g_aReplay[5])
 								EndIf
-;~~
+
 							Case $b_Load
 								If Not FileExists($MyDoc) Then
 									DirCreate($MyDoc)
@@ -2283,7 +2320,7 @@ Func StartForm()
 
 EndFunc   ;==>StartForm
 #CS INFO
-	629477 V55 2/6/2020 2:46:20 PM V54 2/6/2020 10:18:39 AM V53 1/31/2020 5:20:55 PM V52 1/24/2020 1:30:56 AM
+	629166 V56 2/12/2020 9:01:54 AM V55 2/6/2020 2:46:20 PM V54 2/6/2020 10:18:39 AM V53 1/31/2020 5:20:55 PM
 #CE INFO
 
 Func Settings()
@@ -2299,8 +2336,9 @@ Func Settings()
 	Local $b_Color = GUICtrlCreateButton("Colors", 320, 50, 97, 33)
 	Local $b_speed = GUICtrlCreateButton("Speed", 456, 50, 97, 33)
 
-	Local $b_Uni = GUICtrlCreateButton("Delete Data", 456, 100, 97, 33)
+	Local $b_Key = GUICtrlCreateButton("Keys", 183, 100, 97, 33)
 	Local $b_score = GUICtrlCreateButton("Score", 320, 100, 97, 33)
+	Local $b_Uni = GUICtrlCreateButton("Delete Data", 456, 100, 97, 33)
 
 	GUISetState(@SW_SHOW)
 
@@ -2317,6 +2355,8 @@ Func Settings()
 				ScreenSize()
 			Case $b_score
 				SettingScore()
+			Case $b_Key
+				SettingKeys()
 			Case $b_Color
 				ChooseColor()
 			Case $b_speed
@@ -2333,8 +2373,8 @@ Func Settings()
 	$g_FormSetting = -1
 EndFunc   ;==>Settings
 #CS INFO
-	82708 V14 2/9/2020 12:20:38 AM V13 1/10/2020 9:27:34 AM V12 1/9/2020 9:18:30 PM V11 10/28/2019 1:14:59 PM
-#CE
+	89037 V15 2/12/2020 9:01:54 AM V14 2/9/2020 12:20:38 AM V13 1/10/2020 9:27:34 AM V12 1/9/2020 9:18:30 PM
+#CE INFO
 
 Func ScreenSize()
 	Local $sInputBoxAnswer, $keep, $s, $mathW, $mathH, $Math
@@ -2753,7 +2793,13 @@ Func About()
 	$g_FormAbout = GUICreate("Snake19 - About", 615, 430, $g_FormLeft, $g_FormTop, $ws_popup + $ws_caption)
 ;~+~+
 	;$Message &= "|
-	$Message = "0.130 9 Feb 2020 Score: clear all, clear all but highest"
+	$Message = "0.135 14 Feb 2020 Select different keys to use. Not complete, but main keys work, numpad does not"
+	$Message &= "|0.134 12 Feb 2020 Select different keys to use. Went back to version .032."
+	$Message &= "|  Because using way Autoit works and made it more complex and gain nothing."
+	$Message &= "|0.133 12 Feb 2020 Select different keys to use. Try 2, read keys different. -- more complex and gain nothing"
+	$Message &= "|0.132 11 Feb 2020 Select different keys to use. Program: didn't work. Worked of A-Z0-9 not arrows"
+	$Message &= "|0.131 10 Feb 2020 Select different keys to use. Set up form"
+	$Message &= "|0.130 9 Feb 2020 Score: clear all, clear all but highest"
 	$Message &= "||0.129 6 Feb 2020 Save/Load Replay - Load/Save User replay"
 	$Message &= "|0.128 31 Jan 2020 Fixed the replay end, start with old score"
 	$Message &= "|0.127 24 Jan 2020 Save/Load Replay - Load Highscore and current replay"
@@ -2779,10 +2825,6 @@ Func About()
 	$Message &= "|0.107 6 Dec 2019 Fix pass wall endless loop"
 	$Message &= "|0.106 21 Nov 2019 About  - Url to program site"
 	$Message &= "|0.105 21 Nov 2019 Replay - My Snake - Back on self"
-	$Message &= "|0.104 19 Nov 2019 Replay - My Snake - Poop"
-	$Message &= "|0.103 6 Nov 2019 Replay - My Snake - Food"
-	$Message &= "|0.102 4 Nov 2019 Changed Snake Lost"
-	$Message &= "|0.101 4 Nov 2019 Replay - Speed"
 
 	GUICtrlCreateLabel("Welcome to Snake19", 0, 24, 617, 28, $SS_CENTER)
 	GUICtrlSetFont(-1, 14, 800, 0, "MS Sans Serif")
@@ -2844,7 +2886,7 @@ Func About()
 
 EndFunc   ;==>About
 #CS INFO
-	288093 V35 2/9/2020 12:20:38 AM V34 2/6/2020 10:18:39 AM V33 1/31/2020 5:20:55 PM V32 1/24/2020 1:30:56 AM
+	320438 V37 2/14/2020 9:46:03 AM V36 2/12/2020 9:01:54 AM V35 2/9/2020 12:20:38 AM V34 2/6/2020 10:18:39 AM
 #CE
 
 Func SetCellSide()
@@ -3636,13 +3678,258 @@ Func SettingScore()
 EndFunc   ;==>SettingScore
 #CS INFO
 	176850 V2 2/9/2020 12:20:38 AM V1 2/8/2020 10:59:02 PM
+#CE INFO
+
+Func SettingKeys()
+	Local $a, $b, $c, $ok, $cancel
+	Local $kl, $kr, $ku, $kd, $kp, $kq, $km
+	Local $pl, $pr, $pu, $pd, $pp, $pq, $pm
+	Local $pcurrent, $pdefault
+
+	$a = 400
+;~~
+	_Center($a, $a)   ;xw, yh
+
+	;temp remove
+	$g_keypause = IniRead($s_ini, "Key", "Pause", "p")
+	$g_keymin = IniRead($s_ini, "Key", "Minimize", "m")
+	$g_keyquit = IniRead($s_ini, "Key", "Quit", "q")
+	$g_keyup = IniRead($s_ini, "Key", "Up", "{UP}")
+	$g_keydown = IniRead($s_ini, "Key", "Down", "{DOWN}")
+	$g_keyleft = IniRead($s_ini, "Key", "Left", "{LEFT}")
+	$g_keyright = IniRead($s_ini, "Key", "Right", "{RIGHT}")
+
+	$g_FormLeft = -1
+	$g_FormTop = -1
+	;temp remove
+
+	$g_FormKey = GUICreate("Select KEYs", $a, $a, $g_FormLeft, $g_FormTop)
+	GUICtrlCreateLabel("Select Keys - works 14-Feb-2020 not complete", 0, 10, $a, 17, $SS_CENTER)
+	GUICtrlSetFont(-1, 12, 800, 0, "Arial")
+	GUICtrlCreateLabel("Press KEY to change", 0, 30, $a, 17, $SS_CENTER)
+	GUICtrlSetFont(-1, 10, 400, 0, "Arial")
+
+	$cancel = GUICtrlCreateButton("Cancel", $a - 100, $a - 70, 90, 50)
+
+	$kp = $g_keypause
+	$km = $g_keymin
+	$kq = $g_keyquit
+	$ku = $g_keyup
+	$kd = $g_keydown
+	$kl = $g_keyleft
+	$kr = $g_keyright
+
+	$b = 60
+	$c = 100
+
+	$pu = GUICtrlCreateButton("Up = " & $ku, $a / 2 - 50, $b, $c, 20)
+	$pl = GUICtrlCreateButton("Left = " & $kl, $a / 4 - 50, $b + 30, $c, 20)
+	$pr = GUICtrlCreateButton("Right = " & $kr, $a * .75 - 50, $b + 30, $c, 20)
+	$pd = GUICtrlCreateButton("Down = " & $kd, $a / 2 - 50, $b + 60, $c, 20)
+	$pq = GUICtrlCreateButton("Quit = " & $kq, $a / 4 - 50, $b + 100, $c, 20)
+	$pp = GUICtrlCreateButton("Pause = " & $kp, $a / 2 - 50, $b + 100, $c, 20)
+	$pm = GUICtrlCreateButton("Minimize = " & $km, $a * .75 - 50, $b + 100, $c, 20)
+
+	;GUICtrlCreateLabel("Press Key to change", 0, $b + 170, $a, 17, $SS_CENTER)
+	;GUICtrlSetFont(-1, 10, 800, 0, "Arial")
+
+	$pcurrent = GUICtrlCreateButton("Current Keys", 40, $a - 150, 90, 50)
+	$pdefault = GUICtrlCreateButton("Default Keys", $a - 100, $a - 150, 90, 50)
+	$ok = GUICtrlCreateButton("Save", $a - 250, $a - 70, 90, 50)
+
+	GUISetState(@SW_SHOW)
+
+	;ReadKey()
+;~~
+
+	While 1
+		Switch GUIGetMsg()
+			Case $GUI_EVENT_CLOSE, $cancel
+				ExitLoop
+			Case $pl
+				$a = ReadKey()
+				$kl = $g_KeyIn
+				GUICtrlSetData($pl, "Left = " & $a)
+			Case $pr
+				$a = ReadKey()
+				$kr = $g_KeyIn
+				GUICtrlSetData($pr, "Right = " & $a)
+			Case $pu
+				$a = ReadKey()
+				$ku = $g_KeyIn
+				GUICtrlSetData($pu, "Up = " & $a)
+			Case $pd
+				$a = ReadKey()
+				$kd = $g_KeyIn
+				GUICtrlSetData($pd, "Down = " & $a)
+			Case $pp
+				$a = ReadKey()
+				$kp = $g_KeyIn
+				GUICtrlSetData($pp, "Pause = " & $a)
+			Case $pq
+				$a = ReadKey()
+				$kq = $g_KeyIn
+				GUICtrlSetData($pq, "Quit = " & $a)
+			Case $pm
+				$a = ReadKey()
+				$km = $g_KeyIn
+				GUICtrlSetData($pm, "Minimize = " & $a)
+
+			Case $pcurrent
+				$kp = $g_keypause
+				$km = $g_keymin
+				$kq = $g_keyquit
+				$ku = $g_keyup
+				$kd = $g_keydown
+				$kl = $g_keyleft
+				$kr = $g_keyright
+
+				GUICtrlSetData($pl, "Left = " & $kl)
+				GUICtrlSetData($pr, "Right = " & $kr)
+				GUICtrlSetData($pd, "Down = " & $kd)
+				GUICtrlSetData($pp, "Pause = " & $kp)
+				GUICtrlSetData($pq, "Quit = " & $kq)
+				GUICtrlSetData($pm, "Minimize = " & $km)
+				GUICtrlSetData($pu, "Up = " & $ku)
+			Case $pdefault
+				$kp = "p"
+				$km = "m"
+				$kq = "q"
+				$ku = "{UP}"
+				$kd = "{DOWN}"
+				$kl = "{LEFT}"
+				$kr = "{RIGHT}"
+
+				GUICtrlSetData($pl, "Left = " & $kl)
+				GUICtrlSetData($pr, "Right = " & $kr)
+				GUICtrlSetData($pd, "Down = " & $kd)
+				GUICtrlSetData($pp, "Pause = " & $kp)
+				GUICtrlSetData($pq, "Quit = " & $kq)
+				GUICtrlSetData($pm, "Minimize = " & $km)
+				GUICtrlSetData($pu, "Up = " & $ku)
+
+			Case $ok
+				$g_keypause = $kp
+				$g_keymin = $km
+				$g_keyquit = $kq
+				$g_keyup = $ku
+				$g_keydown = $kd
+				$g_keyleft = $kl
+				$g_keyright = $kr
+
+				IniWrite($s_ini, "Key", "Pause", $g_keypause)
+				IniWrite($s_ini, "Key", "Minimize", $g_keymin)
+				IniWrite($s_ini, "Key", "Quit", $g_keyquit)
+				IniWrite($s_ini, "Key", "Up", $g_keyup)
+				IniWrite($s_ini, "Key", "Down", $g_keydown)
+				IniWrite($s_ini, "Key", "Left", $g_keyleft)
+				IniWrite($s_ini, "Key", "Right", $g_keyright)
+				ExitLoop
+
+		EndSwitch
+	WEnd
+
+	GUIDelete($g_FormKey)
+EndFunc   ;==>SettingKeys
+#CS INFO
+	268591 V2 2/14/2020 9:46:03 AM V1 2/12/2020 9:01:54 AM
 #CE
 
+Func WM_COMMAND($hWnd, $iMsg, $wParam, $lParam)
+	Local $iCode = BitShift($wParam, 16)
+	Local $iIDFrom = _WinAPI_LoWord($wParam)
+
+	Switch $iIDFrom
+		Case $tbMyInputNumber
+			Switch $iCode
+				Case $EN_UPDATE
+					$g_KeyIn = GUICtrlRead($tbMyInputNumber)
+					GUICtrlSetData($tbMyInputNumber, $g_KeyIn)
+			EndSwitch
+	EndSwitch
+
+	Return $GUI_RUNDEFMSG
+EndFunc   ;==>WM_COMMAND
+#CS INFO
+	27502 V1 2/12/2020 9:01:54 AM
+#CE INFO
+
+;~~
+Func ReadKey()   ;Trouble with it does letters/number but not the arrow key
+	Local $ab = GUICreate("Press Key to change", 100, 100, -1, -1, $ws_popup + $ws_caption, -1, $g_FormKey)
+	$tbMyInputNumber = GUICtrlCreateEdit("", 10, 10, 10, 20) ; , $ES_AUTOHSCROLL)
+
+	$g_KeyIn = ""
+
+	GUIRegisterMsg($WM_COMMAND, "WM_COMMAND")
+	GUISetState()
+
+	While 1
+
+		Sleep(500)
+		If $g_KeyIn <> "" Then
+			ExitLoop
+		EndIf
+		Switch GUIGetMsg()
+			Case $GUI_EVENT_CLOSE
+				ExitLoop
+		EndSwitch
+
+	WEnd
+
+	GUIRegisterMsg($WM_COMMAND, "")
+	GUIDelete($ab)
+
+	Return ConvertKey()  ; convert $g_Keyin to be used in GUISetAccelerators  Return Upper case $_Keyin
+
+EndFunc   ;==>ReadKey
+#CS INFO
+	46787 V2 2/14/2020 9:46:03 AM V1 2/12/2020 9:01:54 AM
+#CE
+
+Func ConvertKey()  ; convert $g_Keyin to be used in GUISetAccelerators
+	If StringIsAlpha($g_KeyIn) Then
+		$g_KeyIn = StringLower($g_KeyIn)
+		Return StringUpper($g_KeyIn)
+	EndIf
+	; Send()
+	If $g_KeyIn = "~" Then $g_KeyIn = "`"
+	If $g_KeyIn = "_" Then $g_KeyIn = "-"
+	If $g_KeyIn = "+" Then $g_KeyIn = "="
+	If $g_KeyIn = "|" Then $g_KeyIn = "\"
+	If $g_KeyIn = "{" Then $g_KeyIn = "["
+	If $g_KeyIn = "}" Then $g_KeyIn = "]"
+	If $g_KeyIn = ":" Then $g_KeyIn = ";"
+	If $g_KeyIn = '"' Then $g_KeyIn = "'"
+	If $g_KeyIn = "<" Then $g_KeyIn = ","
+	If $g_KeyIn = ">" Then $g_KeyIn = "."
+	If $g_KeyIn = "?" Then $g_KeyIn = "/"
+
+	If $g_KeyIn = "!" Then $g_KeyIn = "1"
+	If $g_KeyIn = "@" Then $g_KeyIn = "2"
+	If $g_KeyIn = "#" Then $g_KeyIn = "3"
+	If $g_KeyIn = "$" Then $g_KeyIn = "4"
+	If $g_KeyIn = "%" Then $g_KeyIn = "5"
+	If $g_KeyIn = "^" Then $g_KeyIn = "6"
+	If $g_KeyIn = "&" Then $g_KeyIn = "7"
+	If $g_KeyIn = "*" Then $g_KeyIn = "8"
+	If $g_KeyIn = "(" Then $g_KeyIn = "9"
+	If $g_KeyIn = ")" Then $g_KeyIn = "0"
+
+	Return $g_KeyIn
+EndFunc   ;==>ConvertKey
+#CS INFO
+	68289 V2 2/14/2020 9:46:03 AM V1 2/12/2020 9:01:54 AM
+#CE
+
+;https://github.com/Pahiro/AutoIT-Scripts/blob/master/keylogger.au3  failed
+
 ;Main
-;SettingScore()
+;SettingKeys()
+;Exit
 
 Main()
 
 Exit
 
-;~T ScriptFunc.exe V0.54a 15 May 2019 - 2/9/2020 12:20:38 AM
+;~T ScriptFunc.exe V0.54a 15 May 2019 - 2/14/2020 9:46:03 AM
