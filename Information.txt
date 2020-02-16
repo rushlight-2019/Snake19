@@ -1,11 +1,10 @@
-0.135 14 Feb 2020 Select different keys to use. Not complete, but main keys work, numpad does not.
+0.136 15 Feb 2020 Select different keys to use. Try3 -- All works
 
 Select keys.  Change which keys to use in the game.  
-Works for the keys one the main area.  A-Z 0-9 and -=\[];',./`
-The A-Z will display as upper case when changed.  The game uses the lower case
-But not the numpad will not work.  
+Works for the usable keys.
 
-Still needs work.  I went through 5 version to do this. Toss out 2 and returned 1.
+You can use Enter, Insert, Home, Page Up, Delete, End, Page Down, Space
+You can not use the Function keys, Shift or Tab
 
 ----------------
 Two versions of the snake game:
@@ -70,20 +69,44 @@ Or go to the Document folder Snake19 and delete the file.
 ----------------
 Settings:
 1) About
-2) Screen Size: Changes Cell size from 10x10 to maximum screen can hold.
-3) Change Colors: 2 per-define color layout.  You can pick any color you want.
-4) Speed:  Change the speed of the movement of snake.  Default is 150 ms per loop, up or down by 10 ms.
-5) Keys:  Select keys to use in the game.  No complete but works. 14-Feb-2020
-6) Score: Clear and reset save on exit,
+2) Screen Size
+3) Colors
+4) Speed
+5) Keys
+6) Score
 X) Remove data files from computer. 
 
-----------------
+--------------
+Settings
 
+	SCREEN SIZE
+Change the number of pixel of the game cell. 10 is the smallest. 22 is default, Maximum is calculated from the screen size.
+
+	COLOR
+2 per-define color layout.  You can pick any color you want.
+
+	SPEED
+Change the speed of the movement of snake.  Default is 150 ms per loop, up or down by 10 ms.
+
+	KEYS
+Change which keys to use in the game.  
+Works for the usable keys.
+You can use Enter, Insert, Home, Page Up, Delete, End, Page Down, Space
+You can not use the Function keys, Shift keys or Tab
+
+	SCORE
+This is the only setting that can be different on each game type.
+Change the number of high scores save on exit. Default is 8,  Were the highest score is saved.
+Clear the high scores. Default is not to delete the highest score.  Uncheck the box and the highest can be deleted.
+
+
+----------------
 To do
-  Select different keys to use.  3 tries.  works not complete need way to do numpad
   Save load scores/setting for Change of size
   Change size of screen.  default 30x40 in blocks of 5
+  Change the X number of snake moves before adding or removing snake cell default I think is 5
 
+----------------
 Problem:
 
 Long: Still have the funny start game problem that I can't create in debug mode.  The end of the snake does not clear, snake just get longer, until you run over it. 

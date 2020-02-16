@@ -1,3 +1,4 @@
+#Region Base
 AutoItSetOption("MustDeclareVars", 1)
 
 ;If not define then only in script
@@ -5,7 +6,7 @@ AutoItSetOption("MustDeclareVars", 1)
 ;Global Static $MESSAGE =  False   ;Pause will still work in script  No DataOut
 
 ; Must be Declared before _Prf_startup   ~+~+
-Global $ver = "0.135 14 Feb 2020 Select different keys to use. Not complete, but main keys work, numpad does not"
+Global $ver = "0.136 15 Feb 2020 Select different keys to use. Try3 -- All works"
 
 Global $ini_ver = "11"  ;changed at 0.127
 Global $g_replayVer = "1"
@@ -15,7 +16,7 @@ Global $g_replayVer = "1"
 #include "R:\!Autoit\Blank\_prf_startup.au3"
 
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
-#AutoIt3Wrapper_Res_Fileversion=0.1.3.5
+#AutoIt3Wrapper_Res_Fileversion=0.1.3.6
 #AutoIt3Wrapper_Icon=R:\!Autoit\Ico\prf.ico
 #AutoIt3Wrapper_Res_Description=Another snake game
 #AutoIt3Wrapper_Res_LegalCopyright=© Phillip Forrestal 2019-2020
@@ -88,6 +89,7 @@ Remove game does not clear replays in data folder 0210
 
 	Version
 ;~+~+
+	0.136 15 Feb 2020 Select different keys to use. Try3 -- All works
 	0.135 14 Feb 2020 Select different keys to use. Not complete, but main keys work, numpad does not
 	0.134 12 Feb 2020 Select different keys to use. Went back to version .032.  Because using way Autoit works and made it more complex and gain nothing.
 	0.133 12 Feb 2020 Select different keys to use. Try 2, read keys different. -- more complex and gain nothing
@@ -262,7 +264,9 @@ Remove game does not clear replays in data folder 0210
 #include <ColorConstants.au3>
 
 Opt("GUIEventOptions", 1)
+#EndRegion Base
 
+#Region Global
 Global $g_data ;= @ScriptDir & "\SNAKE19-Data"
 $g_data = CheckDataLoc() & "\" ;find data folder
 If $g_data = "" Then
@@ -488,7 +492,8 @@ Global $g_Pause
 ;0130
 Global $g_SaveExit
 
-;0131
+;0.131-0.136
+Global $UserDll
 Global $tbMyInputNumber
 Global $g_KeyIn = ""
 Global $g_keypause
@@ -500,6 +505,8 @@ Global $g_keyleft
 Global $g_keyright
 
 PassWallDefault()
+
+#EndRegion Global
 
 ; Main is call at end
 Func Main()
@@ -902,7 +909,7 @@ Func Game()
 EndFunc   ;==>Game
 #CS INFO
 	517170 V77 2/14/2020 9:46:03 AM V76 2/12/2020 9:01:54 AM V75 2/6/2020 10:18:39 AM V74 1/31/2020 5:20:55 PM
-#CE
+#CE INFO
 
 Func Tick() ;
 	Local $fdiff
@@ -2793,7 +2800,8 @@ Func About()
 	$g_FormAbout = GUICreate("Snake19 - About", 615, 430, $g_FormLeft, $g_FormTop, $ws_popup + $ws_caption)
 ;~+~+
 	;$Message &= "|
-	$Message = "0.135 14 Feb 2020 Select different keys to use. Not complete, but main keys work, numpad does not"
+	$Message = "0.136 15 Feb 2020 Select different keys to use. Try3 -- All works"
+	$Message &= "|0.135 14 Feb 2020 Select different keys to use. Not complete, but main keys work, numpad does not"
 	$Message &= "|0.134 12 Feb 2020 Select different keys to use. Went back to version .032."
 	$Message &= "|  Because using way Autoit works and made it more complex and gain nothing."
 	$Message &= "|0.133 12 Feb 2020 Select different keys to use. Try 2, read keys different. -- more complex and gain nothing"
@@ -2886,8 +2894,8 @@ Func About()
 
 EndFunc   ;==>About
 #CS INFO
-	320438 V37 2/14/2020 9:46:03 AM V36 2/12/2020 9:01:54 AM V35 2/9/2020 12:20:38 AM V34 2/6/2020 10:18:39 AM
-#CE
+	326205 V38 2/15/2020 6:21:21 PM V37 2/14/2020 9:46:03 AM V36 2/12/2020 9:01:54 AM V35 2/9/2020 12:20:38 AM
+#CE INFO
 
 Func SetCellSide()
 	Pause("SetCellSide")
@@ -3680,36 +3688,26 @@ EndFunc   ;==>SettingScore
 	176850 V2 2/9/2020 12:20:38 AM V1 2/8/2020 10:59:02 PM
 #CE INFO
 
+#Region SettingKeys
 Func SettingKeys()
 	Local $a, $b, $c, $ok, $cancel
 	Local $kl, $kr, $ku, $kd, $kp, $kq, $km
 	Local $pl, $pr, $pu, $pd, $pp, $pq, $pm
 	Local $pcurrent, $pdefault
 
-	$a = 400
-;~~
-	_Center($a, $a)   ;xw, yh
+	$UserDll = DllOpen("user32.dll")
 
-	;temp remove
-	$g_keypause = IniRead($s_ini, "Key", "Pause", "p")
-	$g_keymin = IniRead($s_ini, "Key", "Minimize", "m")
-	$g_keyquit = IniRead($s_ini, "Key", "Quit", "q")
-	$g_keyup = IniRead($s_ini, "Key", "Up", "{UP}")
-	$g_keydown = IniRead($s_ini, "Key", "Down", "{DOWN}")
-	$g_keyleft = IniRead($s_ini, "Key", "Left", "{LEFT}")
-	$g_keyright = IniRead($s_ini, "Key", "Right", "{RIGHT}")
-
-	$g_FormLeft = -1
-	$g_FormTop = -1
-	;temp remove
-
-	$g_FormKey = GUICreate("Select KEYs", $a, $a, $g_FormLeft, $g_FormTop)
-	GUICtrlCreateLabel("Select Keys - works 14-Feb-2020 not complete", 0, 10, $a, 17, $SS_CENTER)
+	_Center(400, 340)   ;xw, yh
+	$g_FormKey = GUICreate("Select KEYs", 400, 340, $g_FormLeft, $g_FormTop)
+	GUICtrlCreateLabel("Select Keys", 0, 10, 400, 17, $SS_CENTER)
 	GUICtrlSetFont(-1, 12, 800, 0, "Arial")
-	GUICtrlCreateLabel("Press KEY to change", 0, 30, $a, 17, $SS_CENTER)
+	GUICtrlCreateLabel("Press KEY to change", 0, 30, 400, 17, $SS_CENTER)
 	GUICtrlSetFont(-1, 10, 400, 0, "Arial")
 
-	$cancel = GUICtrlCreateButton("Cancel", $a - 100, $a - 70, 90, 50)
+	$cancel = GUICtrlCreateButton("Cancel", 280, 270, 90, 50)
+	$pcurrent = GUICtrlCreateButton("Current Keys", 20, 200, 90, 50)
+	$pdefault = GUICtrlCreateButton("Default Keys", 280, 200, 90, 50)
+	$ok = GUICtrlCreateButton("Save", 140, 270, 90, 50)
 
 	$kp = $g_keypause
 	$km = $g_keymin
@@ -3720,27 +3718,17 @@ Func SettingKeys()
 	$kr = $g_keyright
 
 	$b = 60
-	$c = 100
+	$c = 120
 
-	$pu = GUICtrlCreateButton("Up = " & $ku, $a / 2 - 50, $b, $c, 20)
-	$pl = GUICtrlCreateButton("Left = " & $kl, $a / 4 - 50, $b + 30, $c, 20)
-	$pr = GUICtrlCreateButton("Right = " & $kr, $a * .75 - 50, $b + 30, $c, 20)
-	$pd = GUICtrlCreateButton("Down = " & $kd, $a / 2 - 50, $b + 60, $c, 20)
-	$pq = GUICtrlCreateButton("Quit = " & $kq, $a / 4 - 50, $b + 100, $c, 20)
-	$pp = GUICtrlCreateButton("Pause = " & $kp, $a / 2 - 50, $b + 100, $c, 20)
-	$pm = GUICtrlCreateButton("Minimize = " & $km, $a * .75 - 50, $b + 100, $c, 20)
-
-	;GUICtrlCreateLabel("Press Key to change", 0, $b + 170, $a, 17, $SS_CENTER)
-	;GUICtrlSetFont(-1, 10, 800, 0, "Arial")
-
-	$pcurrent = GUICtrlCreateButton("Current Keys", 40, $a - 150, 90, 50)
-	$pdefault = GUICtrlCreateButton("Default Keys", $a - 100, $a - 150, 90, 50)
-	$ok = GUICtrlCreateButton("Save", $a - 250, $a - 70, 90, 50)
+	$pu = GUICtrlCreateButton("Up = " & $ku, 400 / 2 - 60, $b, $c, 20)
+	$pl = GUICtrlCreateButton("Left = " & $kl, 400 / 4 - 80, $b + 30, $c, 20)
+	$pr = GUICtrlCreateButton("Right = " & $kr, 400 * .75 - 40, $b + 30, $c, 20)
+	$pd = GUICtrlCreateButton("Down = " & $kd, 400 / 2 - 60, $b + 60, $c, 20)
+	$pq = GUICtrlCreateButton("Quit = " & $kq, 400 / 4 - 80, $b + 100, $c, 20)
+	$pp = GUICtrlCreateButton("Pause = " & $kp, 400 / 2 - 60, $b + 100, $c, 20)
+	$pm = GUICtrlCreateButton("Minimize = " & $km, 400 * .75 - 40, $b + 100, $c, 20)
 
 	GUISetState(@SW_SHOW)
-
-	;ReadKey()
-;~~
 
 	While 1
 		Switch GUIGetMsg()
@@ -3829,102 +3817,165 @@ Func SettingKeys()
 		EndSwitch
 	WEnd
 
+	DllClose($UserDll)
 	GUIDelete($g_FormKey)
 EndFunc   ;==>SettingKeys
 #CS INFO
-	268591 V2 2/14/2020 9:46:03 AM V1 2/12/2020 9:01:54 AM
+	228490 V4 2/15/2020 6:35:19 PM V3 2/15/2020 6:21:21 PM V2 2/14/2020 9:46:03 AM V1 2/12/2020 9:01:54 AM
 #CE
 
-Func WM_COMMAND($hWnd, $iMsg, $wParam, $lParam)
-	Local $iCode = BitShift($wParam, 16)
-	Local $iIDFrom = _WinAPI_LoWord($wParam)
+#EndRegion SettingKeys
 
-	Switch $iIDFrom
-		Case $tbMyInputNumber
-			Switch $iCode
-				Case $EN_UPDATE
-					$g_KeyIn = GUICtrlRead($tbMyInputNumber)
-					GUICtrlSetData($tbMyInputNumber, $g_KeyIn)
-			EndSwitch
-	EndSwitch
+#Region ReadKey   Try 3
+;https://github.com/Pahiro/AutoIT-Scripts/blob/master/keylogger.au3
 
-	Return $GUI_RUNDEFMSG
-EndFunc   ;==>WM_COMMAND
+Func _IsPressed1($hexKey)
+	Local $aR
+	$aR = DllCall($UserDll, "int", "GetAsyncKeyState", "int", $hexKey)
+	;dataout(Hex( BitAND($aR[0], 0x8000)), Hex($aR[1]))
+	Return BitAND($aR[0], 0x8000) <> 0
+
+EndFunc   ;==>_IsPressed1
 #CS INFO
-	27502 V1 2/12/2020 9:01:54 AM
+	15759 V1 2/15/2020 6:21:21 PM
 #CE INFO
 
-;~~
-Func ReadKey()   ;Trouble with it does letters/number but not the arrow key
-	Local $ab = GUICreate("Press Key to change", 100, 100, -1, -1, $ws_popup + $ws_caption, -1, $g_FormKey)
-	$tbMyInputNumber = GUICtrlCreateEdit("", 10, 10, 10, 20) ; , $ES_AUTOHSCROLL)
+Func ReadKey()
+	Local $a
 
-	$g_KeyIn = ""
-
-	GUIRegisterMsg($WM_COMMAND, "WM_COMMAND")
+	_Center(100, 140) ;xw, yh
+	Local $ab = GUICreate("Press Key to change", 100, 100, $g_FormLeft, $g_FormTop, $ws_popup + $ws_caption, -1, $g_FormKey)
 	GUISetState()
-
-	While 1
-
-		Sleep(500)
-		If $g_KeyIn <> "" Then
-			ExitLoop
-		EndIf
-		Switch GUIGetMsg()
-			Case $GUI_EVENT_CLOSE
-				ExitLoop
-		EndSwitch
-
-	WEnd
-
-	GUIRegisterMsg($WM_COMMAND, "")
+	$g_KeyIn = _GetKey()
 	GUIDelete($ab)
-
-	Return ConvertKey()  ; convert $g_Keyin to be used in GUISetAccelerators  Return Upper case $_Keyin
-
-EndFunc   ;==>ReadKey
-#CS INFO
-	46787 V2 2/14/2020 9:46:03 AM V1 2/12/2020 9:01:54 AM
-#CE
-
-Func ConvertKey()  ; convert $g_Keyin to be used in GUISetAccelerators
 	If StringIsAlpha($g_KeyIn) Then
 		$g_KeyIn = StringLower($g_KeyIn)
 		Return StringUpper($g_KeyIn)
 	EndIf
-	; Send()
-	If $g_KeyIn = "~" Then $g_KeyIn = "`"
-	If $g_KeyIn = "_" Then $g_KeyIn = "-"
-	If $g_KeyIn = "+" Then $g_KeyIn = "="
-	If $g_KeyIn = "|" Then $g_KeyIn = "\"
-	If $g_KeyIn = "{" Then $g_KeyIn = "["
-	If $g_KeyIn = "}" Then $g_KeyIn = "]"
-	If $g_KeyIn = ":" Then $g_KeyIn = ";"
-	If $g_KeyIn = '"' Then $g_KeyIn = "'"
-	If $g_KeyIn = "<" Then $g_KeyIn = ","
-	If $g_KeyIn = ">" Then $g_KeyIn = "."
-	If $g_KeyIn = "?" Then $g_KeyIn = "/"
-
-	If $g_KeyIn = "!" Then $g_KeyIn = "1"
-	If $g_KeyIn = "@" Then $g_KeyIn = "2"
-	If $g_KeyIn = "#" Then $g_KeyIn = "3"
-	If $g_KeyIn = "$" Then $g_KeyIn = "4"
-	If $g_KeyIn = "%" Then $g_KeyIn = "5"
-	If $g_KeyIn = "^" Then $g_KeyIn = "6"
-	If $g_KeyIn = "&" Then $g_KeyIn = "7"
-	If $g_KeyIn = "*" Then $g_KeyIn = "8"
-	If $g_KeyIn = "(" Then $g_KeyIn = "9"
-	If $g_KeyIn = ")" Then $g_KeyIn = "0"
-
 	Return $g_KeyIn
-EndFunc   ;==>ConvertKey
+
+EndFunc   ;==>ReadKey
 #CS INFO
-	68289 V2 2/14/2020 9:46:03 AM V1 2/12/2020 9:01:54 AM
+	27764 V2 2/15/2020 6:35:19 PM V1 2/15/2020 6:21:21 PM
 #CE
 
-;https://github.com/Pahiro/AutoIT-Scripts/blob/master/keylogger.au3  failed
+Func _GetKey()
 
-;Main
+	While 1
+
+		If _IsPressed1(0xBA) Then Return ';'
+		If _IsPressed1(0xBB) Then Return '='
+		If _IsPressed1(0xBC) Then Return ','
+		If _IsPressed1(0xBD) Then Return '-'
+		If _IsPressed1(0xBE) Then Return '.'
+		If _IsPressed1(0xBF) Then Return '/'
+		If _IsPressed1(0xC0) Then Return '`'
+		If _IsPressed1(0xDB) Then Return '['
+		If _IsPressed1(0xDC) Then Return '\'
+		If _IsPressed1(0xDD) Then Return ']'
+		If _IsPressed1(0xDE) Then Return ("' ")
+		;If _IsPressed1(0x08) Then Return '{BACKSPACE}'
+		;If _IsPressed1(0x09) Then Return '{TAB}'
+		If _IsPressed1(0x0D) Then Return '{ENTER}'
+		;If _IsPressed1(0x13) Then Return '{PAUSE}'
+		;If _IsPressed1(0x14) Then Return '{CAPSLOCK}'
+		;If _IsPressed1(0x1B) Then Return '{ESC}'
+		;If _IsPressed1(0x20) Then Return '{SPACE}'
+		If _IsPressed1(0x21) Then Return '{PGUP}'
+		If _IsPressed1(0x22) Then Return '{PGDN}'
+		If _IsPressed1(0x23) Then Return '{END}'
+		If _IsPressed1(0x24) Then Return '{HOME}'
+		If _IsPressed1(0x25) Then Return '{LEFT}'
+		If _IsPressed1(0x26) Then Return '{UP}'
+		If _IsPressed1(0x27) Then Return '{RIGHT}'
+		If _IsPressed1(0x28) Then Return '{DOWN}'
+		;If _IsPressed1(0x2C) Then Return '{PRINTSCREEN}'
+		If _IsPressed1(0x2D) Then Return '{INS}'
+		If _IsPressed1(0x2E) Then Return '{DEL}'
+		If _IsPressed1(0x30) Then Return '0'
+		If _IsPressed1(0x31) Then Return '1'
+		If _IsPressed1(0x32) Then Return '2'
+		If _IsPressed1(0x33) Then Return '3'
+		If _IsPressed1(0x34) Then Return '4'
+		If _IsPressed1(0x35) Then Return '5'
+		If _IsPressed1(0x36) Then Return '6'
+		If _IsPressed1(0x37) Then Return '7'
+		If _IsPressed1(0x38) Then Return '8'
+		If _IsPressed1(0x39) Then Return '9'
+		If _IsPressed1(0x41) Then Return 'a'
+		If _IsPressed1(0x42) Then Return 'b'
+		If _IsPressed1(0x43) Then Return 'c'
+		If _IsPressed1(0x44) Then Return 'd'
+		If _IsPressed1(0x45) Then Return 'e'
+		If _IsPressed1(0x46) Then Return 'f'
+		If _IsPressed1(0x47) Then Return 'g'
+		If _IsPressed1(0x48) Then Return 'h'
+		If _IsPressed1(0x49) Then Return 'i'
+		If _IsPressed1(0x4A) Then Return 'j'
+		If _IsPressed1(0x4B) Then Return 'k'
+		If _IsPressed1(0x4C) Then Return 'l'
+		If _IsPressed1(0x4D) Then Return 'm'
+		If _IsPressed1(0x4E) Then Return 'n'
+		If _IsPressed1(0x4F) Then Return 'o'
+		If _IsPressed1(0x50) Then Return 'p'
+		If _IsPressed1(0x51) Then Return 'q'
+		If _IsPressed1(0x52) Then Return 'r'
+		If _IsPressed1(0x53) Then Return 's'
+		If _IsPressed1(0x54) Then Return 't'
+		If _IsPressed1(0x55) Then Return 'u'
+		If _IsPressed1(0x56) Then Return 'v'
+		If _IsPressed1(0x57) Then Return 'w'
+		If _IsPressed1(0x58) Then Return 'x'
+		If _IsPressed1(0x59) Then Return 'y'
+		If _IsPressed1(0x5A) Then Return 'z'
+		;If _IsPressed1(0x5B) Then Return '{LWIN}'
+		;if _IsPressed1(0x5C) Then Return '{RWIN}'
+		If _IsPressed1(0x60) Then Return '{NUMPAD0}'
+		If _IsPressed1(0x61) Then Return '{NUMPAD1}'
+		If _IsPressed1(0x62) Then Return '{NUMPAD2}'
+		If _IsPressed1(0x63) Then Return '{NUMPAD3}'
+		If _IsPressed1(0x64) Then Return '{NUMPAD4}'
+		If _IsPressed1(0x65) Then Return '{NUMPAD5}'
+		If _IsPressed1(0x66) Then Return '{NUMPAD6}'
+		If _IsPressed1(0x67) Then Return '{NUMPAD7}'
+		If _IsPressed1(0x68) Then Return '{NUMPAD8}'
+		If _IsPressed1(0x69) Then Return '{NUMPAD9}'
+		If _IsPressed1(0x6A) Then Return '{NUMPADMULT}'
+		If _IsPressed1(0x6B) Then Return '{NUMPADADD}'
+		If _IsPressed1(0x6D) Then Return '{NUMPADSUB}'
+		If _IsPressed1(0x6E) Then Return '{NUMPADDOT}'
+		If _IsPressed1(0x6F) Then Return '{NUMPADDIV}'
+		;If _IsPressed1(0x70) Then Return '{F1}'
+		;If _IsPressed1(0x71) Then Return '{F2}'
+		;If _IsPressed1(0x72) Then Return '{F3}'
+		;If _IsPressed1(0x73) Then Return '{F4}'
+		;If _IsPressed1(0x74) Then Return '{F5}'
+		;If _IsPressed1(0x75) Then Return '{F6}'
+		;If _IsPressed1(0x76) Then Return '{F7}'
+		;If _IsPressed1(0x77) Then Return '{F8}'
+		;If _IsPressed1(0x78) Then Return '{F9}'
+		;If _IsPressed1(0x79) Then Return '{F10}'
+		;If _IsPressed1(0x7A) Then Return '{F11}'
+		;If _IsPressed1(0x7B) Then Return '{F12}'
+		;If _IsPressed1(0x90) Then Return '{NUMLOCK}'
+		;If _IsPressed1(0x91) Then Return '{SCROLLLOCK}'
+		;If _IsPressed1(0xA0) Then Return '{LSHIFT}'
+		;If _IsPressed1(0xA1) Then Return '{RSHIFT}'
+		;If _IsPressed1(0xA2) Then Return '{LCTRL}'
+		;If _IsPressed1(0xA3) Then Return '{RCTRL}'
+		;If _IsPressed1(0xA4) Then Return '{LALT}'
+		;If _IsPressed1(0xA5) Then Return '{RALT}'
+		Sleep(100)
+	WEnd
+	;Will never get here
+EndFunc   ;==>_GetKey
+#CS INFO
+	322916 V1 2/15/2020 6:21:21 PM
+#CE INFO
+
+#EndRegion ReadKey   Try 3
+
+;Test befor Main
 ;SettingKeys()
 ;Exit
 
@@ -3932,4 +3983,4 @@ Main()
 
 Exit
 
-;~T ScriptFunc.exe V0.54a 15 May 2019 - 2/14/2020 9:46:03 AM
+;~T ScriptFunc.exe V0.54a 15 May 2019 - 2/15/2020 6:35:19 PM
