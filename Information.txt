@@ -1,17 +1,19 @@
-0.136 15 Feb 2020 Select different keys to use. Try3 -- All works
+0.139 24 Feb 2020 Misc thing in replay
+0.138 23 Feb 2020 Adjust when the snake becomes longer or shorter
 
-Select keys.  Change which keys to use in the game.  
-Works for the usable keys.
+Setting: Misc.
+Adjust when to Add/Remove Snake Cells
+When to adjust snake length. Snake moves a number of positions before the change occurs. 0-10  Default 2.
 
-You can use Enter, Insert, Home, Page Up, Delete, End, Page Down, Space
-You can not use the Function keys, Shift or Tab
+Bonus Food over 100 length, will create a 2nd food.    On or off.
+
 
 ----------------
 Two versions of the snake game:
-My Snake - hard to die.  
+My Snake - hard to die.
   Food increase Snake by 1.  A special food will get you more.
   My Snake Bonus:
-    Snake can 'double back' on self.  
+    Snake can 'double back' on self.
 
     Will not die if snake eat itself, could cause part of its end to die.
 
@@ -21,7 +23,7 @@ My Snake - hard to die.
     Snake does not like to Turn so, so few turns and Food increase snake & score
       Too many turns Snake gets shorter
 
-Normal Snake 
+Normal Snake
   Food increase Snake by 1.  Score +1 per food pickup.  There is a bonus.
     Will die if Snake eat itself, eat a wall.
 
@@ -32,19 +34,19 @@ Special keys:
  M = Minimize game.  Restore from program tray.
 
 ----------------
-Score line in 
- My Snake: 
+Score line in
+ My Snake:
   Length of snake
-  Maximum length 
+  Maximum length
   Score
   ms/cyc: time it take to do a game loop on this computer. My desktop about 12ms, Win 10 notebook about 85ms.
   test number: number of replay cells used.
-  
+
  Normal Snake: Length of snake.
 
 ----------------
 Replay:
-You can replay the highest score game played and the last game played.  
+You can replay the highest score game played and the last game played.
 At different speeds. Default speed, 200ms, 100ms, Full (no delay in loop)
 
 Replay files now can be stored in User Documents in Snake19 folder
@@ -52,7 +54,7 @@ Files named YearMonthDayTimeAM
 .M-Snk19 My Snake games
 .N-Snk19 Normal Snake games
 
-To rename a file: Press Load Doc, select file and rename it.  F2, new name. 
+To rename a file: Press Load Doc, select file and rename it.  F2, new name.
 
 To delete a file, Press Load Doc, select file and press delete.
 Or go to the Document folder Snake19 and delete the file.
@@ -68,13 +70,16 @@ Or go to the Document folder Snake19 and delete the file.
 
 ----------------
 Settings:
-1) About
-2) Screen Size
-3) Colors
-4) Speed
-5) Keys
-6) Score
-X) Remove data files from computer. 
+About
+
+Screen Size
+Colors
+Speed
+Keys
+Score
+Misc
+
+Remove data files from computer.
 
 --------------
 Settings
@@ -89,7 +94,7 @@ Change the number of pixel of the game cell. 10 is the smallest. 22 is default, 
 Change the speed of the movement of snake.  Default is 150 ms per loop, up or down by 10 ms.
 
 	KEYS
-Change which keys to use in the game.  
+Change which keys to use in the game.
 Works for the usable keys.
 You can use Enter, Insert, Home, Page Up, Delete, End, Page Down, Space
 You can not use the Function keys, Shift keys or Tab
@@ -99,19 +104,27 @@ This is the only setting that can be different on each game type.
 Change the number of high scores save on exit. Default is 8,  Were the highest score is saved.
 Clear the high scores. Default is not to delete the highest score.  Uncheck the box and the highest can be deleted.
 
+	MISC
+Adjust when to Add/Remove Snake Cells
+When to adjust snake length. Snake moves a number of positions before the change occurs. 0-10  Default 2.
+
+Bonus Food over 100 length, will create a 2nd food.    On or off.
+
+
 
 ----------------
 To do
   Save load scores/setting for Change of size
   Change size of screen.  default 30x40 in blocks of 5
-  Change the X number of snake moves before adding or removing snake cell default I think is 5
 
 ----------------
 Problem:
 
-Long: Still have the funny start game problem that I can't create in debug mode.  The end of the snake does not clear, snake just get longer, until you run over it. 
+Long: Still have the funny start game problem that I can't create in debug mode.  The end of the snake does not clear, snake just get longer, until you run over it.
 
-Saw it in version 0.129, 
+Saw it in version 0.138
 
 One way to cause it: Start game, don't move, lose focus, get focus and move. I'll active debug trace and I not able to get it to happen.
+
+I beginning to think it a timing problem with it loose focus and pause.  They are not in the same place.
 

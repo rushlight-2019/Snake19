@@ -6,17 +6,18 @@ AutoItSetOption("MustDeclareVars", 1)
 ;Global Static $MESSAGE =  False   ;Pause will still work in script  No DataOut
 
 ; Must be Declared before _Prf_startup   ~+~+
-Global $ver = "0.136 15 Feb 2020 Select different keys to use. Try3 -- All works"
+Global $ver = "0.139 24 Feb 2020 Misc thing in replay"
+;Save Setting and score for size of game"
 
-Global $ini_ver = "11"  ;changed at 0.127
-Global $g_replayVer = "1"
+Global $ini_ver = "0.139"
+Global $g_replayVer = "0.138"
 
 ;Global $TESTING = False
 
 #include "R:\!Autoit\Blank\_prf_startup.au3"
 
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
-#AutoIt3Wrapper_Res_Fileversion=0.1.3.6
+#AutoIt3Wrapper_Res_Fileversion=0.1.3.9
 #AutoIt3Wrapper_Icon=R:\!Autoit\Ico\prf.ico
 #AutoIt3Wrapper_Res_Description=Another snake game
 #AutoIt3Wrapper_Res_LegalCopyright=© Phillip Forrestal 2019-2020
@@ -89,6 +90,9 @@ Remove game does not clear replays in data folder 0210
 
 	Version
 ;~+~+
+	0.139 24 Feb 2020 Misc thing in replay
+	0.138 23 Feb 2020 Adjust when the snake becomes longer or shorter
+	0.137 17 Feb 2020 Fix If High score delete, delete Highest replay too
 	0.136 15 Feb 2020 Select different keys to use. Try3 -- All works
 	0.135 14 Feb 2020 Select different keys to use. Not complete, but main keys work, numpad does not
 	0.134 12 Feb 2020 Select different keys to use. Went back to version .032.  Because using way Autoit works and made it more complex and gain nothing.
@@ -407,9 +411,15 @@ Global $g_Focus = "Snake19 - " & $ver
 ;0.32  Taking types out of game loop put into function
 Global $g_endgame = False
 Global $g_gChange
-Global $g_gChangeHalf
-Static $s_gChangeBaseExtra = 5
-Static $s_gChangeBaseNormal = 10
+Global $g_gChangeCnt
+Global $g_gChangeBaseMy = 5  ; ~~
+Global $g_gChangeBaseNormal = 10
+Global $g_gChangeBase ; Need for Replay
+
+;0.138
+Global $g_gBonusFoodNormal
+Global $g_gBonusFoodMy
+Global $g_gBonusFood
 
 Global $g_turnNo ; Keyboard turn number
 Global $g_turnLast ;Keyboard turn number last to see it a turn was made.
@@ -529,11 +539,10 @@ Func Main()
 		Exit
 	EndIf
 
-	$g_TickTime = Int(IniRead($s_ini, "General", "Speed", 150))
+	;	$g_TickTime = Int(IniRead($s_ini, "General", "Speed", 150))  Not need here because reset in Main Menu because Replay changes it.
 	$g_SaveExit = Int(IniRead($s_ini, "General", "SaveExit", 8))
 	$g_GameWhich = Int(IniRead($s_ini, "General", "Game", 1))
 
-;~~
 	;0.131
 	$g_keypause = IniRead($s_ini, "Key", "Pause", "p")
 	$g_keymin = IniRead($s_ini, "Key", "Minimize", "m")
@@ -544,6 +553,12 @@ Func Main()
 	$g_keyright = IniRead($s_ini, "Key", "Right", "{RIGHT}")
 	; $aAccelKey2[][] = [["{RIGHT}", $L_idRight], ["{LEFT}", $L_idLeft], ["{DOWN}", $L_idDown], ["{UP}", $L_idUp], ["q", $L_idEsc], ["p", $L_idPause], ["m", $L_idHid]]
 	;$aAccelKey2[][] = [[$g_keyright, $L_idRight], [$g_keyleft, $L_idLeft], [$g_keydown, $L_idDown], [$g_keyup, $L_idUp], [$g_keyquit, $L_idEsc], [$g_keypause,$L_idPause], [$g_keymin, $L_idHid]]
+
+	;0.138
+	$g_gChangeBaseNormal = Int(IniRead($s_ini, "Misc", "ChangeBaseNormal", 2)) ;10
+	$g_gChangeBaseMy = Int(IniRead($s_ini, "Misc", "ChangeBaseMy", 2)) ;5
+	$g_gBonusFoodNormal = IniRead($s_ini, "Misc", "BonusFoodNormal", True)
+	$g_gBonusFoodMy = IniRead($s_ini, "Misc", "BonusFoodMy", True)
 
 	IniCenterGameScreen(False)
 
@@ -591,7 +606,7 @@ Func Main()
 
 EndFunc   ;==>Main
 #CS INFO
-	182541 V45 2/12/2020 9:01:54 AM V44 2/9/2020 12:20:38 AM V43 1/24/2020 1:30:56 AM V42 1/23/2020 7:11:42 PM
+	210580 V46 2/24/2020 11:43:24 AM V45 2/12/2020 9:01:54 AM V44 2/9/2020 12:20:38 AM V43 1/24/2020 1:30:56 AM
 #CE INFO
 
 Func Game()
@@ -682,12 +697,50 @@ Func Game()
 		ClearBoard() ; Change how create is done not need on first pass
 	EndIf
 
+	;Default before start
+	$g_turnLast = 0
+	$g_ScoreTurn = 0
+	$g_ScoreFood = 0
+	$g_GameScore = 0
+	$g_SnakeMax = 0
+	$g_SnakeCount = 1
+	$g_iScore = 0
+	$g_gChangeCnt = 0
+	$g_foodCnt = 1 ; How many on Board
+	$g_tc = "??"
+
+	;0.40
+	$HungerCnt = 0
+
+	;0.91
+	PassWallDefault()
+
+	Switch $g_GameWhich
+		Case 1 ;my
+			$g_gChange = 2 ;Start with X so snake will not die at start
+			$g_Turns = -1 ; The way it start with 1 turn on start. To fix start with +1
+			$g_HungeryLast = $g_Turns
+			$HungerCnt = 0
+			$g_gBonusFood = $g_gBonusFoodMy
+			$g_gChangeBase = $g_gChangeBaseMy
+		Case 0             ;			Normal
+			$g_gChange = 1
+			$g_Turns = -1 ; The way it start with 1 turn on start. To fix start with +1
+			$g_gBonusFood = $g_gBonusFoodNormal
+			$g_gChangeBase = $g_gChangeBaseNormal
+	EndSwitch
+
 	;Replay reset game to record
 	If $g_ReplayStatus = $s_ReplayPlay Then
 		$g_iTickCnt = 0
 		If $g_iReplayPlyInx <> 0 Then
 			$g_iReplayPlyInx = 0
 		EndIf
+		;ReplayRecData(99, $g_sx) ;6
+		;ReplayRecData(99, $g_sy) ;7
+		$g_gBonusFood = $g_aReplay[8]
+		$g_gChangeBase = $g_aReplay[9]
+
 	Else
 		$g_ReplayStatus = $s_ReplayRec
 		$g_aReplay[0] = 0
@@ -697,28 +750,35 @@ Func Game()
 		$g_aReplay[0] = 0 ; size
 		;		_ArrayDisplay($g_aReplay)
 
-		;Size of array
-		;which game
-		; score -- add at end of game
-		; replay ver
-		;Ver of game
-		;date
-		;board size X (future)
-		;board size Y (future)
+		;0 Size of array
+		;1 which game
+		;2 score -- add at end of game
+		;3 replay ver
+		;4 Ver of game
+		;5 date
+		;6 board size X (future)
+		;7 board size Y (future)
+		;8 Bonus food True/False
+		;9 Change Base
 
-		ReplayRecData(99, $g_GameWhich)
-		ReplayRecData(99, $g_GameScore)
-		ReplayRecData(99, $g_replayVer)
-		ReplayRecData(99, $ver)
-		ReplayRecData(99, _Now())
-		ReplayRecData(99, $g_sx)
-		ReplayRecData(99, $g_sy)
-		;		dataout("Skip play records", $g_aReplay[0]+1)
-		;		pause("Skip play records", $g_aReplay[0]+1)
+		ReplayRecData(99, $g_GameWhich) ;1
+		ReplayRecData(99, $g_GameScore) ;2
+		ReplayRecData(99, $g_replayVer) ;3
+		ReplayRecData(99, $ver) ;4
+		ReplayRecData(99, _Now()) ;5
+		ReplayRecData(99, $g_sx) ;6
+		ReplayRecData(99, $g_sy) ;7
+		ReplayRecData(99, $g_gBonusFood) ;8
+		ReplayRecData(99, $g_gChangeBase) ;$g_gChangeBaseNormal or $g_gChangeBaseMy ;9
+		;$g_aReplay[6]
+
+		;_ArrayDisplay($g_aReplay)
+		;dataout("Skip play records", $g_aReplay[0]+1)
+		;pause("Skip play records", $g_aReplay[0]+1)
 	EndIf
 
 	If $g_ReplayStatus = $s_ReplayPlay Then ;skip first records
-		$g_iReplayPlyInx += 8
+		$g_iReplayPlyInx += 10
 	EndIf
 
 	StartSnake()
@@ -732,47 +792,13 @@ Func Game()
 		$g_poop[$z][0] = 0
 	Next
 
-	;Default before start
-	$g_turnLast = 0
-	$g_ScoreTurn = 0
-	$g_ScoreFood = 0
-	$g_GameScore = 0
-	$g_SnakeMax = 0
-	$g_SnakeCount = 1
-	$g_iScore = 0
-	$g_gChangeHalf = 0
-	$g_foodCnt = 1 ; How many on Board
-	$g_tc = "??"
-
-	;0.40
-	$HungerCnt = 0
-
-	;0.91
-	PassWallDefault()
-
-	Switch $g_GameWhich
-		Case 1 ;extra
-			$g_gChange = 2 ;Start with X so snake will not die at start
-			$g_Turns = -1 ; The way it start with 1 turn on start. To fix start with +1
-			$g_HungeryLast = $g_Turns
-			$HungerCnt = 0
-		Case 0 ;			Normal
-			$g_gChange = 1
-			$g_Turns = -1 ; The way it start with 1 turn on start. To fix start with +1
-	EndSwitch
-
-;~~
-	;pause($g_keypause)
-	;$g_keypause = "{NUMPADADD}"
 	;0.131
 	; $aAccelKey2[][] = [["{RIGHT}", $L_idRight], ["{LEFT}", $L_idLeft], ["{DOWN}", $L_idDown], ["{UP}", $L_idUp], ["q", $L_idEsc], ["p", $L_idPause], ["m", $L_idHid]]
 	Local $aAccelKey2[][] = [[$g_keyright, $L_idRight], [$g_keyleft, $L_idLeft], [$g_keydown, $L_idDown], [$g_keyup, $L_idUp], [$g_keyquit, $L_idEsc], [$g_keypause, $L_idPause], [$g_keymin, $L_idHid]]
 
-	;	Local $aAccelKey2[][] = [["{RIGHT}", $L_idRight], ["{LEFT}", $L_idLeft], ["{DOWN}", $L_idDown], ["{UP}", $L_idUp], ["q", $L_idEsc], ["p", $L_idPause], ["m", $L_idHid]]
 	GUISetAccelerators($aAccelKey2, $g_ctrlBoard)
 	MouseMove(0, 0, 0)
 
-	$g_endgame = False
 	If $g_ReplayStatus = $s_ReplayPlay Then
 		$a = GetReplayPlay(4)
 		$g_gChange = $a[3]
@@ -780,9 +806,13 @@ Func Game()
 		ReplayRecData(4, $g_gChange) ; Start cell len
 	EndIf
 
+	$g_endgame = False
 	$g_Pause = False ;.0116
 	$g_iTickCnt = 0
-	$g_hTick = TimerInit()
+
+	;---------------------------------START GAME
+	$g_hTick = TimerInit()   ; must be just before GAME Start
+
 	Do ;game Loop
 		Tick()
 
@@ -793,7 +823,6 @@ Func Game()
 		EndIf
 
 		If $nMsg = $L_idHid Then
-			dataout("HIDE")
 			Do
 			Until GUIGetMsg() <> $L_idHid
 
@@ -809,7 +838,6 @@ Func Game()
 		Else
 
 			If $nMsg = $L_idPause Then
-				dataout("Pause")
 				Do
 				Until GUIGetMsg() <> $L_idPause
 				$g_Pause = True
@@ -908,8 +936,8 @@ Func Game()
 
 EndFunc   ;==>Game
 #CS INFO
-	517170 V77 2/14/2020 9:46:03 AM V76 2/12/2020 9:01:54 AM V75 2/6/2020 10:18:39 AM V74 1/31/2020 5:20:55 PM
-#CE INFO
+	541243 V79 2/24/2020 8:19:55 PM V78 2/24/2020 11:43:24 AM V77 2/14/2020 9:46:03 AM V76 2/12/2020 9:01:54 AM
+#CE
 
 Func Tick() ;
 	Local $fdiff
@@ -1184,9 +1212,9 @@ Func Extra()
 
 			PrevNext($x_new + $g_dirX, $y_new + $g_dirY) ;New value
 			RemoveSnakeExtra() ;only empty cell change len
-			$g_iScore += 100 ;50
+			$g_iScore += 100
 			$g_ScoreFood += 1
-			$g_gChange += 10 ;5
+			$g_gChange += 10
 			Status(3, "Poop Bonus Food: Score 100, Snake 10", 2)
 
 			$g_Turns = 0
@@ -1198,36 +1226,39 @@ Func Extra()
 			PrevNext($x_new + $g_dirX, $y_new + $g_dirY) ;New value
 
 			;Check to see if snake grow longer or shorter
-			If $g_gChange = 0 Then
-				RemoveSnakeExtra()
-			ElseIf $g_gChange > 0 Then ; snake get longer don't remove end
-				Switch $g_gChangeHalf
-					Case 0
-						$g_gChange -= 1
-						$g_gChangeHalf = $s_gChangeBaseExtra
-					Case Else
-						RemoveSnakeExtra() ;Same size
-						$g_gChangeHalf -= 1
-				EndSwitch
+			Select
+				Case $g_gChange = 0
+					RemoveSnakeExtra()
 
-			ElseIf $g_gChange < 0 Then ; snake get shorter remove end twice
-				Switch $g_gChangeHalf
-					Case 0
-						$g_gChange += 1
-						$g_gChangeHalf = $s_gChangeBaseExtra
-						If RemoveSnakeExtra() Then ;one smaller
-							$g_endgame = True
-							Return ;no snake
-						EndIf
-						If RemoveSnakeExtra(True) Then
-							$g_endgame = True
-							Return ;no snake
-						EndIf
-					Case Else
-						$g_gChangeHalf -= 1
-						RemoveSnakeExtra() ;same size
-				EndSwitch
-			EndIf
+				Case $g_gChange > 0 ; snake get longer don't remove end
+					Switch $g_gChangeCnt
+						Case 0
+							$g_gChange -= 1
+							$g_gChangeCnt = $g_gChangeBase
+						Case Else
+							RemoveSnakeExtra() ;Same size
+							$g_gChangeCnt -= 1
+					EndSwitch
+
+				Case $g_gChange < 0 ; snake get shorter remove end twice
+					Switch $g_gChangeCnt
+						Case 0
+							$g_gChange += 1
+							$g_gChangeCnt = $g_gChangeBase
+							If RemoveSnakeExtra() Then ;one smaller
+								$g_endgame = True
+								Return ;no snake
+							EndIf
+							If RemoveSnakeExtra(True) Then
+								$g_endgame = True
+								Return ;no snake
+							EndIf
+						Case Else
+							$g_gChangeCnt -= 1
+							RemoveSnakeExtra() ;same size
+					EndSwitch
+			EndSelect
+
 			If $g_Turns > 4 Then
 				If $g_HungeryLast < $g_Turns Then
 					$g_HungeryLast = $g_Turns
@@ -1273,8 +1304,8 @@ Func Extra()
 
 EndFunc   ;==>Extra
 #CS INFO
-	450727 V56 1/23/2020 7:11:42 PM V55 1/9/2020 9:18:30 PM V54 12/29/2019 7:10:02 PM V53 12/22/2019 6:27:43 PM
-#CE INFO
+	448556 V58 2/24/2020 8:19:55 PM V57 2/24/2020 11:43:24 AM V56 1/23/2020 7:11:42 PM V55 1/9/2020 9:18:30 PM
+#CE
 
 Func Normal()
 	Local Static $LS_SnakeLenLast = 0
@@ -1314,7 +1345,6 @@ Func Normal()
 					Status(0, "", 0)
 			EndSwitch
 			$g_Turns = 0
-			$g_gChangeHalf = $s_gChangeBaseNormal
 			$g_ScoreFood += 1
 
 			;RemoveFood()  NOT needed because  snake will over write with out looking
@@ -1324,20 +1354,22 @@ Func Normal()
 		Case $EMPTY ;Normal
 
 			PrevNext($x_new + $g_dirX, $y_new + $g_dirY) ;New value
+			Select
+				Case $g_gChange = 0
+					RemoveSnakeNormal()
 
-			If $g_gChange = 0 Then
-				RemoveSnakeNormal()
-			ElseIf $g_gChange > 0 Then ; snake get longer don't remove end
-				Switch $g_gChangeHalf
-					Case 0
-						$g_gChange -= 1
-						$g_gChangeHalf = $s_gChangeBaseNormal
-					Case Else
-						RemoveSnakeNormal() ;Same size
-						$g_gChangeHalf -= 1
-				EndSwitch
-			EndIf
+				Case $g_gChange > 0 ; snake get longer don't remove end
+					Switch $g_gChangeCnt
+						Case 0
+							$g_gChange -= 1
+							$g_gChangeCnt = $g_gChangeBase
+						Case Else
+							RemoveSnakeNormal() ;Same size
+							$g_gChangeCnt -= 1
+					EndSwitch
+			EndSelect
 	EndSwitch
+
 	;Score NORMAL
 	$g_iScore = $Map[$num][$x_new][$y_new] - $Map[$num][$x_end][$y_end] + 1
 	If $LS_SnakeLenLast <> $g_iScore Then
@@ -1349,8 +1381,8 @@ Func Normal()
 	; END NORMAL
 EndFunc   ;==>Normal
 #CS INFO
-	114253 V12 11/5/2019 12:50:43 AM V11 10/31/2019 6:10:24 PM V10 10/28/2019 1:14:59 PM V9 8/18/2019 11:56:18 AM
-#CE INFO
+	110340 V14 2/24/2020 8:19:55 PM V13 2/24/2020 11:43:24 AM V12 11/5/2019 12:50:43 AM V11 10/31/2019 6:10:24 PM
+#CE
 
 Func StartDead($inX, $inY)
 	Local $x, $y
@@ -1641,14 +1673,18 @@ Func AddFood($start = False)
 	Local $x, $y, $a
 
 	If Not $start Then ;Force start with one food  below math sometime cause 0 food on start
-
-		$x = Int(($Map[$num][$x_new][$y_new] - $Map[$num][$x_end][$y_end]) / 100) + 1
-		If $x > 2 Then ; Only 2 foods
-			$x = 2
+		$x = 1
+		If $g_gBonusFood Then
+			If ($Map[$num][$x_new][$y_new] - $Map[$num][$x_end][$y_end]) > 100 Then
+				$x = 2
+			EndIf
 		EndIf
 
 		If $g_foodCnt > $x Then
 			$g_foodCnt -= 1
+			If $g_foodCnt < 1 Then
+				$g_foodCnt = 1  ; for some reason $g_foodCnt becomes 0
+			EndIf
 			Return
 		ElseIf $g_foodCnt < $x Then
 			$g_foodCnt += 1
@@ -1723,7 +1759,7 @@ Func AddFood($start = False)
 
 EndFunc   ;==>AddFood
 #CS INFO
-	106682 V21 1/23/2020 7:11:42 PM V20 11/19/2019 1:09:35 PM V19 11/6/2019 5:52:00 PM V18 11/5/2019 12:50:43 AM
+	113568 V22 2/24/2020 11:43:24 AM V21 1/23/2020 7:11:42 PM V20 11/19/2019 1:09:35 PM V19 11/6/2019 5:52:00 PM
 #CE INFO
 
 Func ClearBoard()
@@ -2107,7 +2143,10 @@ Func StartForm()
 	GUISetState(@SW_SHOW)
 
 	;restored here because Replay will change it.
-	$g_TickTime = IniRead($s_ini, "General", "Speed", 150)
+	$g_TickTime = Int(IniRead($s_ini, "General", "Speed", 150))
+
+;~~
+	;$g_TickTime = 500
 
 	;Move mouse to the GO button
 	$a = WinGetPos(GUICtrlGetHandle($b_start))
@@ -2281,12 +2320,9 @@ Func StartForm()
 								$filename = StringReplace($filename, "/", "")
 								$filename = StringReplace($filename, " ", "")
 								$filename = $MyDoc & "\" & $filename
-								;		MsgBox(262144, 'Debug line ~' & @ScriptLineNumber, 'Selection:' & @CRLF & '$filename' & @CRLF & @CRLF & 'Return:' & @CRLF & $filename) ;### Debug MSGBOX
 								;	$filename = $MyDoc & "\" & "Test.n-snk19"
-								;	MsgBox(262144, 'Debug line ~' & @ScriptLineNumber, 'Selection:' & @CRLF & '$filename' & @CRLF & @CRLF & 'Return:' & @CRLF & $filename) ;### Debug MSGBOX
 								_FileWriteFromArray($filename, $g_aReplay)
 								;								@error
-								;		MsgBox(262144, 'Debug line ~' & @ScriptLineNumber, 'Selection:' & @CRLF & '@error' & @CRLF & @CRLF & 'Return:' & @CRLF & @error) ;### Debug MSGBOX
 
 								$filename = ""
 
@@ -2327,7 +2363,7 @@ Func StartForm()
 
 EndFunc   ;==>StartForm
 #CS INFO
-	629166 V56 2/12/2020 9:01:54 AM V55 2/6/2020 2:46:20 PM V54 2/6/2020 10:18:39 AM V53 1/31/2020 5:20:55 PM
+	600273 V57 2/24/2020 11:43:24 AM V56 2/12/2020 9:01:54 AM V55 2/6/2020 2:46:20 PM V54 2/6/2020 10:18:39 AM
 #CE INFO
 
 Func Settings()
@@ -2343,6 +2379,7 @@ Func Settings()
 	Local $b_Color = GUICtrlCreateButton("Colors", 320, 50, 97, 33)
 	Local $b_speed = GUICtrlCreateButton("Speed", 456, 50, 97, 33)
 
+	Local $b_AdjLen = GUICtrlCreateButton("Misc.", 47, 100, 97, 33)
 	Local $b_Key = GUICtrlCreateButton("Keys", 183, 100, 97, 33)
 	Local $b_score = GUICtrlCreateButton("Score", 320, 100, 97, 33)
 	Local $b_Uni = GUICtrlCreateButton("Delete Data", 456, 100, 97, 33)
@@ -2364,6 +2401,8 @@ Func Settings()
 				SettingScore()
 			Case $b_Key
 				SettingKeys()
+			Case $b_AdjLen
+				SettingsWhenAdjLen()
 			Case $b_Color
 				ChooseColor()
 			Case $b_speed
@@ -2380,7 +2419,7 @@ Func Settings()
 	$g_FormSetting = -1
 EndFunc   ;==>Settings
 #CS INFO
-	89037 V15 2/12/2020 9:01:54 AM V14 2/9/2020 12:20:38 AM V13 1/10/2020 9:27:34 AM V12 1/9/2020 9:18:30 PM
+	96532 V16 2/24/2020 11:43:24 AM V15 2/12/2020 9:01:54 AM V14 2/9/2020 12:20:38 AM V13 1/10/2020 9:27:34 AM
 #CE INFO
 
 Func ScreenSize()
@@ -2800,7 +2839,10 @@ Func About()
 	$g_FormAbout = GUICreate("Snake19 - About", 615, 430, $g_FormLeft, $g_FormTop, $ws_popup + $ws_caption)
 ;~+~+
 	;$Message &= "|
-	$Message = "0.136 15 Feb 2020 Select different keys to use. Try3 -- All works"
+	$Message = "0.139 24 Feb 2020 Misc thing in replay"
+	$Message &= "|0.138 23 Feb 2020 Adjust when the snake becomes longer or shorter"
+	$Message &= "|0.137 17 Feb 2020 Fix If High score delete, delete Highest replay too"
+	$Message &= "|0.136 15 Feb 2020 Select different keys to use. Try3 -- All works"
 	$Message &= "|0.135 14 Feb 2020 Select different keys to use. Not complete, but main keys work, numpad does not"
 	$Message &= "|0.134 12 Feb 2020 Select different keys to use. Went back to version .032."
 	$Message &= "|  Because using way Autoit works and made it more complex and gain nothing."
@@ -2828,11 +2870,6 @@ Func About()
 	$Message &= "|0.112 15 Dec 2019 Color changes.  Change layout more, not complete"
 	$Message &= "|0.111 15 Dec 2019 Error on long replay.  Fixed Poop not releasing right, 55 was not skipping.  Still over edge error"
 	$Message &= "||0.110 13 Dec 2019 Color changes.  Change layout"
-	$Message &= "|0.109 11 Dec 2019 Replay - My Snake - Changed: Too much Dead Snake"
-	$Message &= "|0.108 10 Dec 2019 Replay - My Snake - Through wall"
-	$Message &= "|0.107 6 Dec 2019 Fix pass wall endless loop"
-	$Message &= "|0.106 21 Nov 2019 About  - Url to program site"
-	$Message &= "|0.105 21 Nov 2019 Replay - My Snake - Back on self"
 
 	GUICtrlCreateLabel("Welcome to Snake19", 0, 24, 617, 28, $SS_CENTER)
 	GUICtrlSetFont(-1, 14, 800, 0, "MS Sans Serif")
@@ -2894,8 +2931,8 @@ Func About()
 
 EndFunc   ;==>About
 #CS INFO
-	326205 V38 2/15/2020 6:21:21 PM V37 2/14/2020 9:46:03 AM V36 2/12/2020 9:01:54 AM V35 2/9/2020 12:20:38 AM
-#CE INFO
+	319570 V41 2/24/2020 8:19:55 PM V40 2/24/2020 11:43:24 AM V39 2/17/2020 8:07:54 PM V38 2/15/2020 6:21:21 PM
+#CE
 
 Func SetCellSide()
 	Pause("SetCellSide")
@@ -3644,16 +3681,24 @@ Func SettingScore()
 				;Clear score
 				If $doclr Then
 					If BitAND(GUICtrlRead($butHi), $GUI_CHECKED) = $GUI_CHECKED Then
-						$cnt = 1
+						$cnt = 1 ; Checked
 					Else
-						$cnt = 0
+						$cnt = 0  ; NOT Checked
 					EndIf
 					If $g_GameWhich = 0 Then     ; 0 Normal, 1 Mine
 						$a = IniReadSection($s_scoreini, "HighScoreNormal")
+						$c = "Nor-"
 					Else
 						$a = IniReadSection($s_scoreini, "HighScoreMySnake")
+						$c = "My-"
 					EndIf
+
 					If @error = 0 Then
+						If $cnt = 0 Then  ; Delete high score then delete Highest replay
+							If FileExists($g_data & $c & "Highest.Snk19") = 1 Then
+								FileDelete($g_data & $c & "Highest.Snk19")
+							EndIf
+						EndIf
 
 						For $i = 1 To 10
 							If $i > $cnt Then
@@ -3685,7 +3730,7 @@ Func SettingScore()
 	GUIDelete($g_FormScore)
 EndFunc   ;==>SettingScore
 #CS INFO
-	176850 V2 2/9/2020 12:20:38 AM V1 2/8/2020 10:59:02 PM
+	192706 V4 2/24/2020 11:43:24 AM V3 2/17/2020 8:07:54 PM V2 2/9/2020 12:20:38 AM V1 2/8/2020 10:59:02 PM
 #CE INFO
 
 #Region SettingKeys
@@ -3822,7 +3867,7 @@ Func SettingKeys()
 EndFunc   ;==>SettingKeys
 #CS INFO
 	228490 V4 2/15/2020 6:35:19 PM V3 2/15/2020 6:21:21 PM V2 2/14/2020 9:46:03 AM V1 2/12/2020 9:01:54 AM
-#CE
+#CE INFO
 
 #EndRegion SettingKeys
 
@@ -3857,7 +3902,7 @@ Func ReadKey()
 EndFunc   ;==>ReadKey
 #CS INFO
 	27764 V2 2/15/2020 6:35:19 PM V1 2/15/2020 6:21:21 PM
-#CE
+#CE INFO
 
 Func _GetKey()
 
@@ -3975,12 +4020,112 @@ EndFunc   ;==>_GetKey
 
 #EndRegion ReadKey   Try 3
 
+Func SaveSettingScore()
+
+EndFunc   ;==>SaveSettingScore
+#CS INFO
+	4677 V1 2/24/2020 11:43:24 AM
+#CE INFO
+
+Func SettingsWhenAdjLen()
+	Local $idInput
+	Local $ckFoodBonus
+
+	Local $a, $b, $c, $ok, $cancel
+
+	Switch $g_GameWhich
+		Case 1 ;my
+			$g_gBonusFood = $g_gBonusFoodMy
+		Case 0             ;			Normal
+			$g_gBonusFood = $g_gBonusFoodNormal
+	EndSwitch
+
+	_Center(280, 265)   ;xw, yh
+	$g_FormScore = GUICreate("Adjust when to Add/Remove Snake Cells", 280, 265, $g_FormLeft, $g_FormTop)
+	GUICtrlCreateLabel("When to adjust snake length", 0, 10, 280, 17, $SS_CENTER)
+	GUICtrlSetFont(-1, 12, 800, 0, "Arial")
+	GUICtrlCreateLabel("Snake moves a number of positions", 0, 30, 280, 17, $SS_CENTER)
+	GUICtrlCreateLabel("before the change occurs.", 0, 50, 280, 17, $SS_CENTER)
+	GUICtrlSetFont(-1, 10, 400, 0, "Arial")
+
+	If $g_GameWhich = 0 Then ; 0 Normal, 1 Mine
+		$a = "Normal"
+		$b = $g_gChangeBaseNormal
+		$c = 2
+	Else
+		$a = "My"
+		$b = $g_gChangeBaseMy
+		$c = 2
+	EndIf
+
+	GUICtrlCreateLabel("Default is " & $c & " for " & $a & " Snake", 0, 80, 280, 17, $SS_CENTER)
+	GUICtrlSetFont(-1, 10, 400, 0, "Arial")
+
+	$idInput = GUICtrlCreateInput($b, (280 - 50) / 2, 100, 50, 30, $ES_CENTER)
+	GUICtrlSetFont(-1, 12, 400, 0, "Arial")
+	Local $updown = GUICtrlCreateUpdown($idInput, BitOR($GUI_SS_DEFAULT_UPDOWN, $UDS_ARROWKEYS))
+	GUICtrlSetLimit($updown, 10, 0)
+	;GUICtrlRead($idInput)
+
+	;Check box is for it bonus food is  used at 100
+
+	$ckFoodBonus = GUICtrlCreateCheckbox("Bonus Food over 100 length", 30, 150, 250, 20)
+	GUICtrlSetFont(-1, 12, 400, 0, "Arial")
+	If $g_gBonusFood Then
+		GUICtrlSetState(-1, $GUI_CHECKED)
+	EndIf
+
+	$ok = GUICtrlCreateButton("OK", 34, 200, 90, 50)
+	$cancel = GUICtrlCreateButton("Cancel", 155, 200, 90, 50)
+	GUISetState(@SW_SHOW)
+
+	While 1
+		Switch GUIGetMsg()
+			Case $GUI_EVENT_CLOSE, $cancel
+				ExitLoop
+
+			Case $ok
+				$a = GUICtrlRead($idInput)
+				If $g_GameWhich = 0 Then ; 0 Normal, 1 Mine
+					If $a <> $g_gChangeBaseNormal Then
+						$g_gChangeBaseNormal = $a
+						$g_gChangeBase = $a
+						IniWrite($s_ini, "Misc", "ChangeBaseNormal", $a)
+					EndIf
+				Else
+					If $a <> $g_gChangeBaseMy Then
+						$g_gChangeBaseMy = $a
+						$g_gChangeBase = $a
+						IniWrite($s_ini, "Misc", "ChangeBaseMy", $a)
+					EndIf
+				EndIf
+
+				$a = BitAND(GUICtrlRead($ckFoodBonus), $GUI_CHECKED) = $GUI_CHECKED
+				If $a <> $g_gBonusFood Then
+
+					If $g_GameWhich = 0 Then     ; 0 Normal, 1 Mine
+						IniWrite($s_ini, "Misc", "BonusFoodNormal", $a)
+						$g_gBonusFoodNormal = $a
+					Else
+						IniWrite($s_ini, "Misc", "BonusFoodMy", $a)
+						$g_gBonusFoodMy = $a
+					EndIf
+				EndIf
+				ExitLoop
+		EndSwitch
+	WEnd
+	GUIDelete($g_FormScore)
+EndFunc   ;==>SettingsWhenAdjLen
+#CS INFO
+	172781 V2 2/24/2020 8:19:55 PM V1 2/24/2020 11:43:24 AM
+#CE
+
 ;Test befor Main
-;SettingKeys()
+;SettingsWhenAdjLen()
 ;Exit
 
 Main()
 
 Exit
 
-;~T ScriptFunc.exe V0.54a 15 May 2019 - 2/15/2020 6:35:19 PM
+;~T ScriptFunc.exe V0.54a 15 May 2019 - 2/24/2020 8:19:55 PM
