@@ -1,10 +1,13 @@
-0.141 27 Feb 2020 Change Size cell x cell: code. Set to 10-60
+0.142 18 Mar 2020 Change Size cell x cell: code. Set to 20-40 steps of 5
 
 Change the game board size.  Default is 30x40
-Smallest is now 10x10 too small I think.  Games play fast. My longest snake was 42. Just ran out of free cells.
-60x60 Took too long
+Smallest was too small and bigest was too big. It now 20x20 to 40x40.
+10x10 Games play fast. My longest snake was 42. Just ran out of free cells.
+50x50 Took too long
 
-Replay is not set to change board size.
+Fixed the set cell size.  Calulates the right maximum size, not the super big number.
+
+Replay is not set to change board size. Will crash is a big board is played on a small board
 
 
 ----------------
@@ -86,11 +89,11 @@ Remove data files from computer.
 Settings
 	CHANGE BOARD SIZE
 Change the game board size.  Default is 30x40
-Smallest is now 10x10 too small I think.  Games play fast. My longest snake was 42. Just ran out of free cells.
-60x60 Took too long.  Or any size in between.
+Any size between 20x20 to 40x40
+Below 20x20 was to small.
+Above 40x40 Took too long.
 
-Large size may require the cell size to be smaller.  See Screen Size
-
+Large size may require the cell size to be smaller.  See Screen Size  Later will pop up if change is needed.
 
 	SCREEN SIZE
 Change the number of pixel of the game cell. 10 is the smallest. 22 is default, Maximum is calculated from the screen size.
@@ -133,7 +136,7 @@ Problem:
 
 Long: Still have the funny start game problem that I can't create in debug mode.  The end of the snake does not clear, snake just get longer, until you run over it.
 
-Saw it in version 0.138
+Saw it in version 0.141
 
 One way to cause it: Start game, don't move, lose focus, get focus and move. I'll active debug trace and I not able to get it to happen.
 

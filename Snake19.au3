@@ -6,7 +6,7 @@ AutoItSetOption("MustDeclareVars", 1)
 ;Global Static $MESSAGE =  False   ;Pause will still work in script  No DataOut
 
 ; Must be Declared before _Prf_startup   ~+~+
-Global $ver = "0.141 27 Feb 2020 Change Size cell x cell: code. Set to 10-60"
+Global $ver = "0.142 18 Mar 2020 Change Size cell x cell: code. Set to 20-40 steps of 5"
 
 Global $ini_ver = "0.139"
 Global $g_replayVer = "0.138"
@@ -16,7 +16,7 @@ Global $g_replayVer = "0.138"
 #include "R:\!Autoit\Blank\_prf_startup.au3"
 
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
-#AutoIt3Wrapper_Res_Fileversion=0.1.4.1
+#AutoIt3Wrapper_Res_Fileversion=0.1.4.2
 #AutoIt3Wrapper_Icon=R:\!Autoit\Ico\prf.ico
 #AutoIt3Wrapper_Res_Description=Another snake game
 #AutoIt3Wrapper_Res_LegalCopyright=© Phillip Forrestal 2019-2020
@@ -85,6 +85,7 @@ to do
 
 	Version
 ;~+~+
+	0.142 18 Mar 2020 Change Size cell x cell: code. Set to 20-40 steps of 5
 	0.141 28 Feb 2020 Change Size cell x cell: code. Set to 10-60
 	0.140 26 Feb 2020 Change Size cell x cell: Form
 	0.139 24 Feb 2020 Misc thing in replay
@@ -614,7 +615,7 @@ Func Main()
 EndFunc   ;==>Main
 #CS INFO
 	218291 V47 2/28/2020 12:24:54 AM V46 2/24/2020 11:43:24 AM V45 2/12/2020 9:01:54 AM V44 2/9/2020 12:20:38 AM
-#CE
+#CE INFO
 
 Func Game()
 	Local $nMsg, $x, $y, $flag
@@ -949,7 +950,7 @@ Func Game()
 EndFunc   ;==>Game
 #CS INFO
 	553994 V80 2/28/2020 12:24:54 AM V79 2/24/2020 8:19:55 PM V78 2/24/2020 11:43:24 AM V77 2/14/2020 9:46:03 AM
-#CE
+#CE INFO
 
 Func Tick() ;
 	Local $fdiff
@@ -1548,7 +1549,7 @@ Func StartSnake()
 EndFunc   ;==>StartSnake
 #CS INFO
 	43265 V11 2/28/2020 12:24:54 AM V10 1/23/2020 7:11:42 PM V9 12/6/2019 2:47:59 PM V8 11/1/2019 8:41:21 AM
-#CE
+#CE INFO
 
 Func DoubleBack($dirx, $diry)
 	Local $a, $flag
@@ -1772,7 +1773,7 @@ Func AddFood($start = False)
 EndFunc   ;==>AddFood
 #CS INFO
 	117358 V23 2/28/2020 12:24:54 AM V22 2/24/2020 11:43:24 AM V21 1/23/2020 7:11:42 PM V20 11/19/2019 1:09:35 PM
-#CE
+#CE INFO
 
 Func ClearBoard()
 	Local $var, $NotEmpty
@@ -2434,15 +2435,19 @@ Func Settings()
 EndFunc   ;==>Settings
 #CS INFO
 	105740 V17 2/28/2020 12:24:54 AM V16 2/24/2020 11:43:24 AM V15 2/12/2020 9:01:54 AM V14 2/9/2020 12:20:38 AM
-#CE
+#CE INFO
 
 Func ScreenSize()
 	Local $sInputBoxAnswer, $keep, $s, $mathW, $mathH, $Math
 	Local $err
 
+	$g_boardx = $g_sxBase + 2 ;$g_sxBase is not fix after 0.140
+	$g_boardy = $g_syBase + 2
+
 	$keep = $g_Size
 	$mathW = Int(@DesktopWidth / $g_boardx) - 1
-	$mathH = Int((@DesktopHeight - ($g_Font * 2)) / $g_boardy) - 1
+
+	$mathH = Int((@DesktopHeight - ($g_Font * 3)) / $g_boardy) - 1
 
 	If $mathW > $mathH Then
 		$Math = $mathH
@@ -2451,7 +2456,8 @@ Func ScreenSize()
 	EndIf
 
 	$s = "Default side is " & $g_sizeDef
-	$s &= @CRLF & "Current cell size: " & $g_Size & @CRLF & "Desktop screen size: " & @DesktopHeight & "x" & @DesktopWidth & @CRLF & "Maximum cell size: "
+	$s &= @CRLF & "Current cell size: " & $g_Size & @CRLF & "Desktop screen size: " & @DesktopHeight & "x"
+	$s &= @DesktopWidth & @CRLF & "Maximum cell size: "
 	$s &= $Math & @CRLF & @CRLF & "Use Maximum cell size or enter a smaller size."
 
 	_Center(250, 200) ;xw, yh
@@ -2480,7 +2486,7 @@ Func ScreenSize()
 	EndSelect
 EndFunc   ;==>ScreenSize
 #CS INFO
-	82337 V8 1/16/2020 2:54:39 AM V7 1/10/2020 9:27:34 AM V6 12/30/2019 7:47:56 PM V5 10/20/2019 1:07:26 AM
+	88868 V9 3/19/2020 12:09:38 AM V8 1/16/2020 2:54:39 AM V7 1/10/2020 9:27:34 AM V6 12/30/2019 7:47:56 PM
 #CE INFO
 
 ; Read INI setting
@@ -2853,7 +2859,8 @@ Func About()
 	$g_FormAbout = GUICreate("Snake19 - About", 615, 430, $g_FormLeft, $g_FormTop, $ws_popup + $ws_caption)
 ;~+~+
 	;$Message &= "|
-	$Message = "0.141 28 Feb 2020 Change Size cell x cell: code. Set to 10 to 60"
+	$Message = "0.142 18 Mar 2020 Change Size cell x cell: code. Set to 20-40 steps of 5"
+	$Message &= "|0.141 28 Feb 2020 Change Size cell x cell: code. Set to 10 to 60"
 	$Message &= "|0.140 26 Feb 2020 Change Size cell x cell: Form"
 	$Message &= "|0.139 24 Feb 2020 Misc thing in replay"
 	$Message &= "|0.138 23 Feb 2020 Adjust when the snake becomes longer or shorter"
@@ -2947,8 +2954,8 @@ Func About()
 
 EndFunc   ;==>About
 #CS INFO
-	329089 V43 2/28/2020 12:24:54 AM V42 2/26/2020 3:10:00 AM V41 2/24/2020 8:19:55 PM V40 2/24/2020 11:43:24 AM
-#CE
+	335059 V44 3/19/2020 12:09:38 AM V43 2/28/2020 12:24:54 AM V42 2/26/2020 3:10:00 AM V41 2/24/2020 8:19:55 PM
+#CE INFO
 
 Func SetCellSide()
 	Pause("SetCellSide")
@@ -3104,7 +3111,7 @@ Func WallTrue()
 EndFunc   ;==>WallTrue
 #CS INFO
 	152840 V13 2/28/2020 12:24:54 AM V12 1/23/2020 7:11:42 PM V11 12/29/2019 7:10:02 PM V10 12/27/2019 1:22:40 AM
-#CE
+#CE INFO
 
 Func PWedge($xy, $offset, $far, ByRef $foundEdge)     ; 2nd output $flag True  pass edge and return not valid
 	$foundEdge = False
@@ -3296,7 +3303,7 @@ Func CkOutsideEdgeX($nv, $ov)
 EndFunc   ;==>CkOutsideEdgeX
 #CS INFO
 	16330 V2 2/28/2020 12:24:54 AM V1 12/15/2019 9:48:21 AM
-#CE
+#CE INFO
 
 ;Check to see if the sum is inside the edge, return $nv if ok same, not ok then 0
 Func CkOutsideEdgeY($nv, $ov)
@@ -3312,7 +3319,7 @@ Func CkOutsideEdgeY($nv, $ov)
 EndFunc   ;==>CkOutsideEdgeY
 #CS INFO
 	16335 V2 2/28/2020 12:24:54 AM V1 12/15/2019 9:48:21 AM
-#CE
+#CE INFO
 
 Func ChooseColor()
 	Local $a, $y, $flag
@@ -3746,7 +3753,7 @@ Func SettingScore()
 EndFunc   ;==>SettingScore
 #CS INFO
 	191431 V5 2/28/2020 12:24:54 AM V4 2/24/2020 11:43:24 AM V3 2/17/2020 8:07:54 PM V2 2/9/2020 12:20:38 AM
-#CE
+#CE INFO
 
 #Region SettingKeys
 Func SettingKeys()
@@ -4171,7 +4178,7 @@ Func ChangeBoardSize()
 	$idX = GUICtrlCreateInput($x, $a + 25, 100, 50, 30, $ES_CENTER)
 	GUICtrlSetFont(-1, 12, 400, 0, "Arial")
 	Local $celX = GUICtrlCreateUpdown($idX, BitOR($GUI_SS_DEFAULT_UPDOWN, $UDS_ARROWKEYS))
-	GUICtrlSetLimit($celX, 60, 10)
+	GUICtrlSetLimit($celX, 40, 20)
 
 	$a = 150
 	GUICtrlCreateLabel("Y:", $a, 100, 28, 28, $SS_CENTER)
@@ -4180,9 +4187,7 @@ Func ChangeBoardSize()
 	$idY = GUICtrlCreateInput($y, $a + 25, 100, 50, 30, $ES_CENTER)
 	GUICtrlSetFont(-1, 12, 400, 0, "Arial")
 	Local $celY = GUICtrlCreateUpdown($idY, BitOR($GUI_SS_DEFAULT_UPDOWN, $UDS_ARROWKEYS))
-	GUICtrlSetLimit($celY, 60, 10)
-
-	;Check box is for it bonus food is  used at 100
+	GUICtrlSetLimit($celY, 40, 20)
 
 	$default = GUICtrlCreateButton("Default", 90, 150, 100, 25)
 	$ok = GUICtrlCreateButton("OK", 34, 200, 90, 50)
@@ -4245,8 +4250,8 @@ Func ChangeBoardSize()
 	GUIDelete($g_FormCellxCell)
 EndFunc   ;==>ChangeBoardSize
 #CS INFO
-	181431 V2 2/28/2020 12:24:54 AM V1 2/26/2020 3:10:00 AM
-#CE
+	177809 V3 3/19/2020 12:09:38 AM V2 2/28/2020 12:24:54 AM V1 2/26/2020 3:10:00 AM
+#CE INFO
 
 ;Test befor Main
 ;ChangeBoardSize()
@@ -4256,4 +4261,4 @@ Main()
 
 Exit
 
-;~T ScriptFunc.exe V0.54a 15 May 2019 - 2/28/2020 12:24:54 AM
+;~T ScriptFunc.exe V0.54a 15 May 2019 - 3/19/2020 12:09:38 AM
