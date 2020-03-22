@@ -1,3 +1,7 @@
+0.143 21 Mar 2020 Save / Load replay base on size
+
+What ever the game board size store in the replay, the game board size will change that size
+
 0.142 18 Mar 2020 Change Size cell x cell: code. Set to 20-40 steps of 5
 
 Change the game board size.  Default is 30x40
@@ -125,11 +129,14 @@ Bonus Food over 100 length, will create a 2nd food.    On or off.
 
 ----------------
 To do
-Change board size: Make sure is fits on screen.
+Save replay highest score for each game board size (25)
+Save the high score base on game board size.
 Addd Board size to Main Menu.
+Change board size: Make sure is fits on screen.
 Main Menu buttons.
 Press Q is changable.
 Clean up
+Rare problem: No food in game. Seen it once this year. But I saved the replay games.
 
 ----------------
 Problem:
@@ -142,4 +149,4 @@ One way to cause it: Start game, don't move, lose focus, get focus and move. I'l
 
 I beginning to think it a timing problem with it loose focus and pause.  They are not in the same place.
 
-Rare: No food in game. Seen it once this year.
+Rare: No food in game. Seen it once this year. But I saved the replay games.

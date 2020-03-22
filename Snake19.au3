@@ -6,7 +6,7 @@ AutoItSetOption("MustDeclareVars", 1)
 ;Global Static $MESSAGE =  False   ;Pause will still work in script  No DataOut
 
 ; Must be Declared before _Prf_startup   ~+~+
-Global $ver = "0.142 18 Mar 2020 Change Size cell x cell: code. Set to 20-40 steps of 5"
+Global $ver = "0.143 21 Mar 2020 Save / Load replay base on size"
 
 Global $ini_ver = "0.139"
 Global $g_replayVer = "0.138"
@@ -16,7 +16,7 @@ Global $g_replayVer = "0.138"
 #include "R:\!Autoit\Blank\_prf_startup.au3"
 
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
-#AutoIt3Wrapper_Res_Fileversion=0.1.4.2
+#AutoIt3Wrapper_Res_Fileversion=0.1.4.3
 #AutoIt3Wrapper_Icon=R:\!Autoit\Ico\prf.ico
 #AutoIt3Wrapper_Res_Description=Another snake game
 #AutoIt3Wrapper_Res_LegalCopyright=© Phillip Forrestal 2019-2020
@@ -81,10 +81,10 @@ Global $g_replayVer = "0.138"
 	6 = snake cell number (to compute size)
 
 to do
-	Change size of screen.  default 40x30  in blocks of 5
 
 	Version
 ;~+~+
+	0.143 21 Mar 2020 Save / Load replay base on size
 	0.142 18 Mar 2020 Change Size cell x cell: code. Set to 20-40 steps of 5
 	0.141 28 Feb 2020 Change Size cell x cell: code. Set to 10-60
 	0.140 26 Feb 2020 Change Size cell x cell: Form
@@ -637,6 +637,24 @@ Func Game()
 	IniWrite($s_ini, "General", "Game", $g_GameWhich)
 
 ;~~
+	;Replay has to read replay array to set size of board here
+	If $g_ReplayStatus = $s_ReplayPlay Then
+		;	_ArrayDisplay($g_aReplay,"" ,"12")
+		$x = $g_aReplay[6]
+		$y = $g_aReplay[7]
+	Else
+		$x = Int(IniRead($s_ini, "Board", "X", 40))
+		$y = Int(IniRead($s_ini, "Board", "Y", 30))
+	EndIf
+	If $x <> $g_sxBase Or $y <> $g_syBase Then
+		GUIDelete($g_ctrlBoard)
+		$g_ctrlBoard = -1
+	EndIf
+	If $g_ctrlBoard = -1 Then
+		$g_sxBase = $x
+		$g_syBase = $y
+	EndIf
+
 	$g_boardx = $g_sxBase + 2 ;$g_sxBase is not fix after 0.140
 	$g_boardy = $g_syBase + 2
 
@@ -749,12 +767,13 @@ Func Game()
 		If $g_iReplayPlyInx <> 0 Then
 			$g_iReplayPlyInx = 0
 		EndIf
-		;ReplayRecData(99, $g_sxBase) ;6
-		;ReplayRecData(99, $g_syBase) ;7
+		;ReplayRecData(99, $g_sxBase) ;6 $g_aReplay[6]
+		;ReplayRecData(99, $g_syBase) ;7 $g_aReplay[7]
 		$g_gBonusFood = $g_aReplay[8]
 		$g_gChangeBase = $g_aReplay[9]
 
 	Else
+		;		 : Rec Redo
 		$g_ReplayStatus = $s_ReplayRec
 		$g_aReplay[0] = 0
 		$g_iReplayPlyInx = 0
@@ -949,8 +968,8 @@ Func Game()
 
 EndFunc   ;==>Game
 #CS INFO
-	553994 V80 2/28/2020 12:24:54 AM V79 2/24/2020 8:19:55 PM V78 2/24/2020 11:43:24 AM V77 2/14/2020 9:46:03 AM
-#CE INFO
+	589011 V81 3/22/2020 1:49:08 AM V80 2/28/2020 12:24:54 AM V79 2/24/2020 8:19:55 PM V78 2/24/2020 11:43:24 AM
+#CE
 
 Func Tick() ;
 	Local $fdiff
@@ -2859,7 +2878,8 @@ Func About()
 	$g_FormAbout = GUICreate("Snake19 - About", 615, 430, $g_FormLeft, $g_FormTop, $ws_popup + $ws_caption)
 ;~+~+
 	;$Message &= "|
-	$Message = "0.142 18 Mar 2020 Change Size cell x cell: code. Set to 20-40 steps of 5"
+	$Message = "0.143 21 Mar 2020 Save / Load replay base on size"
+	$Message &= "|0.142 18 Mar 2020 Change Size cell x cell: code. Set to 20-40 steps of 5"
 	$Message &= "|0.141 28 Feb 2020 Change Size cell x cell: code. Set to 10 to 60"
 	$Message &= "|0.140 26 Feb 2020 Change Size cell x cell: Form"
 	$Message &= "|0.139 24 Feb 2020 Misc thing in replay"
@@ -2954,8 +2974,8 @@ Func About()
 
 EndFunc   ;==>About
 #CS INFO
-	335059 V44 3/19/2020 12:09:38 AM V43 2/28/2020 12:24:54 AM V42 2/26/2020 3:10:00 AM V41 2/24/2020 8:19:55 PM
-#CE INFO
+	339437 V45 3/22/2020 1:49:08 AM V44 3/19/2020 12:09:38 AM V43 2/28/2020 12:24:54 AM V42 2/26/2020 3:10:00 AM
+#CE
 
 Func SetCellSide()
 	Pause("SetCellSide")
@@ -4261,4 +4281,4 @@ Main()
 
 Exit
 
-;~T ScriptFunc.exe V0.54a 15 May 2019 - 3/19/2020 12:09:38 AM
+;~T ScriptFunc.exe V0.54a 15 May 2019 - 3/22/2020 1:49:08 AM
