@@ -6,7 +6,8 @@ AutoItSetOption("MustDeclareVars", 1)
 ;Global Static $MESSAGE =  False   ;Pause will still work in script  No DataOut
 
 ; Must be Declared before _Prf_startup   ~+~+
-Global $ver = "0.143 21 Mar 2020 Save / Load replay base on size"
+Global $ver = "0.144 25 Mar 2020 Game size fix - crash"
+;"High score base on game size"
 
 Global $ini_ver = "0.139"
 Global $g_replayVer = "0.138"
@@ -16,7 +17,7 @@ Global $g_replayVer = "0.138"
 #include "R:\!Autoit\Blank\_prf_startup.au3"
 
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
-#AutoIt3Wrapper_Res_Fileversion=0.1.4.3
+#AutoIt3Wrapper_Res_Fileversion=0.1.4.4
 #AutoIt3Wrapper_Icon=R:\!Autoit\Ico\prf.ico
 #AutoIt3Wrapper_Res_Description=Another snake game
 #AutoIt3Wrapper_Res_LegalCopyright=© Phillip Forrestal 2019-2020
@@ -84,9 +85,10 @@ to do
 
 	Version
 ;~+~+
+	0.144 25 Mar 2020 Game size fix - crash
 	0.143 21 Mar 2020 Save / Load replay base on size
 	0.142 18 Mar 2020 Change Size cell x cell: code. Set to 20-40 steps of 5
-	0.141 28 Feb 2020 Change Size cell x cell: code. Set to 10-60
+	0.141 28 Feb 2020 Change Size cell x cell: code. Set to 10-60 too small-too long
 	0.140 26 Feb 2020 Change Size cell x cell: Form
 	0.139 24 Feb 2020 Misc thing in replay
 	0.138 23 Feb 2020 Adjust when the snake becomes longer or shorter
@@ -627,6 +629,8 @@ Func Game()
 	Local Static $L_idEsc
 	Local Static $L_idPause
 	Local Static $L_idHid
+	Local Static $L_gamesizeX = 0
+	Local Static $L_gamesizeY = 0
 	Local $NotFirstPass
 	Local $a, $b
 
@@ -646,11 +650,13 @@ Func Game()
 		$x = Int(IniRead($s_ini, "Board", "X", 40))
 		$y = Int(IniRead($s_ini, "Board", "Y", 30))
 	EndIf
-	If $x <> $g_sxBase Or $y <> $g_syBase Then
-		GUIDelete($g_ctrlBoard)
-		$g_ctrlBoard = -1
+	If $g_ctrlBoard <> -1 And ($x <> $L_gamesizeX Or $y <> $L_gamesizeY) Then  ;Use only for this test
+		dataout($x, $L_gamesizeX)
+		RemoveGameBoard()
 	EndIf
 	If $g_ctrlBoard = -1 Then
+		$L_gamesizeX = $x ;Use only for this test
+		$L_gamesizeY = $y
 		$g_sxBase = $x
 		$g_syBase = $y
 	EndIf
@@ -665,7 +671,8 @@ Func Game()
 		SayClearBoard(True)
 		_Center($g_boardx * $g_Size, $g_boardy * $g_Size + $b + 2, True)
 
-		$g_ctrlBoard = GUICreate("Snake19 - " & $ver, $g_boardx * $g_Size, $g_boardy * $g_Size + $b + 2, $g_FormLeft, $g_FormTop, $ws_popup + $ws_caption)
+		$g_Focus = "Snake19 - " & $ver & " - Game size: " & $g_sxBase & " x " & $g_syBase
+		$g_ctrlBoard = GUICreate($g_Focus, $g_boardx * $g_Size, $g_boardy * $g_Size + $b + 2, $g_FormLeft, $g_FormTop, $ws_popup + $ws_caption)
 		GUISetState(@SW_SHOW, $g_ctrlBoard)
 
 		$L_idDown = GUICtrlCreateDummy()
@@ -968,7 +975,7 @@ Func Game()
 
 EndFunc   ;==>Game
 #CS INFO
-	589011 V81 3/22/2020 1:49:08 AM V80 2/28/2020 12:24:54 AM V79 2/24/2020 8:19:55 PM V78 2/24/2020 11:43:24 AM
+	607809 V82 3/25/2020 9:28:31 AM V81 3/22/2020 1:49:08 AM V80 2/28/2020 12:24:54 AM V79 2/24/2020 8:19:55 PM
 #CE
 
 Func Tick() ;
@@ -1852,10 +1859,11 @@ EndFunc   ;==>NormalExtra
 #CE INFO
 
 Func DisplayHiScore()
-	Local $s
+	Local $s, $hs
 
+	$hs = "High Score - "
 	If $g_GameWhich = 0 Then     ; 0 Normal, 1 Mine
-		GUICtrlSetData($g_HiScoreWho, "High Score - Normal Snake")
+		$hs &= "Normal"
 		For $i = 0 To 9
 			If $g_aHiScore[$i + 1][0] = 0 Then
 				GUICtrlSetData($g_HiScore[$i], "")
@@ -1866,7 +1874,7 @@ Func DisplayHiScore()
 			EndIf
 		Next
 	Else
-		GUICtrlSetData($g_HiScoreWho, "High Score - My Snake")
+		$hs &= "My"
 		For $i = 0 To 9
 			;GUICtrlSetData($g_HiScore[$i], $i + 1 & " - " & $g_aHiScore[$i + 1][0] & " - " & $g_aHiScore[$i + 1][1] & " Length: " & $g_aHiScore[$i + 1][2] & " Food: " & $g_aHiScore[$i + 1][3] & " Turn: " & $g_aHiScore[$i + 1][4])
 			If $g_aHiScore[$i + 1][0] = 0 Then
@@ -1878,11 +1886,12 @@ Func DisplayHiScore()
 			EndIf
 		Next
 	EndIf
+	GUICtrlSetData($g_HiScoreWho, $hs & " Snake - Game size: " & $g_sxBase & " x " & $g_syBase)
 
 EndFunc   ;==>DisplayHiScore
 #CS INFO
-	102931 V9 12/11/2019 11:54:15 AM V8 10/20/2019 12:46:58 AM V7 7/24/2019 11:20:48 PM V6 7/24/2019 12:53:35 PM
-#CE INFO
+	103513 V10 3/25/2020 9:28:31 AM V9 12/11/2019 11:54:15 AM V8 10/20/2019 12:46:58 AM V7 7/24/2019 11:20:48 PM
+#CE
 
 Func UpDateHiScore()
 	$g_aReplay[2] = $g_GameScore
@@ -2105,6 +2114,9 @@ Func StartForm()
 	Local $c = 200     ;120
 	Local $gameLoc, $x, $y, $done, $GameName
 
+	$g_sxBase = Int(IniRead($s_ini, "Board", "X", 40))
+	$g_syBase = Int(IniRead($s_ini, "Board", "Y", 30))
+
 	$g_ReplayActive = False
 
 	Local $sMainMenuTitle = "Snake19 - Main Menu"
@@ -2129,15 +2141,17 @@ Func StartForm()
 		GUICtrlSetFont(-1, 10, 900, 0, "Arial")
 
 		GUIStartGroup($g_FormStart)
-		$g_Radio1 = GUICtrlCreateRadio("Normal Snake", $a, $b + 20, $c, 20)
-		GUICtrlSetFont(-1, 10, 800, 0, "Arial")
 		$g_Radio2 = GUICtrlCreateRadio("My Snake", $a, $b, $c, 20)
 		GUICtrlSetFont(-1, 10, 800, 0, "Arial")
+		$g_Radio1 = GUICtrlCreateRadio("Normal Snake", $a, $b + 20, $c, 20)
+		GUICtrlSetFont(-1, 10, 800, 0, "Arial")
 
-		$b += 40
+		$b += 60  ;was 40
 
-		$g_HiScoreWho = GUICtrlCreateLabel("High Score - My Snake", $a, $b, $c + 60, 24) ; Height is twice font size
-		GUICtrlSetFont(-1, 10, 400, 0, "Arial")
+		$a = 50
+		;$g_HiScoreWho = GUICtrlCreateLabel("High Score - My Snake", $a, $b, $c + 60, 24) ; Height is twice font size
+		$g_HiScoreWho = GUICtrlCreateLabel("High Score - My Snake", $a, $b, 500, 24) ; Height is twice font size
+		GUICtrlSetFont(-1, 10, 600, 0, "Arial")
 		$a = 50
 		$b += 20
 
@@ -2155,7 +2169,7 @@ Func StartForm()
 		Local $Edit1 = GUICtrlCreateEdit("", 20, $b, 550, 230, $ES_READONLY)
 		GUICtrlSetFont($Edit1, 10, 400, 0, "Arial")
 		GUICtrlSetData($Edit1, "Press Q to quit. Press P to Pause.  Press M to Minimize game" & @CRLF, 1)
-		GUICtrlSetData($Edit1, @CRLF, 1)
+		;GUICtrlSetData($Edit1, @CRLF, 1)
 		GUICtrlSetData($Edit1, "If you lose Focus or Minimize the game, it will PAUSE" & @CRLF, 1)
 		GUICtrlSetData($Edit1, @CRLF, 1)
 
@@ -2394,8 +2408,8 @@ Func StartForm()
 
 EndFunc   ;==>StartForm
 #CS INFO
-	599962 V58 2/26/2020 3:10:00 AM V57 2/24/2020 11:43:24 AM V56 2/12/2020 9:01:54 AM V55 2/6/2020 2:46:20 PM
-#CE INFO
+	615736 V59 3/25/2020 9:28:31 AM V58 2/26/2020 3:10:00 AM V57 2/24/2020 11:43:24 AM V56 2/12/2020 9:01:54 AM
+#CE
 
 Func Settings()
 	Local $y
@@ -2497,16 +2511,13 @@ Func ScreenSize()
 			EndIf
 			If $g_Size <> $keep Then
 				IniWrite($s_ini, "General", "SizeCell", $g_Size)
-				Sleep(500)
-
-				GUIDelete($g_ctrlBoard)
-				$g_ctrlBoard = -1
+				RemoveGameBoard()
 			EndIf
 	EndSelect
 EndFunc   ;==>ScreenSize
 #CS INFO
-	88868 V9 3/19/2020 12:09:38 AM V8 1/16/2020 2:54:39 AM V7 1/10/2020 9:27:34 AM V6 12/30/2019 7:47:56 PM
-#CE INFO
+	86324 V10 3/25/2020 9:28:31 AM V9 3/19/2020 12:09:38 AM V8 1/16/2020 2:54:39 AM V7 1/10/2020 9:27:34 AM
+#CE
 
 ; Read INI setting
 Func ReadIni()
@@ -2878,9 +2889,10 @@ Func About()
 	$g_FormAbout = GUICreate("Snake19 - About", 615, 430, $g_FormLeft, $g_FormTop, $ws_popup + $ws_caption)
 ;~+~+
 	;$Message &= "|
-	$Message = "0.143 21 Mar 2020 Save / Load replay base on size"
+	$Message = "0.144 25 Mar 2020 Game size fix - crash"
+	$Message &= "|0.143 21 Mar 2020 Save / Load replay base on size"
 	$Message &= "|0.142 18 Mar 2020 Change Size cell x cell: code. Set to 20-40 steps of 5"
-	$Message &= "|0.141 28 Feb 2020 Change Size cell x cell: code. Set to 10 to 60"
+	$Message &= "|0.141 28 Feb 2020 Change Size cell x cell: code. Set to 10 to 60 too small, too long"
 	$Message &= "|0.140 26 Feb 2020 Change Size cell x cell: Form"
 	$Message &= "|0.139 24 Feb 2020 Misc thing in replay"
 	$Message &= "|0.138 23 Feb 2020 Adjust when the snake becomes longer or shorter"
@@ -2974,7 +2986,7 @@ Func About()
 
 EndFunc   ;==>About
 #CS INFO
-	339437 V45 3/22/2020 1:49:08 AM V44 3/19/2020 12:09:38 AM V43 2/28/2020 12:24:54 AM V42 2/26/2020 3:10:00 AM
+	344718 V46 3/25/2020 9:28:31 AM V45 3/22/2020 1:49:08 AM V44 3/19/2020 12:09:38 AM V43 2/28/2020 12:24:54 AM
 #CE
 
 Func SetCellSide()
@@ -3526,8 +3538,7 @@ Func ChooseColor()
 					Next
 
 					If $flag Then
-						GUIDelete($g_ctrlBoard)
-						$g_ctrlBoard = -1
+						RemoveGameBoard()
 					EndIf
 					ExitLoop
 
@@ -3560,8 +3571,8 @@ Func ChooseColor()
 	$g_FormColor = -1
 EndFunc   ;==>ChooseColor
 #CS INFO
-	366457 V5 1/10/2020 9:27:34 AM V4 1/9/2020 9:18:30 PM V3 12/30/2019 7:47:56 PM V2 12/29/2019 7:10:02 PM
-#CE INFO
+	364648 V6 3/25/2020 9:28:31 AM V5 1/10/2020 9:27:34 AM V4 1/9/2020 9:18:30 PM V3 12/30/2019 7:47:56 PM
+#CE
 
 ;Read / Write INI Center of game screen
 Func IniCenterGameScreen($wr = True)
@@ -4221,8 +4232,8 @@ Func ChangeBoardSize()
 			Case $GUI_EVENT_CLOSE, $cancel
 				ExitLoop
 			Case $default
-				$x = 30
-				$y = 40
+				$x = 40
+				$y = 30
 				GUICtrlSetData($idX, $x)
 				GUICtrlSetData($idY, $y)
 
@@ -4257,11 +4268,6 @@ Func ChangeBoardSize()
 					IniWrite($s_ini, "Board", "y", $g_syBase)
 					$a = True
 				EndIf
-
-				If $a And $g_ctrlBoard <> -1 Then
-					GUIDelete($g_ctrlBoard)
-					$g_ctrlBoard = -1
-				EndIf
 				ExitLoop
 
 		EndSwitch
@@ -4270,8 +4276,18 @@ Func ChangeBoardSize()
 	GUIDelete($g_FormCellxCell)
 EndFunc   ;==>ChangeBoardSize
 #CS INFO
-	177809 V3 3/19/2020 12:09:38 AM V2 2/28/2020 12:24:54 AM V1 2/26/2020 3:10:00 AM
-#CE INFO
+	171620 V4 3/25/2020 9:28:31 AM V3 3/19/2020 12:09:38 AM V2 2/28/2020 12:24:54 AM V1 2/26/2020 3:10:00 AM
+#CE
+
+Func RemoveGameBoard()
+	SayClearBoard(True)
+	GUIDelete($g_ctrlBoard)
+	$g_ctrlBoard = -1
+	SayClearBoard()
+EndFunc   ;==>RemoveGameBoard
+#CS INFO
+	10879 V1 3/25/2020 9:28:31 AM
+#CE
 
 ;Test befor Main
 ;ChangeBoardSize()
@@ -4281,4 +4297,4 @@ Main()
 
 Exit
 
-;~T ScriptFunc.exe V0.54a 15 May 2019 - 3/22/2020 1:49:08 AM
+;~T ScriptFunc.exe V0.54a 15 May 2019 - 3/25/2020 9:28:31 AM

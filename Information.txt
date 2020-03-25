@@ -1,9 +1,11 @@
-0.143 21 Mar 2020 Save / Load replay base on size
+0.144 25 Mar 2020 Game size fix - crash
+Game board size, size changed, but it would crash, fixed
+Used a local static for current size.
 
+0.143 21 Mar 2020 Save / Load replay base on size
 What ever the game board size store in the replay, the game board size will change that size
 
 0.142 18 Mar 2020 Change Size cell x cell: code. Set to 20-40 steps of 5
-
 Change the game board size.  Default is 30x40
 Smallest was too small and bigest was too big. It now 20x20 to 40x40.
 10x10 Games play fast. My longest snake was 42. Just ran out of free cells.
