@@ -1,18 +1,24 @@
-0.144 25 Mar 2020 Game size fix - crash
+	0.146 27 Mar 2020 Fixed the rare start problem
+The end of the snake does not clear, snake just get longer, until you run over it.
+The fix was simple and logical.  Need to set some variables and do a test. Which was needed at the start.
+
+	0.145 27 Mar 2020 High scores base on game size
+Different High score for each of the game board size.
+Different Highest replay saves.
+
+	0.144 25 Mar 2020 Game size fix - crash
 Game board size, size changed, but it would crash, fixed
 Used a local static for current size.
 
-0.143 21 Mar 2020 Save / Load replay base on size
+	0.143 21 Mar 2020 Save / Load replay base on size
 What ever the game board size store in the replay, the game board size will change that size
 
-0.142 18 Mar 2020 Change Size cell x cell: code. Set to 20-40 steps of 5
-Change the game board size.  Default is 30x40
+	0.142 18 Mar 2020 Change Size cell x cell: code. Set to 20-40 steps of 5
+Change the game board size.  Default is 40x30
 Smallest was too small and bigest was too big. It now 20x20 to 40x40.
 10x10 Games play fast. My longest snake was 42. Just ran out of free cells.
 50x50 Took too long
-
 Fixed the set cell size.  Calulates the right maximum size, not the super big number.
-
 Replay is not set to change board size. Will crash is a big board is played on a small board
 
 
@@ -94,12 +100,8 @@ Remove data files from computer.
 --------------
 Settings
 	CHANGE BOARD SIZE
-Change the game board size.  Default is 30x40
-Any size between 20x20 to 40x40
-Below 20x20 was to small.
-Above 40x40 Took too long.
-
-Large size may require the cell size to be smaller.  See Screen Size  Later will pop up if change is needed.
+Change the game board size.  Default is 40x30
+Size 20 to 40 by steps of 5
 
 	SCREEN SIZE
 Change the number of pixel of the game cell. 10 is the smallest. 22 is default, Maximum is calculated from the screen size.
@@ -131,9 +133,6 @@ Bonus Food over 100 length, will create a 2nd food.    On or off.
 
 ----------------
 To do
-Save replay highest score for each game board size (25)
-Save the high score base on game board size.
-Addd Board size to Main Menu.
 Change board size: Make sure is fits on screen.
 Main Menu buttons.
 Press Q is changable.
@@ -143,12 +142,11 @@ Rare problem: No food in game. Seen it once this year. But I saved the replay ga
 ----------------
 Problem:
 
-Long: Still have the funny start game problem that I can't create in debug mode.  The end of the snake does not clear, snake just get longer, until you run over it.
-
-Saw it in version 0.141
-
-One way to cause it: Start game, don't move, lose focus, get focus and move. I'll active debug trace and I not able to get it to happen.
-
-I beginning to think it a timing problem with it loose focus and pause.  They are not in the same place.
+Should be fixed 0.146
+Long: Still have the funny start game problem that I can't create in debug mode.
+The end of the snake does not clear, snake just get longer, until you run over it.
+Saw it in version 0.145
+One way to cause it: Start game, don't move, lose focus, get focus and move.
+I'll active debug trace and I not able to get it to happen.
 
 Rare: No food in game. Seen it once this year. But I saved the replay games.
