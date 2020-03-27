@@ -1,6 +1,6 @@
 	0.146 27 Mar 2020 Fixed the rare start problem
 The end of the snake does not clear, snake just get longer, until you run over it.
-The fix was simple and logical.  Need to set some variables and do a test. Which was needed at the start.
+The fix was simple and logical.  Need to set some variables and do a test. Which wasn't needed at the start.
 
 	0.145 27 Mar 2020 High scores base on game size
 Different High score for each of the game board size.
