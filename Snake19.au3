@@ -6,7 +6,7 @@ AutoItSetOption("MustDeclareVars", 1)
 ;Global Static $MESSAGE =  False   ;Pause will still work in script  No DataOut
 
 ; Must be Declared before _Prf_startup   ~+~+
-Global $ver = "0.146 27 Mar 2020 Fixed the rare start problem"
+Global $ver = "0.147 30 Mar 2020 Adjust remove to half"
 
 Global $ini_ver = "0.139"
 Global $g_replayVer = "0.138"
@@ -16,7 +16,7 @@ Global $g_replayVer = "0.138"
 #include "R:\!Autoit\Blank\_prf_startup.au3"
 
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
-#AutoIt3Wrapper_Res_Fileversion=0.1.4.6
+#AutoIt3Wrapper_Res_Fileversion=0.1.4.7
 #AutoIt3Wrapper_Icon=R:\!Autoit\Ico\prf.ico
 #AutoIt3Wrapper_Res_Description=Another snake game
 #AutoIt3Wrapper_Res_LegalCopyright=© Phillip Forrestal 2019-2020
@@ -84,6 +84,7 @@ to do
 
 	Version
 ;~+~+
+	0.147 30 Mar 2020 Adjust remove to half
 	0.146 27 Mar 2020 Fixed the rare start problem
 	0.145 27 Mar 2020 High scores base on game size
 	0.144 25 Mar 2020 Game size fix - crash
@@ -993,7 +994,7 @@ Func Game()
 EndFunc   ;==>Game
 #CS INFO
 	625192 V84 3/27/2020 11:32:12 AM V83 3/27/2020 10:44:43 AM V82 3/25/2020 9:28:31 AM V81 3/22/2020 1:49:08 AM
-#CE
+#CE INFO
 
 Func Tick() ;
 	Local $fdiff
@@ -2429,7 +2430,7 @@ Func StartForm()
 EndFunc   ;==>StartForm
 #CS INFO
 	646712 V61 3/27/2020 11:32:12 AM V60 3/27/2020 10:44:43 AM V59 3/25/2020 9:28:31 AM V58 2/26/2020 3:10:00 AM
-#CE
+#CE INFO
 
 Func Settings()
 	Local $y
@@ -2566,11 +2567,11 @@ Func LostSnake()
 	If $a > 10 Then
 		$a = 10
 	EndIf
-	Return $a
+	Return Int($a / 2) ; 0.147
 EndFunc   ;==>LostSnake
 #CS INFO
-	10491 V2 11/19/2019 1:09:35 PM V1 11/5/2019 12:50:43 AM
-#CE INFO
+	11277 V3 3/30/2020 8:16:34 PM V2 11/19/2019 1:09:35 PM V1 11/5/2019 12:50:43 AM
+#CE
 
 ;Search the poop array for time out
 ;0 flag, 1 x, 2 y, 3 cnt down
@@ -2909,7 +2910,8 @@ Func About()
 	$g_FormAbout = GUICreate("Snake19 - About", 615, 430, $g_FormLeft, $g_FormTop, $ws_popup + $ws_caption)
 ;~+~+
 	;$Message &= "|
-	$Message = "0.146 27 Mar 2020 Fixed the rare start problem"
+	$Message = "0.147 30 Mar 2020 Adjust remove to half"
+	$Message &= "|0.146 27 Mar 2020 Fixed the rare start problem"
 	$Message &= "|0.145 27 Mar 2020 High scores base on game size"
 	$Message &= "|0.144 25 Mar 2020 Game size fix - crash"
 	$Message &= "|0.143 21 Mar 2020 Save / Load replay base on size"
@@ -3008,7 +3010,7 @@ Func About()
 
 EndFunc   ;==>About
 #CS INFO
-	353543 V47 3/27/2020 11:32:12 AM V46 3/25/2020 9:28:31 AM V45 3/22/2020 1:49:08 AM V44 3/19/2020 12:09:38 AM
+	357323 V48 3/30/2020 8:16:34 PM V47 3/27/2020 11:32:12 AM V46 3/25/2020 9:28:31 AM V45 3/22/2020 1:49:08 AM
 #CE
 
 Func SetCellSide()
@@ -4319,4 +4321,4 @@ Main()
 
 Exit
 
-;~T ScriptFunc.exe V0.54a 15 May 2019 - 3/27/2020 11:53:26 AM
+;~T ScriptFunc.exe V0.54a 15 May 2019 - 3/30/2020 8:16:34 PM
