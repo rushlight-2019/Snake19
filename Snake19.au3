@@ -6,7 +6,8 @@ AutoItSetOption("MustDeclareVars", 1)
 ;Global Static $MESSAGE =  False   ;Pause will still work in script  No DataOut
 
 ; Must be Declared before _Prf_startup   ~+~+
-Global $ver = "0.147 30 Mar 2020 Adjust remove to half"
+Global $ver = "0.149 5 Apr 2020 Reverted to 0.144 This version has no problems"
+;"High score base on game size"
 
 Global $ini_ver = "0.139"
 Global $g_replayVer = "0.138"
@@ -16,7 +17,7 @@ Global $g_replayVer = "0.138"
 #include "R:\!Autoit\Blank\_prf_startup.au3"
 
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
-#AutoIt3Wrapper_Res_Fileversion=0.1.4.7
+#AutoIt3Wrapper_Res_Fileversion=0.1.4.9
 #AutoIt3Wrapper_Icon=R:\!Autoit\Ico\prf.ico
 #AutoIt3Wrapper_Res_Description=Another snake game
 #AutoIt3Wrapper_Res_LegalCopyright=© Phillip Forrestal 2019-2020
@@ -84,15 +85,17 @@ to do
 
 	Version
 ;~+~+
-	0.147 30 Mar 2020 Adjust remove to half
+	0.149 5 Apr 2020 Reverted to 0.144 This version has no problems
+	0.148 5 Apr 2020 Found a number of problems.  Tired to fix.
+	0.147 31 Mar 2020 Adjust remove to half
 	0.146 27 Mar 2020 Fixed the rare start problem
 	0.145 27 Mar 2020 High scores base on game size
+
 	0.144 25 Mar 2020 Game size fix - crash
 	0.143 21 Mar 2020 Save / Load replay base on size
 	0.142 18 Mar 2020 Change Size cell x cell: code. Set to 20-40 steps of 5
 	0.141 28 Feb 2020 Change Size cell x cell: code. Set to 10-60 too small-too long
 	0.140 26 Feb 2020 Change Size cell x cell: Form
-
 	0.139 24 Feb 2020 Misc thing in replay
 	0.138 23 Feb 2020 Adjust when the snake becomes longer or shorter
 	0.137 17 Feb 2020 Fix If High score delete, delete Highest replay too
@@ -100,10 +103,10 @@ to do
 	0.135 14 Feb 2020 Select different keys to use. Not complete, but main keys work, numpad does not
 	0.134 12 Feb 2020 Select different keys to use. Went back to version .032.  Because using way Autoit works and made it more complex and gain nothing.
 	0.133 12 Feb 2020 Select different keys to use. Try 2, read keys different. -- more complex and gain nothing
+
 	0.132 11 Feb 2020 Select different keys to use. Program: didn't work. Worked of A-Z0-9 not arrows
 	0.131 10 Feb 2020 Select different keys to use. Set up form
 	0.130 9 Feb 2020 Score: clear all, clear all but highest
-
 	0.129 6 Feb 2020 Save/Load Replay - Load/Save User replay
 	0.128 31 Jan 2020 Fixed the replay end, start with old score
 	0.127 24 Jan 2020 Save/Load Replay - Load Highscore and current replay
@@ -114,7 +117,6 @@ to do
 	0.122 15 Jan 2020 Hide game screen - Main Menu
 	0.121 10 Jan 2020 make rest of forms open on Game center
 	0.120 10 Jan 2020 make forms and game open saved or true center Main and Game done
-
 	0.119 5 Jan 2020 Remember where start open last, make forms and game open there
 	0.118 5 Jan 2020 Hid games menus.  Need to rework them
 	0.117 31 Dec 2019 Hid, Pause now will work in Replay
@@ -125,7 +127,6 @@ to do
 	0.112 15 Dec 2019 Color changes.  Change layout more, not complete
 	0.111 15 Dec 2019 Error on long replay.  Fixed Poop not releasing right. 55 was not skipping. Still over edge error.
 	0.110 13 Dec 2019 Color changes.  Change layout"
-
 	0.109 11 Dec 2019 Replay - My Snake - Changed: Too much Dead Snake
 	0.108 10 Dec 2019 Replay - My Snake - Through wall
 	0.107 6 Dec 2019 Fix pass wall endless loop
@@ -591,8 +592,8 @@ Func Main()
 		;1.01
 		$g_GameWhich = IniRead($s_ini, "General", "Game", 1)
 
-		IniDelete($s_scoreini, "HighScoreMy" & $g_sxBase & $g_syBase)
-		IniDelete($s_scoreini, "HighScoreNormal" & $g_sxBase & $g_syBase)
+		IniDelete($s_scoreini, "HighScoreMySnake")
+		IniDelete($s_scoreini, "HighScoreNormal")
 		IniWrite($s_scoreini, "Score", "Version", $ini_ver)
 	EndIf
 
@@ -621,7 +622,7 @@ Func Main()
 
 EndFunc   ;==>Main
 #CS INFO
-	221339 V48 3/27/2020 10:44:43 AM V47 2/28/2020 12:24:54 AM V46 2/24/2020 11:43:24 AM V45 2/12/2020 9:01:54 AM
+	218291 V47 2/28/2020 12:24:54 AM V46 2/24/2020 11:43:24 AM V45 2/12/2020 9:01:54 AM V44 2/9/2020 12:20:38 AM
 #CE INFO
 
 Func Game()
@@ -900,10 +901,6 @@ Func Game()
 			Else
 
 				If $nMsg > 0 Then
-					$g_turnNo = 0
-					$g_dirX = 0
-					$g_dirY = 0
-
 					Switch $nMsg
 
 						Case $L_idLeft
@@ -936,16 +933,7 @@ Func Game()
 							$g_dirY = 1
 
 					EndSwitch
-
-					;0.146~~~ ReplayRecData(2, $g_dirX, $g_dirY, $g_turnNo)
-					;0.146  The new letter keys could be in the buffer
-					If $g_dirX = 0 And $g_dirY = 0 Then
-						$g_iTickCnt = 0
-						$g_turnNo = 0
-						ContinueLoop
-					Else
-						ReplayRecData(2, $g_dirX, $g_dirY, $g_turnNo)
-					EndIf
+					ReplayRecData(2, $g_dirX, $g_dirY, $g_turnNo)
 
 				Else
 					Do
@@ -993,18 +981,18 @@ Func Game()
 
 EndFunc   ;==>Game
 #CS INFO
-	625192 V84 3/27/2020 11:32:12 AM V83 3/27/2020 10:44:43 AM V82 3/25/2020 9:28:31 AM V81 3/22/2020 1:49:08 AM
+	607809 V82 3/25/2020 9:28:31 AM V81 3/22/2020 1:49:08 AM V80 2/28/2020 12:24:54 AM V79 2/24/2020 8:19:55 PM
 #CE INFO
 
 Func Tick() ;
 	Local $fdiff
 
-	;If $TESTING Then
-	;	If $Map[$what][0][0] <> $M1 Then
-	;		Pause("Null not edge", $Map[$what][0][0])
-	;		$Map[$what][0][0] = $M1
-	;	EndIf
-	;EndIf
+	If $TESTING Then
+		If $Map[$what][0][0] <> $M1 Then
+			Pause("Null not edge", $Map[$what][0][0])
+			$Map[$what][0][0] = $M1
+		EndIf
+	EndIf
 
 	If $g_Status0Off = 0 Then
 		Status(0, "", 0)
@@ -1055,7 +1043,7 @@ Func Tick() ;
 	$g_hTick = TimerInit()
 EndFunc   ;==>Tick
 #CS INFO
-	67812 V20 3/27/2020 10:44:43 AM V19 1/15/2020 10:44:49 AM V18 12/30/2019 7:47:56 PM V17 11/4/2019 9:35:34 AM
+	67458 V19 1/15/2020 10:44:49 AM V18 12/30/2019 7:47:56 PM V17 11/4/2019 9:35:34 AM V16 8/25/2019 6:50:13 PM
 #CE INFO
 
 Func Extra()
@@ -1944,17 +1932,17 @@ Func UpDateHiScore()
 		GUICtrlCreateLabel("Score: " & $g_GameScore, 25, 30, 200, 25)
 		GUICtrlSetFont(-1, 12, 400, 0, "Arial")
 		GUISetState(@SW_SHOW)
-		Sleep(4000)
+		Sleep(5000)
 		GUIDelete($g_FormGameHiScore)
 		$g_FormGameHiScore = 1
 
 	EndIf
 EndFunc   ;==>UpDateHiScore
 #CS INFO
-	85217 V20 3/27/2020 10:44:43 AM V19 1/31/2020 5:20:55 PM V18 1/23/2020 7:11:42 PM V17 1/10/2020 9:27:34 AM
+	85218 V19 1/31/2020 5:20:55 PM V18 1/23/2020 7:11:42 PM V17 1/10/2020 9:27:34 AM V16 1/9/2020 9:18:30 PM
 #CE INFO
 
-Func SaveHiScore() ;~~
+Func SaveHiScore()
 	Local $x, $a[12][2]
 
 	For $x = 1 To 10
@@ -1963,14 +1951,14 @@ Func SaveHiScore() ;~~
 	Next
 	$a[0][0] = 10
 	If $g_GameWhich = 0 Then     ; 0 Normal, 1 Mine
-		$x = IniWriteSection($s_scoreini, "HighScoreNormal" & $g_sxBase & $g_syBase, $a)
+		$x = IniWriteSection($s_scoreini, "HighScoreNormal", $a)
 	Else
-		$x = IniWriteSection($s_scoreini, "HighScoreMy" & $g_sxBase & $g_syBase, $a)
+		$x = IniWriteSection($s_scoreini, "HighScoreMySnake", $a)
 	EndIf
 
 EndFunc   ;==>SaveHiScore
 #CS INFO
-	36976 V8 3/27/2020 10:44:43 AM V7 12/11/2019 11:54:15 AM V6 7/24/2019 11:20:48 PM V5 7/13/2019 7:20:00 PM
+	33617 V7 12/11/2019 11:54:15 AM V6 7/24/2019 11:20:48 PM V5 7/13/2019 7:20:00 PM V4 6/16/2019 10:16:04 AM
 #CE INFO
 
 Func IniHighFive()
@@ -1980,9 +1968,9 @@ Func IniHighFive()
 	For $x = 0 To 1
 		$g_GameWhich = $x
 		If $g_GameWhich = 0 Then     ; 0 Normal, 1 Mine
-			$a = IniReadSection($s_scoreini, "HighScoreNormal" & $g_sxBase & $g_syBase)
+			$a = IniReadSection($s_scoreini, "HighScoreNormal")
 		Else
-			$a = IniReadSection($s_scoreini, "HighScoreMy" & $g_sxBase & $g_syBase)
+			$a = IniReadSection($s_scoreini, "HighScoreMySnake")
 		EndIf
 		If @error = 0 Then
 
@@ -2013,15 +2001,15 @@ Func IniHighFive()
 
 EndFunc   ;==>IniHighFive
 #CS INFO
-	60745 V8 3/27/2020 10:44:43 AM V7 2/9/2020 12:20:38 AM V6 12/11/2019 11:54:15 AM V5 11/19/2019 1:09:35 PM
+	57697 V7 2/9/2020 12:20:38 AM V6 12/11/2019 11:54:15 AM V5 11/19/2019 1:09:35 PM V4 10/8/2019 4:57:52 PM
 #CE INFO
 
 Func ReadHiScore()
 	Local $a, $c, $z
 	If $g_GameWhich = 0 Then     ; 0 Normal, 1 Mine
-		$a = IniReadSection($s_scoreini, "HighScoreNormal" & $g_sxBase & $g_syBase)
+		$a = IniReadSection($s_scoreini, "HighScoreNormal")
 	Else
-		$a = IniReadSection($s_scoreini, "HighScoreMy" & $g_sxBase & $g_syBase)
+		$a = IniReadSection($s_scoreini, "HighScoreMySnake")
 	EndIf
 	If @error = 0 Then
 
@@ -2049,7 +2037,7 @@ Func ReadHiScore()
 	EndIf
 EndFunc   ;==>ReadHiScore
 #CS INFO
-	58441 V10 3/27/2020 10:44:43 AM V9 12/11/2019 11:54:15 AM V8 11/19/2019 1:09:35 PM V7 10/8/2019 4:57:52 PM
+	55393 V9 12/11/2019 11:54:15 AM V8 11/19/2019 1:09:35 PM V7 10/8/2019 4:57:52 PM V6 7/24/2019 11:20:48 PM
 #CE INFO
 
 ;Load Level from THE GAME
@@ -2179,6 +2167,11 @@ Func StartForm()
 			$b += 20
 		Next
 
+		$b_setting = GUICtrlCreateButton("Setting", 50, 550, 75, 35)
+		$b_about = GUICtrlCreateButton("About", 500, 550, 75, 35)
+		$gb_replay = GUICtrlCreateButton("Replay", 270 + 75 + 25, 550, 75, 35)
+		$b_start = GUICtrlCreateButton("GO", 270, 550, 75, 35)
+
 		Local $Edit1 = GUICtrlCreateEdit("", 20, $b, 550, 230, $ES_READONLY)
 		GUICtrlSetFont($Edit1, 10, 400, 0, "Arial")
 		GUICtrlSetData($Edit1, "Press Q to quit. Press P to Pause.  Press M to Minimize game" & @CRLF, 1)
@@ -2197,11 +2190,6 @@ Func StartForm()
 		GUICtrlSetData($Edit1, " Snake can 'double back' on self. Pass through Wall to other side. But loose X cells." & @CRLF, 1)
 		GUICtrlSetData($Edit1, " Snake does not like to Turn so, so few turns and Food increase snake & score" & @CRLF, 1)
 		GUICtrlSetData($Edit1, "  Too many turns Snake gets shorter", 1)
-
-		$b_setting = GUICtrlCreateButton("Setting", 50, 550, 75, 35)
-		$b_about = GUICtrlCreateButton("About", 500, 550, 75, 35)
-		$gb_replay = GUICtrlCreateButton("Replay", 270 + 75 + 25, 550, 75, 35)
-		$b_start = GUICtrlCreateButton("GO", 270, 550, 75, 35)
 
 	EndIf
 	GUISetState(@SW_SHOW)
@@ -2287,9 +2275,8 @@ Func StartForm()
 				Else
 					$GameName = "My-"
 				EndIf
-				;pause($g_data & $GameName & "Current" & $g_sxBase & $g_syBase & ".Snk19")
 
-				If FileExists($g_data & $GameName & "Current" & $g_sxBase & $g_syBase & ".Snk19") = 1 Then
+				If FileExists($g_data & $GameName & "Current.Snk19") = 1 Then
 
 					GUIDelete($g_FormStart)
 					$g_FormStart = -1
@@ -2324,7 +2311,7 @@ Func StartForm()
 					EndIf
 
 					If $g_aReplay[0] = 1 Then
-						If _FileReadToArray($g_data & $GameName & "Current" & $g_sxBase & $g_syBase & ".Snk19", $g_aReplay, 0) Then
+						If _FileReadToArray($g_data & $GameName & "Current.Snk19", $g_aReplay, 0) Then
 							$datename = "Current"
 						EndIf
 					EndIf
@@ -2339,16 +2326,16 @@ Func StartForm()
 								$done = 2 ;restart Start Form
 								ExitLoop
 							Case $b_rpHigh
-								If FileExists($g_data & $GameName & "Highest" & $g_sxBase & $g_syBase & ".Snk19") = 1 Then
-									If _FileReadToArray($g_data & $GameName & "Highest" & $g_sxBase & $g_syBase & ".Snk19", $g_aReplay, 0) Then
-										$datename = "Highest" & $g_sxBase & $g_syBase
+								If FileExists($g_data & $GameName & "Highest.Snk19") = 1 Then
+									If _FileReadToArray($g_data & $GameName & "Highest.Snk19", $g_aReplay, 0) Then
+										$datename = "Highest"
 										GUICtrlSetData($l_title, $datename & " - " & $g_aReplay[5])
 									EndIf
 								EndIf
 
 							Case $b_rpLast
-								If _FileReadToArray($g_data & $GameName & "Current" & $g_sxBase & $g_syBase & ".Snk19", $g_aReplay, 0) Then
-									$datename = "Current" & $g_sxBase & $g_syBase
+								If _FileReadToArray($g_data & $GameName & "Current.Snk19", $g_aReplay, 0) Then
+									$datename = "Current"
 									GUICtrlSetData($l_title, $datename & " - " & $g_aReplay[5])
 								EndIf
 
@@ -2362,7 +2349,6 @@ Func StartForm()
 									$GameName = "M-"
 								EndIf
 								dataout("LOAD")
-								;$filename = FileOpenDialog("Load Replay", $MyDoc, "Snake Replay (*." & $GameName & "snk19)", 1, "", $g_FormReplay)
 								$filename = FileOpenDialog("Load Replay", $MyDoc, "Snake Replay (*." & $GameName & "snk19)", 1, "", $g_FormReplay)
 								If @error = 0 Then
 									If _FileReadToArray($filename, $g_aReplay, 0) Then
@@ -2380,7 +2366,7 @@ Func StartForm()
 								Else
 									$GameName = "M-"
 								EndIf
-								$filename = _Now() & $g_sxBase & $g_syBase & "." & $GameName & "Snk19"
+								$filename = _Now() & "." & $GameName & "Snk19"
 								$filename = StringReplace($filename, ":", "")
 								$filename = StringReplace($filename, "/", "")
 								$filename = StringReplace($filename, " ", "")
@@ -2390,7 +2376,6 @@ Func StartForm()
 								;								@error
 
 								$filename = ""
-								MsgBox(0, "Save", "Replay Saved", 1)
 
 							Case $b_rpStd
 								$g_ReplayActive = True
@@ -2429,7 +2414,7 @@ Func StartForm()
 
 EndFunc   ;==>StartForm
 #CS INFO
-	646712 V61 3/27/2020 11:32:12 AM V60 3/27/2020 10:44:43 AM V59 3/25/2020 9:28:31 AM V58 2/26/2020 3:10:00 AM
+	615736 V59 3/25/2020 9:28:31 AM V58 2/26/2020 3:10:00 AM V57 2/24/2020 11:43:24 AM V56 2/12/2020 9:01:54 AM
 #CE INFO
 
 Func Settings()
@@ -2567,11 +2552,11 @@ Func LostSnake()
 	If $a > 10 Then
 		$a = 10
 	EndIf
-	Return Int($a / 2) ; 0.147
+	Return $a
 EndFunc   ;==>LostSnake
 #CS INFO
-	11277 V3 3/30/2020 8:16:34 PM V2 11/19/2019 1:09:35 PM V1 11/5/2019 12:50:43 AM
-#CE
+	10491 V2 11/19/2019 1:09:35 PM V1 11/5/2019 12:50:43 AM
+#CE INFO
 
 ;Search the poop array for time out
 ;0 flag, 1 x, 2 y, 3 cnt down
@@ -2910,15 +2895,18 @@ Func About()
 	$g_FormAbout = GUICreate("Snake19 - About", 615, 430, $g_FormLeft, $g_FormTop, $ws_popup + $ws_caption)
 ;~+~+
 	;$Message &= "|
-	$Message = "0.147 30 Mar 2020 Adjust remove to half"
+	;	$Message = "0.150 5 Apr 2020 High scores base on game size"
+	$Message = "0.149 5 Apr 2020 Reverted to 0.144 This version has no problems"
+	$Message &= "|0.148 5 Apr 2020 Found a number of problems.  Tired to fix."
+	$Message &= "|0.147 31 Mar 2020 Adjust remove to half"
 	$Message &= "|0.146 27 Mar 2020 Fixed the rare start problem"
 	$Message &= "|0.145 27 Mar 2020 High scores base on game size"
-	$Message &= "|0.144 25 Mar 2020 Game size fix - crash"
+	$Message &= "||0.144 25 Mar 2020 Game size fix - crash"
 	$Message &= "|0.143 21 Mar 2020 Save / Load replay base on size"
 	$Message &= "|0.142 18 Mar 2020 Change Size cell x cell: code. Set to 20-40 steps of 5"
 	$Message &= "|0.141 28 Feb 2020 Change Size cell x cell: code. Set to 10 to 60 too small, too long"
 	$Message &= "|0.140 26 Feb 2020 Change Size cell x cell: Form"
-	$Message &= "|0.139 24 Feb 2020 Misc thing in replay"
+	$Message &= "||0.139 24 Feb 2020 Misc thing in replay"
 	$Message &= "|0.138 23 Feb 2020 Adjust when the snake becomes longer or shorter"
 	$Message &= "|0.137 17 Feb 2020 Fix If High score delete, delete Highest replay too"
 	$Message &= "|0.136 15 Feb 2020 Select different keys to use. Try3 -- All works"
@@ -3010,7 +2998,7 @@ Func About()
 
 EndFunc   ;==>About
 #CS INFO
-	357323 V48 3/30/2020 8:16:34 PM V47 3/27/2020 11:32:12 AM V46 3/25/2020 9:28:31 AM V45 3/22/2020 1:49:08 AM
+	372847 V48 4/5/2020 7:35:56 PM V47 4/5/2020 7:23:15 PM V46 3/25/2020 9:28:31 AM V45 3/22/2020 1:49:08 AM
 #CE
 
 Func SetCellSide()
@@ -3666,7 +3654,7 @@ EndFunc   ;==>_Center
 	62929 V4 1/16/2020 2:54:39 AM V3 1/10/2020 5:12:30 PM V2 1/10/2020 8:46:50 AM V1 1/9/2020 9:18:30 PM
 #CE INFO
 
-;_FileWriteFromArray("Array.txt", $g_a5)
+;_FileWriteFromArray("Array.txt", $g_aReplay)
 ;$g_data
 
 Func ReplaySave()
@@ -3686,25 +3674,25 @@ Func ReplaySave()
 	EndIf
 
 	If $RPhighscore = 0 Then
-		If FileExists($g_data & $GameName & "Highest" & $g_sxBase & $g_syBase & ".Snk19") = 1 Then
-			_FileReadToArray($g_data & $GameName & "Highest" & $g_sxBase & $g_syBase & ".Snk19", $H, 0)
+		If FileExists($g_data & $GameName & "Highest.Snk19") = 1 Then
+			_FileReadToArray($g_data & $GameName & "Highest.Snk19", $H, 0)
 			$RPhighscore = $H[2]
 			$H = 0 ;clear array
 		EndIf
 	EndIf
 
 	If $g_aReplay[0] > 8 Then  ; which means it  was not aborted
-		_FileWriteFromArray($g_data & $GameName & "Current" & $g_sxBase & $g_syBase & ".Snk19", $g_aReplay)
+		_FileWriteFromArray($g_data & $GameName & "Current.Snk19", $g_aReplay)
 		;		_ArrayDisplay($g_aReplay)
 
 		If $g_aReplay[2] > $RPhighscore Then
-			_FileWriteFromArray($g_data & $GameName & "Highest" & $g_sxBase & $g_syBase & ".Snk19", $g_aReplay)
+			_FileWriteFromArray($g_data & $GameName & "Highest.Snk19", $g_aReplay)
 			$RPhighscore = $g_aReplay[2]
 		EndIf
 	EndIf
 EndFunc   ;==>ReplaySave
 #CS INFO
-	77093 V5 3/27/2020 10:44:43 AM V4 2/6/2020 2:46:20 PM V3 1/24/2020 1:30:56 AM V2 1/23/2020 7:11:42 PM
+	69577 V4 2/6/2020 2:46:20 PM V3 1/24/2020 1:30:56 AM V2 1/23/2020 7:11:42 PM V1 1/22/2020 5:09:10 PM
 #CE INFO
 
 Func SettingScore()
@@ -3764,17 +3752,17 @@ Func SettingScore()
 						$cnt = 0  ; NOT Checked
 					EndIf
 					If $g_GameWhich = 0 Then     ; 0 Normal, 1 Mine
-						$a = IniReadSection($s_scoreini, "HighScoreNormal" & $g_sxBase & $g_syBase)
+						$a = IniReadSection($s_scoreini, "HighScoreNormal")
 						$c = "Nor-"
 					Else
-						$a = IniReadSection($s_scoreini, "HighScoreMy" & $g_sxBase & $g_syBase)
+						$a = IniReadSection($s_scoreini, "HighScoreMySnake")
 						$c = "My-"
 					EndIf
 
 					If @error = 0 Then
 						If $cnt = 0 Then  ; Delete high score then delete Highest replay
-							If FileExists($g_data & $c & "Highest" & $g_sxBase & $g_syBase & ".Snk19") = 1 Then
-								FileDelete($g_data & $c & "Highest" & $g_sxBase & $g_syBase & ".Snk19")
+							If FileExists($g_data & $c & "Highest.Snk19") = 1 Then
+								FileDelete($g_data & $c & "Highest.Snk19")
 							EndIf
 						EndIf
 
@@ -3807,7 +3795,7 @@ Func SettingScore()
 	GUIDelete($g_FormScore)
 EndFunc   ;==>SettingScore
 #CS INFO
-	198237 V6 3/27/2020 10:44:43 AM V5 2/28/2020 12:24:54 AM V4 2/24/2020 11:43:24 AM V3 2/17/2020 8:07:54 PM
+	191431 V5 2/28/2020 12:24:54 AM V4 2/24/2020 11:43:24 AM V3 2/17/2020 8:07:54 PM V2 2/9/2020 12:20:38 AM
 #CE INFO
 
 #Region SettingKeys
@@ -4321,4 +4309,4 @@ Main()
 
 Exit
 
-;~T ScriptFunc.exe V0.54a 15 May 2019 - 3/30/2020 8:16:34 PM
+;~T ScriptFunc.exe V0.54a 15 May 2019 - 4/5/2020 7:35:56 PM
