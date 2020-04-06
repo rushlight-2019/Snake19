@@ -1,16 +1,22 @@
-	0.149 5 Apr 2020 Reverted to 0.144 This version has no problems
+0.151 6 Apr 2020 Adjust remove to half
+	Seems to end to quick, remove cell slower
+
+0.150 6 Apr 2020 Fixed 0.145 High scores base on game size
+	Found the bug in 0.145 and removed it. But I all my problems started in the fix for the rare problem
+		Different High score for each of the game board size.
+		Different Highest replay saves.
+
+
+0.149 5 Apr 2020 Reverted to 0.144 This version has no problems
 	Removed 0.148 5 Apr 2020 Found a number of problems.  Tired to fix.
 
 	Removed 0.147 31 Mar 2020 Adjust remove to half
-Seems to end to quick, remove cell slower
 
 	Removed 0.146 27 Mar 2020 Fixed the rare start problem
-The end of the snake does not clear, snake just get longer, until you run over it.
-The fix was simple and logical.  Need to set some variables and do a test. Which wasn't needed at the start.
+		The end of the snake does not clear, snake just get longer, until you run over it.
+		The fix was simple and logical.  Need to set some variables and do a test. Which wasn't needed at the start.
 
-	Removed 0.145 27 Mar 2020 High scores base on game size
-Different High score for each of the game board size.
-Different Highest replay saves.
+	Remove 0.145 27 Mar 2020 High scores base on game size
 
 	0.144 25 Mar 2020 Game size fix - crash
 Game board size, size changed, but it would crash, fixed
