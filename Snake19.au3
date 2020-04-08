@@ -6,9 +6,9 @@ AutoItSetOption("MustDeclareVars", 1)
 ;Global Static $MESSAGE =  False   ;Pause will still work in script  No DataOut
 
 ; Must be Declared before _Prf_startup   ~+~+
-Global $ver = "0.151 6 Apr 2020 Adjust remove to half"
-
-;. Fixed the rare start problem, I hope"
+Global $ver = "0.153 7 Apr 2020 Fix PAUSE press problem 2nd. This should fix the rare problem too"
+;Fix HIDE press problem first
+;Fix PAUSE press problem 2nd.  This should fix the rare problem too
 
 Global $ini_ver = "0.139"
 Global $g_replayVer = "0.138"
@@ -18,7 +18,7 @@ Global $g_replayVer = "0.138"
 #include "R:\!Autoit\Blank\_prf_startup.au3"
 
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
-#AutoIt3Wrapper_Res_Fileversion=0.1.5.1
+#AutoIt3Wrapper_Res_Fileversion=0.1.5.3
 #AutoIt3Wrapper_Icon=R:\!Autoit\Ico\prf.ico
 #AutoIt3Wrapper_Res_Description=Another snake game
 #AutoIt3Wrapper_Res_LegalCopyright=© Phillip Forrestal 2019-2020
@@ -86,6 +86,8 @@ to do
 
 	Version
 ;~+~+
+	0.153 7 Apr 2020 Fix PAUSE press problem 2nd. This should fix the rare problem too
+	0.152 7 Apr 2020 Fix the HIDE on problem 1st
 	0.151 6 Apr 2020 Adjust remove to half
 	0.150 6 Apr 2020 Fixed 0.145 High scores base on game size
 	0.149 5 Apr 2020 Reverted to 0.144 This version has no problems
@@ -354,7 +356,6 @@ $g_FormScore = -1
 $g_FormKey = -1
 $g_FormAdjLen = -1
 
-;~~
 Global $g_first = True
 
 Global $g_Size = 22 ; max? ;min = 10
@@ -577,7 +578,6 @@ Func Main()
 	$g_gBonusFoodNormal = IniRead($s_ini, "Misc", "BonusFoodNormal", True)
 	$g_gBonusFoodMy = IniRead($s_ini, "Misc", "BonusFoodMy", True)
 
-;~~
 	;0.141
 	$g_sxBase = Int(IniRead($s_ini, "Board", "X", 40))
 	$g_syBase = Int(IniRead($s_ini, "Board", "Y", 30))
@@ -628,10 +628,11 @@ Func Main()
 
 EndFunc   ;==>Main
 #CS INFO
-	221339 V48 3/27/2020 10:44:43 AM V47 2/28/2020 12:24:54 AM V46 2/24/2020 11:43:24 AM V45 2/12/2020 9:01:54 AM
+	221028 V49 4/7/2020 2:15:18 AM V48 3/27/2020 10:44:43 AM V47 2/28/2020 12:24:54 AM V46 2/24/2020 11:43:24 AM
 #CE INFO
 
 Func Game()
+	Local $l_startrun ;153
 	Local $nMsg, $x, $y, $flag
 	;Keys acc
 	Local Static $L_idDown
@@ -652,7 +653,6 @@ Func Game()
 
 	IniWrite($s_ini, "General", "Game", $g_GameWhich)
 
-;~~
 	;Replay has to read replay array to set size of board here
 	If $g_ReplayStatus = $s_ReplayPlay Then
 		;	_ArrayDisplay($g_aReplay,"" ,"12")
@@ -846,8 +846,6 @@ Func Game()
 	;0.131
 	; $aAccelKey2[][] = [["{RIGHT}", $L_idRight], ["{LEFT}", $L_idLeft], ["{DOWN}", $L_idDown], ["{UP}", $L_idUp], ["q", $L_idEsc], ["p", $L_idPause], ["m", $L_idHid]]
 	Local $aAccelKey2[][] = [[$g_keyright, $L_idRight], [$g_keyleft, $L_idLeft], [$g_keydown, $L_idDown], [$g_keyup, $L_idUp], [$g_keyquit, $L_idEsc], [$g_keypause, $L_idPause], [$g_keymin, $L_idHid]]
-
-	GUISetAccelerators($aAccelKey2, $g_ctrlBoard)
 	MouseMove(0, 0, 0)
 
 	If $g_ReplayStatus = $s_ReplayPlay Then
@@ -857,13 +855,24 @@ Func Game()
 		ReplayRecData(4, $g_gChange) ; Start cell len
 	EndIf
 
+	;---------------------------------START GAME
+
+	If $g_ReplayStatus = $s_ReplayPlay Then ;153
+		$l_startrun = True
+	Else
+		$l_startrun = False
+	EndIf
+
 	$g_endgame = False
 	$g_Pause = False ;.0116
 	$g_iTickCnt = 0
+	$g_turnNo = 0
+	$g_turnLast = 0
 
-	;---------------------------------START GAME
-	$g_hTick = TimerInit()   ; must be just before GAME Start
+	GUISetAccelerators($aAccelKey2, $g_ctrlBoard)
+	MouseMove(0, 0, 0)
 
+	$g_hTick = TimerInit() ; must be just before GAME Start
 	Do ;game Loop
 		Tick()
 
@@ -873,108 +882,106 @@ Func Game()
 			ExitLoop
 		EndIf
 
-		If $nMsg = $L_idHid Then
+		If $nMsg = $L_idHid Then  ;152 if HIDE found should by pass all test to loop  Tick() handles the HID as Lost of Focus
 			Do
 			Until GUIGetMsg() <> $L_idHid
 
 			GUISetState(@SW_MINIMIZE, $g_ctrlBoard)
+			ContinueLoop ; Game Loop
 		EndIf
 
-		If $g_Pause Then             ;Pause 0.116
+		;153~~
+		If $g_Pause Then             ;Pause 0.116  153 will never be true until the first move
 			If $nMsg = $L_idPause Then
 				Do
 				Until GUIGetMsg() <> $L_idPause
 				$g_Pause = False
+				Status(1, "", 2)
 			EndIf
-		Else
+			ContinueLoop  ; skip to end
+		EndIf
 
-			If $nMsg = $L_idPause Then
-				Do
-				Until GUIGetMsg() <> $L_idPause
+		If $nMsg = $L_idPause Then
+			Do
+			Until GUIGetMsg() <> $L_idPause
+			If $l_startrun Then     ;153 if added
 				$g_Pause = True
+				Status(1, "---PAUSE---", 2)
+			EndIf
+			ContinueLoop     ;153 skip to end of loop
+		EndIf
+
+		If $g_ReplayStatus = $s_ReplayPlay Then
+			$a = GetReplayPlay(2)
+			If $a[0] Then
+				$g_dirX = $a[3]
+				$g_dirY = $a[4]
+				$g_turnNo = $a[5]
 			EndIf
 
-			$g_iTickCnt += 1 ; Must be in the unpause loop
-			If $g_ReplayStatus = $s_ReplayPlay Then
+		Else
+			If $nMsg > 0 Then
 
-				$a = GetReplayPlay(2)
-				If $a[0] Then
-					$g_dirX = $a[3]
-					$g_dirY = $a[4]
-					$g_turnNo = $a[5]
-				EndIf
-				; ReplayRecData(2, $g_dirX, $g_dirY, $g_turnNo)
+				Switch $nMsg
+
+					Case $L_idLeft
+						Do
+						Until GUIGetMsg() <> $L_idLeft
+						$g_turnNo = 1
+						$g_dirX = -1
+						$g_dirY = 0
+
+					Case $L_idRight
+						Do
+						Until GUIGetMsg() <> $L_idRight
+						$g_turnNo = 2
+						$g_dirX = 1
+						$g_dirY = 0
+
+					Case $L_idUp
+						Do
+						Until GUIGetMsg() <> $L_idUp
+						$g_turnNo = 3
+						$g_dirX = 0
+						$g_dirY = -1
+
+					Case $L_idDown
+						Do
+						Until GUIGetMsg() <> $L_idDown
+						$g_turnNo = 4
+						$g_dirX = 0
+						$g_dirY = 1
+
+				EndSwitch
+
 			Else
+				Do
+				Until GUIGetMsg() = 0
+			EndIf     ;If $nMsg > 0 Then
 
-				If $nMsg > 0 Then
-					;$g_turnNo = 0
-					;$g_dirX = 0
-					;$g_dirY = 0
+		EndIf     ;Replay if
 
-					Switch $nMsg
-
-						Case $L_idLeft
-							Do
-							Until GUIGetMsg() <> $L_idLeft
-							$g_turnNo = 1
-							$g_dirX = -1
-							$g_dirY = 0
-
-						Case $L_idRight
-							Do
-							Until GUIGetMsg() <> $L_idRight
-							$g_turnNo = 2
-							$g_dirX = 1
-							$g_dirY = 0
-
-						Case $L_idUp
-
-							Do
-							Until GUIGetMsg() <> $L_idUp
-							$g_turnNo = 3
-							$g_dirX = 0
-							$g_dirY = -1
-
-						Case $L_idDown
-							Do
-							Until GUIGetMsg() <> $L_idDown
-							$g_turnNo = 4
-							$g_dirX = 0
-							$g_dirY = 1
-
-					EndSwitch
-
-					;0.146~~~
-					;					If $g_dirX <> 0 Or $g_dirY <> 0 Then
-					ReplayRecData(2, $g_dirX, $g_dirY, $g_turnNo)
-					;					EndIf
-
-				Else
-					Do
-					Until GUIGetMsg() = 0
-					If $g_dirX = 0 And $g_dirY = 0 Then
-						$g_iTickCnt = 0
-						ContinueLoop
-					EndIf
-				EndIf ;If $nMsg > 0 Then
-
-			EndIf ;Replay if
-
-			If $g_turnNo <> $g_turnLast Then
-				$g_turnLast = $g_turnNo
-				$g_ScoreTurn += 1
-				$g_Turns += 1
-
+		If $g_turnNo <> $g_turnLast Then
+			ReplayRecData(2, $g_dirX, $g_dirY, $g_turnNo)
+			$g_turnLast = $g_turnNo
+			$g_ScoreTurn += 1
+			$g_Turns += 1
+			If Not $l_startrun Then
+				$l_startrun = True        ;if False game hasn't started  turn it True and game is running and pause can be turned on.
+				MouseMove(0, 0, 0)
 			EndIf
+		EndIf
 
+		If $l_startrun Then
+			$g_iTickCnt += 1 ; Must be in the unpause loop
 			Switch $g_GameWhich
 				Case 1
 					Extra()
 				Case 0
 					Normal()
 			EndSwitch
+		EndIf
 
-		EndIf ;Pause
 	Until $g_endgame ;;game Loop
 	GUISetAccelerators(1, $g_ctrlBoard)     ; Turn off Accelerator
 
@@ -983,11 +990,8 @@ Func Game()
 	EndIf
 	If $g_ReplayStatus = $s_ReplayPlay Then
 		$a = GetReplayPlay(5)
-		Dataout("REC DONE ____-----------------------Replay Quit-------------")
-
 	Else
 		ReplayRecData(5) ; end of game
-		Dataout("REC DONE ____-----End of Game----------------------------------")
 	EndIf
 	$g_ReplayStatus = $s_ReplayOff
 
@@ -995,8 +999,8 @@ Func Game()
 
 EndFunc   ;==>Game
 #CS INFO
-	614124 V84 4/6/2020 1:06:34 AM V83 3/27/2020 10:44:43 AM V82 3/25/2020 9:28:31 AM V81 3/22/2020 1:49:08 AM
-#CE INFO
+	641259 V86 4/7/2020 9:22:30 PM V85 4/7/2020 2:15:18 AM V84 4/6/2020 1:06:34 AM V83 3/27/2020 10:44:43 AM
+#CE
 
 Func Tick() ;
 	Local $fdiff
@@ -1956,7 +1960,7 @@ EndFunc   ;==>UpDateHiScore
 	85217 V20 3/27/2020 10:44:43 AM V19 1/31/2020 5:20:55 PM V18 1/23/2020 7:11:42 PM V17 1/10/2020 9:27:34 AM
 #CE INFO
 
-Func SaveHiScore() ;~~
+Func SaveHiScore()
 	Local $x, $a[12][2]
 
 	For $x = 1 To 10
@@ -1972,7 +1976,7 @@ Func SaveHiScore() ;~~
 
 EndFunc   ;==>SaveHiScore
 #CS INFO
-	36976 V8 3/27/2020 10:44:43 AM V7 12/11/2019 11:54:15 AM V6 7/24/2019 11:20:48 PM V5 7/13/2019 7:20:00 PM
+	36665 V9 4/7/2020 2:15:18 AM V8 3/27/2020 10:44:43 AM V7 12/11/2019 11:54:15 AM V6 7/24/2019 11:20:48 PM
 #CE INFO
 
 Func IniHighFive()
@@ -2572,7 +2576,7 @@ Func LostSnake()
 EndFunc   ;==>LostSnake
 #CS INFO
 	11614 V3 4/6/2020 6:53:29 AM V2 11/19/2019 1:09:35 PM V1 11/5/2019 12:50:43 AM
-#CE
+#CE INFO
 
 ;Search the poop array for time out
 ;0 flag, 1 x, 2 y, 3 cnt down
@@ -2911,7 +2915,9 @@ Func About()
 	$g_FormAbout = GUICreate("Snake19 - About", 615, 430, $g_FormLeft, $g_FormTop, $ws_popup + $ws_caption)
 ;~+~+
 	;$Message &= "|
-	$Message = "0.151 6 Apr 2020 Adjust remove to half"
+	$Message = "0.153 7 Apr 2020 Fix PAUSE press problem 2nd. This should fix the rare problem too"
+	$Message &= "|0.152 7 Apr 2020 Fix the HIDE on problem 1st"
+	$Message &= "|0.151 6 Apr 2020 Adjust remove to half"
 	$Message &= "|0.150 6 Apr 2020 Fixed 0.145 High scores base on game size"
 	$Message &= "|0.149 5 Apr 2020 Reverted to 0.144 This version has no problems"
 	$Message &= "|0.148 5 Apr 2020 Found a number of problems.  Tired to fix."
@@ -3016,7 +3022,7 @@ Func About()
 
 EndFunc   ;==>About
 #CS INFO
-	377428 V48 4/6/2020 6:53:29 AM V47 4/6/2020 1:06:34 AM V46 3/25/2020 9:28:31 AM V45 3/22/2020 1:49:08 AM
+	388750 V50 4/7/2020 9:22:30 PM V49 4/7/2020 2:15:18 AM V48 4/6/2020 6:53:29 AM V47 4/6/2020 1:06:34 AM
 #CE
 
 Func SetCellSide()
@@ -4254,7 +4260,6 @@ Func ChangeBoardSize()
 	$ok = GUICtrlCreateButton("OK", 34, 200, 90, 50)
 	$cancel = GUICtrlCreateButton("Cancel", 155, 200, 90, 50)
 	GUISetState(@SW_SHOW)
-;~~
 
 	While 1
 		$nMsg = GUIGetMsg()
@@ -4306,7 +4311,7 @@ Func ChangeBoardSize()
 	GUIDelete($g_FormCellxCell)
 EndFunc   ;==>ChangeBoardSize
 #CS INFO
-	171620 V4 3/25/2020 9:28:31 AM V3 3/19/2020 12:09:38 AM V2 2/28/2020 12:24:54 AM V1 2/26/2020 3:10:00 AM
+	171309 V5 4/7/2020 2:15:18 AM V4 3/25/2020 9:28:31 AM V3 3/19/2020 12:09:38 AM V2 2/28/2020 12:24:54 AM
 #CE INFO
 
 Func RemoveGameBoard()
@@ -4327,4 +4332,4 @@ Main()
 
 Exit
 
-;~T ScriptFunc.exe V0.54a 15 May 2019 - 4/6/2020 6:53:29 AM
+;~T ScriptFunc.exe V0.54a 15 May 2019 - 4/7/2020 9:22:30 PM

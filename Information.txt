@@ -1,3 +1,7 @@
+0.153 7 Apr 2020 Fix PAUSE press problem 2nd. This should fix the rare problem too
+0.152 7 Apr 2020 Fix the HIDE on problem 1st
+	The rare problem was cause when I added HIDE and PAUSE to the game.  Now they skip over the arrow movement check.
+
 0.151 6 Apr 2020 Adjust remove to half
 	Seems to end to quick, remove cell slower
 
@@ -14,7 +18,7 @@
 
 	Removed 0.146 27 Mar 2020 Fixed the rare start problem
 		The end of the snake does not clear, snake just get longer, until you run over it.
-		The fix was simple and logical.  Need to set some variables and do a test. Which wasn't needed at the start.
+		The fix was simple and logical. (But cause a ton of other problems)
 
 	Remove 0.145 27 Mar 2020 High scores base on game size
 
