@@ -1,3 +1,6 @@
+0.154 10 Apr 2020 Change board size, make sure it will fit
+	forces SCREEN SIZE is too big
+
 0.153 7 Apr 2020 Fix PAUSE press problem 2nd. This should fix the rare problem too
 0.152 7 Apr 2020 Fix the HIDE on problem 1st
 	The rare problem was cause when I added HIDE and PAUSE to the game.  Now they skip over the arrow movement check.
@@ -149,7 +152,9 @@ Bonus Food over 100 length, will create a 2nd food.    On or off.
 
 ----------------
 To do
-Change board size: Make sure is fits on screen.
+Check if game board is on screen
+Fix Score remove not needed make smaller
+Status size problem
 Main Menu buttons.
 Press Q is changable.
 Clean up
@@ -158,7 +163,9 @@ Rare problem: No food in game. Seen it once this year. But I saved the replay ga
 ----------------
 Problem:
 
-Should be fixed 0.146
+Should be fixed in 0.153
+The rare problem is in how pause worked.
+Should be fixed in 0.146 the fix cause problems.
 Long: Still have the funny start game problem that I can't create in debug mode.
 The end of the snake does not clear, snake just get longer, until you run over it.
 Saw it in version 0.145

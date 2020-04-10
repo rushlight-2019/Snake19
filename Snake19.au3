@@ -6,9 +6,7 @@ AutoItSetOption("MustDeclareVars", 1)
 ;Global Static $MESSAGE =  False   ;Pause will still work in script  No DataOut
 
 ; Must be Declared before _Prf_startup   ~+~+
-Global $ver = "0.153 7 Apr 2020 Fix PAUSE press problem 2nd. This should fix the rare problem too"
-;Fix HIDE press problem first
-;Fix PAUSE press problem 2nd.  This should fix the rare problem too
+Global $ver = "0.154 10 Apr 2020 Change board size, make sure it will fit"
 
 Global $ini_ver = "0.139"
 Global $g_replayVer = "0.138"
@@ -18,7 +16,7 @@ Global $g_replayVer = "0.138"
 #include "R:\!Autoit\Blank\_prf_startup.au3"
 
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
-#AutoIt3Wrapper_Res_Fileversion=0.1.5.3
+#AutoIt3Wrapper_Res_Fileversion=0.1.5.4
 #AutoIt3Wrapper_Icon=R:\!Autoit\Ico\prf.ico
 #AutoIt3Wrapper_Res_Description=Another snake game
 #AutoIt3Wrapper_Res_LegalCopyright=© Phillip Forrestal 2019-2020
@@ -86,6 +84,7 @@ to do
 
 	Version
 ;~+~+
+	0.154 10 Apr 2020 Change board size, make sure it will fit
 	0.153 7 Apr 2020 Fix PAUSE press problem 2nd. This should fix the rare problem too
 	0.152 7 Apr 2020 Fix the HIDE on problem 1st
 	0.151 6 Apr 2020 Adjust remove to half
@@ -890,7 +889,6 @@ Func Game()
 			ContinueLoop ; Game Loop
 		EndIf
 
-		;153~~
 		If $g_Pause Then             ;Pause 0.116  153 will never be true until the first move
 			If $nMsg = $L_idPause Then
 				Do
@@ -999,8 +997,8 @@ Func Game()
 
 EndFunc   ;==>Game
 #CS INFO
-	641259 V86 4/7/2020 9:22:30 PM V85 4/7/2020 2:15:18 AM V84 4/6/2020 1:06:34 AM V83 3/27/2020 10:44:43 AM
-#CE
+	640795 V87 4/10/2020 12:20:13 PM V86 4/7/2020 9:22:30 PM V85 4/7/2020 2:15:18 AM V84 4/6/2020 1:06:34 AM
+#CE INFO
 
 Func Tick() ;
 	Local $fdiff
@@ -2446,7 +2444,6 @@ Func Settings()
 	GUICtrlSetFont(-1, 14, 800, 0, "Arial")
 
 	Local $b_boardSize = GUICtrlCreateButton("Change board size", 47, 50, 97, 33)
-	;Local $b_about = GUICtrlCreateButton("About", 47, 50, 97, 33)
 	Local $b_ScreenSize = GUICtrlCreateButton("Screen Size", 183, 50, 97, 33)
 	Local $b_Color = GUICtrlCreateButton("Colors", 320, 50, 97, 33)
 	Local $b_speed = GUICtrlCreateButton("Speed", 456, 50, 97, 33)
@@ -2466,9 +2463,6 @@ Func Settings()
 				ExitLoop
 			Case $b_boardSize
 				ChangeBoardSize()
-				;Case $b_about
-				;	About()
-				;	ExitLoop
 			Case $b_ScreenSize
 				ScreenSize()
 			Case $b_score
@@ -2481,9 +2475,6 @@ Func Settings()
 				ChooseColor()
 			Case $b_speed
 				Speed()
-				;Case $b_Adj   Going to use buttons in setting  Combo menu is broken
-				;	AdjustValues()
-				;	ExitLoop
 			Case $b_Uni
 				DeleteData()
 		EndSwitch
@@ -2493,9 +2484,10 @@ Func Settings()
 	$g_FormSetting = -1
 EndFunc   ;==>Settings
 #CS INFO
-	105740 V17 2/28/2020 12:24:54 AM V16 2/24/2020 11:43:24 AM V15 2/12/2020 9:01:54 AM V14 2/9/2020 12:20:38 AM
+	101241 V18 4/10/2020 12:20:13 PM V17 2/28/2020 12:24:54 AM V16 2/24/2020 11:43:24 AM V15 2/12/2020 9:01:54 AM
 #CE INFO
 
+;~~
 Func ScreenSize()
 	Local $sInputBoxAnswer, $keep, $s, $mathW, $mathH, $Math
 	Local $err
@@ -2506,7 +2498,7 @@ Func ScreenSize()
 	$keep = $g_Size
 	$mathW = Int(@DesktopWidth / $g_boardx) - 1
 
-	$mathH = Int((@DesktopHeight - ($g_Font * 3)) / $g_boardy) - 1
+	$mathH = Int((@DesktopHeight - ($g_Font * 4)) / $g_boardy) - 1  ; was 3 b4 154 now 4
 
 	If $mathW > $mathH Then
 		$Math = $mathH
@@ -2542,7 +2534,7 @@ Func ScreenSize()
 	EndSelect
 EndFunc   ;==>ScreenSize
 #CS INFO
-	86324 V10 3/25/2020 9:28:31 AM V9 3/19/2020 12:09:38 AM V8 1/16/2020 2:54:39 AM V7 1/10/2020 9:27:34 AM
+	87462 V11 4/10/2020 12:20:13 PM V10 3/25/2020 9:28:31 AM V9 3/19/2020 12:09:38 AM V8 1/16/2020 2:54:39 AM
 #CE INFO
 
 ; Read INI setting
@@ -2915,7 +2907,8 @@ Func About()
 	$g_FormAbout = GUICreate("Snake19 - About", 615, 430, $g_FormLeft, $g_FormTop, $ws_popup + $ws_caption)
 ;~+~+
 	;$Message &= "|
-	$Message = "0.153 7 Apr 2020 Fix PAUSE press problem 2nd. This should fix the rare problem too"
+	$Message = "0.154 10 Apr 2020 Change board size, make sure it will fit"
+	$Message &= "|0.153 7 Apr 2020 Fix PAUSE press problem 2nd. This should fix the rare problem too"
 	$Message &= "|0.152 7 Apr 2020 Fix the HIDE on problem 1st"
 	$Message &= "|0.151 6 Apr 2020 Adjust remove to half"
 	$Message &= "|0.150 6 Apr 2020 Fixed 0.145 High scores base on game size"
@@ -3022,8 +3015,8 @@ Func About()
 
 EndFunc   ;==>About
 #CS INFO
-	388750 V50 4/7/2020 9:22:30 PM V49 4/7/2020 2:15:18 AM V48 4/6/2020 6:53:29 AM V47 4/6/2020 1:06:34 AM
-#CE
+	394052 V51 4/10/2020 12:20:13 PM V50 4/7/2020 9:22:30 PM V49 4/7/2020 2:15:18 AM V48 4/6/2020 6:53:29 AM
+#CE INFO
 
 Func SetCellSide()
 	Pause("SetCellSide")
@@ -4210,6 +4203,7 @@ EndFunc   ;==>SettingsWhenAdjLen
 	175423 V3 2/26/2020 3:10:00 AM V2 2/24/2020 8:19:55 PM V1 2/24/2020 11:43:24 AM
 #CE INFO
 
+;~~
 Func ChangeBoardSize()
 	Local $ok, $cancel, $default, $nMsg, $idX, $idY, $x, $y, $a, $Input_Value
 
@@ -4309,9 +4303,30 @@ Func ChangeBoardSize()
 	WEnd
 
 	GUIDelete($g_FormCellxCell)
+
+	;154 add below
+	Local $mathW, $mathH
+
+	$g_boardx = $g_sxBase + 2 ;$g_sxBase is not fix after 0.140
+	$g_boardy = $g_syBase + 2
+
+	$mathW = Int(@DesktopWidth / $g_boardx) - 1
+
+	$mathH = Int((@DesktopHeight - ($g_Font * 4)) / $g_boardy) - 1  ; was 3 b4 154 now 4
+
+	If $mathW > $mathH Then
+		$mathW = $mathH
+		;Else
+		;$Math = $mathW
+	EndIf
+
+	If $g_Size > $mathW Then
+		ScreenSize()
+	EndIf
+
 EndFunc   ;==>ChangeBoardSize
 #CS INFO
-	171309 V5 4/7/2020 2:15:18 AM V4 3/25/2020 9:28:31 AM V3 3/19/2020 12:09:38 AM V2 2/28/2020 12:24:54 AM
+	197320 V6 4/10/2020 12:20:13 PM V5 4/7/2020 2:15:18 AM V4 3/25/2020 9:28:31 AM V3 3/19/2020 12:09:38 AM
 #CE INFO
 
 Func RemoveGameBoard()
@@ -4332,4 +4347,4 @@ Main()
 
 Exit
 
-;~T ScriptFunc.exe V0.54a 15 May 2019 - 4/7/2020 9:22:30 PM
+;~T ScriptFunc.exe V0.54a 15 May 2019 - 4/10/2020 12:20:13 PM
