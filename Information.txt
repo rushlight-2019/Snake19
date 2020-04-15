@@ -1,3 +1,6 @@
+0.156 15 Apr 2020 Fix Score & status
+	Changed wording and remove some number to make if fix on smaller game board size. Very small will not fix.
+
 0.155 15 Apr 2020 Check if game board is on screen
 	forces Game Boad on the screen
 		Top and Left the screen must be created.
@@ -156,7 +159,6 @@ Bonus Food over 100 length, will create a 2nd food.    On or off.
 
 ----------------
 To do
-Check if game board is on screen
 Fix Score remove not needed make smaller
 Status size problem
 Main Menu buttons.

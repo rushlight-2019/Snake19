@@ -6,7 +6,7 @@ AutoItSetOption("MustDeclareVars", 1)
 ;Global Static $MESSAGE =  False   ;Pause will still work in script  No DataOut
 
 ; Must be Declared before _Prf_startup   ~+~+
-Global $ver = "0.155 15 Apr 2020 Check if game board is on screen"
+Global $ver = "0.156 15 Apr 2020 Fix Score & status"
 
 Global $ini_ver = "0.139"
 Global $g_replayVer = "0.138"
@@ -16,7 +16,7 @@ Global $g_replayVer = "0.138"
 #include "R:\!Autoit\Blank\_prf_startup.au3"
 
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
-#AutoIt3Wrapper_Res_Fileversion=0.1.5.5
+#AutoIt3Wrapper_Res_Fileversion=0.1.5.6
 #AutoIt3Wrapper_Icon=R:\!Autoit\Ico\prf.ico
 #AutoIt3Wrapper_Res_Description=Another snake game
 #AutoIt3Wrapper_Res_LegalCopyright=© Phillip Forrestal 2019-2020
@@ -84,6 +84,7 @@ to do
 
 	Version
 ;~+~+
+	0.156 15 Apr 2020 Fix Score & status
 	0.155 14 Apr 2020 Check if game board is on screen
 	0.154 10 Apr 2020 Change board size, make sure it will fit
 	0.153 7 Apr 2020 Fix PAUSE press problem 2nd. This should fix the rare problem too
@@ -1000,7 +1001,7 @@ Func Game()
 EndFunc   ;==>Game
 #CS INFO
 	642436 V88 4/15/2020 2:57:51 AM V87 4/10/2020 12:20:13 PM V86 4/7/2020 9:22:30 PM V85 4/7/2020 2:15:18 AM
-#CE
+#CE INFO
 
 Func Tick() ;
 	Local $fdiff
@@ -1093,7 +1094,8 @@ Func Extra()
 
 			EndIf
 			$a = LostSnake()
-			Status(3, "Ate DEAD snake  Yuck!! Lost " & $a & " cells of snake", 1)
+			;		Status(3, "Ate DEAD snake  Yuck!! Lost " & $a & " cells of snake", 1)
+			Status(3, "Ate DEAD snake  Yuck!! Lost " & $a, 1)
 			$g_gChange -= $a
 
 			$Map[$what][$x_new + $g_dirX][$y_new + $g_dirY] = $EMPTY
@@ -1105,8 +1107,8 @@ Func Extra()
 			$g_gChange -= $a
 
 			PrevNext($x_new + $g_dirX, $y_new + $g_dirY) ;New value
-
-			Status(3, "Ate  snake POOP  Yuck! Lost " & $a & " cells of snake", 1)
+			;Status(3, "Ate  snake POOP  Yuck! Lost " & $a & " cells of snake", 1)
+			Status(3, "Ate  snake POOP  Yuck! Lost " & $a, 1)
 			If $g_ReplayStatus = $s_ReplayPlay Then
 				$a = GetReplayPlay(20) ;55
 				dataout("55", $a[2])
@@ -1278,7 +1280,8 @@ Func Extra()
 			$g_iScore += 100
 			$g_ScoreFood += 1
 			$g_gChange += 10
-			Status(3, "Poop Bonus Food: Score 100, Snake 10", 2)
+			;Status(3, "Poop Bonus Food: Score 100, Snake 10", 2)
+			Status(3, "Poop Bonus Food", 2)
 
 			$g_Turns = 0
 			$g_HungeryLast = 0
@@ -1361,14 +1364,18 @@ Func Extra()
 			Case $s_ReplayPlay
 				$b = String($g_iReplayPlyInx)
 		EndSwitch
-
-		Status(1, StringFormat("Lenght: %4u, Max: %4u, Score: %6u,   ms/cyc %u %6s", $a, $g_SnakeMax, $g_GameScore, $g_tc, $b), 2)
+		;		Status(1, StringFormat("L %4u, Mx: %4u, Score: %6u,   ms/cyc %u", $a, $g_SnakeMax, $g_GameScore, $g_tc, $b), 2)
+		If $g_GameScore > 500 Then
+			Status(1, StringFormat("L %u Max %u Score %u", $a, $g_SnakeMax, $g_GameScore), 2)
+		Else
+			Status(1, StringFormat("L %u Max %u Score %u  ms/cyc %u", $a, $g_SnakeMax, $g_GameScore, $g_tc), 2)
+		EndIf
 	EndIf
 
 EndFunc   ;==>Extra
 #CS INFO
-	448556 V58 2/24/2020 8:19:55 PM V57 2/24/2020 11:43:24 AM V56 1/23/2020 7:11:42 PM V55 1/9/2020 9:18:30 PM
-#CE INFO
+	472588 V59 4/15/2020 1:41:14 PM V58 2/24/2020 8:19:55 PM V57 2/24/2020 11:43:24 AM V56 1/23/2020 7:11:42 PM
+#CE
 
 Func Normal()
 	Local Static $LS_SnakeLenLast = 0
@@ -2436,7 +2443,7 @@ Func StartForm()
 EndFunc   ;==>StartForm
 #CS INFO
 	645484 V61 4/15/2020 2:57:51 AM V60 3/27/2020 10:44:43 AM V59 3/25/2020 9:28:31 AM V58 2/26/2020 3:10:00 AM
-#CE
+#CE INFO
 
 Func Settings()
 	Local $y
@@ -2488,7 +2495,7 @@ Func Settings()
 EndFunc   ;==>Settings
 #CS INFO
 	90689 V19 4/15/2020 2:57:51 AM V18 4/10/2020 12:20:13 PM V17 2/28/2020 12:24:54 AM V16 2/24/2020 11:43:24 AM
-#CE
+#CE INFO
 
 ;~~
 Func ScreenSize()
@@ -2540,7 +2547,7 @@ Func ScreenSize()
 EndFunc   ;==>ScreenSize
 #CS INFO
 	92854 V12 4/15/2020 2:57:51 AM V11 4/10/2020 12:20:13 PM V10 3/25/2020 9:28:31 AM V9 3/19/2020 12:09:38 AM
-#CE
+#CE INFO
 
 ; Read INI setting
 Func ReadIni()
@@ -2912,7 +2919,8 @@ Func About()
 	$g_FormAbout = GUICreate("Snake19 - About", 615, 430, $g_FormLeft, $g_FormTop, $ws_popup + $ws_caption)
 ;~+~+
 	;$Message &= "|
-	$Message = "0.155 14 Apr 2020 Check if game board is on screen"
+	$Message = "0.156 15 Apr 2020 Fix Score & status"
+	$Message &= "|0.155 14 Apr 2020 Check if game board is on screen"
 	$Message &= "|0.154 10 Apr 2020 Change board size, make sure it will fit"
 	$Message &= "|0.153 7 Apr 2020 Fix PAUSE press problem 2nd. This should fix the rare problem too"
 	$Message &= "|0.152 7 Apr 2020 Fix the HIDE on problem 1st"
@@ -3021,7 +3029,7 @@ Func About()
 
 EndFunc   ;==>About
 #CS INFO
-	398621 V52 4/15/2020 2:57:51 AM V51 4/10/2020 12:20:13 PM V50 4/7/2020 9:22:30 PM V49 4/7/2020 2:15:18 AM
+	402013 V53 4/15/2020 1:41:14 PM V52 4/15/2020 2:57:51 AM V51 4/10/2020 12:20:13 PM V50 4/7/2020 9:22:30 PM
 #CE
 
 Func SetCellSide()
@@ -3304,7 +3312,7 @@ Func ReplayRecData($func, $x = 0, $y = 0, $z = 0, $zz = 0)
 EndFunc   ;==>ReplayRecData
 #CS INFO
 	76109 V15 4/15/2020 2:57:51 AM V14 1/24/2020 1:30:56 AM V13 1/23/2020 7:11:42 PM V12 1/22/2020 5:09:10 PM
-#CE
+#CE INFO
 
 ;$nMsg = GetReplayPlay(N)
 
@@ -3664,7 +3672,7 @@ Func _CenterGameBd()
 EndFunc   ;==>_CenterGameBd
 #CS INFO
 	35180 V1 4/15/2020 2:57:51 AM
-#CE
+#CE INFO
 
 ;	$g_FormLeft = -1
 ;	$g_FormTop = -1
@@ -3707,7 +3715,7 @@ Func _Center($W, $H, $G = False) ;xw, yh  $G= game board
 EndFunc   ;==>_Center
 #CS INFO
 	74844 V5 4/15/2020 2:57:51 AM V4 1/16/2020 2:54:39 AM V3 1/10/2020 5:12:30 PM V2 1/10/2020 8:46:50 AM
-#CE
+#CE INFO
 
 ;_FileWriteFromArray("Array.txt", $g_a5)
 ;$g_data
@@ -4387,7 +4395,7 @@ Func _ArrayDataOut(Const ByRef $aArray, $title = "") ;one dimention
 EndFunc   ;==>_ArrayDataOut
 #CS INFO
 	15536 V1 4/15/2020 2:57:51 AM
-#CE
+#CE INFO
 
 ;ChangeBoardSize()
 ;Exit
@@ -4396,4 +4404,4 @@ Main()
 
 Exit
 
-;~T ScriptFunc.exe V0.54a 15 May 2019 - 4/15/2020 2:57:51 AM
+;~T ScriptFunc.exe V0.54a 15 May 2019 - 4/15/2020 1:41:14 PM
