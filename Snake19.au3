@@ -6,7 +6,7 @@ AutoItSetOption("MustDeclareVars", 1)
 ;Global Static $MESSAGE =  False   ;Pause will still work in script  No DataOut
 
 ; Must be Declared before _Prf_startup   ~+~+
-Global $ver = "0.154 10 Apr 2020 Change board size, make sure it will fit"
+Global $ver = "0.155 15 Apr 2020 Check if game board is on screen"
 
 Global $ini_ver = "0.139"
 Global $g_replayVer = "0.138"
@@ -16,7 +16,7 @@ Global $g_replayVer = "0.138"
 #include "R:\!Autoit\Blank\_prf_startup.au3"
 
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
-#AutoIt3Wrapper_Res_Fileversion=0.1.5.4
+#AutoIt3Wrapper_Res_Fileversion=0.1.5.5
 #AutoIt3Wrapper_Icon=R:\!Autoit\Ico\prf.ico
 #AutoIt3Wrapper_Res_Description=Another snake game
 #AutoIt3Wrapper_Res_LegalCopyright=© Phillip Forrestal 2019-2020
@@ -84,6 +84,7 @@ to do
 
 	Version
 ;~+~+
+	0.155 14 Apr 2020 Check if game board is on screen
 	0.154 10 Apr 2020 Change board size, make sure it will fit
 	0.153 7 Apr 2020 Fix PAUSE press problem 2nd. This should fix the rare problem too
 	0.152 7 Apr 2020 Fix the HIDE on problem 1st
@@ -679,8 +680,8 @@ Func Game()
 		Dim $Map[7][$g_boardx][$g_boardy] ;$Map[$what][x][y]
 
 		$b = $g_Font * 2
-		SayClearBoard(True)
-		_Center($g_boardx * $g_Size, $g_boardy * $g_Size + $b + 2, True)
+		SayClearBoard(True)  ;~~
+		_Center($g_boardx * $g_Size, $g_boardy * $g_Size + $b + 3, True)
 
 		$g_Focus = "Snake19 - " & $ver & " - Game size: " & $g_sxBase & " x " & $g_syBase
 		$g_ctrlBoard = GUICreate($g_Focus, $g_boardx * $g_Size, $g_boardy * $g_Size + $b + 2, $g_FormLeft, $g_FormTop, $ws_popup + $ws_caption)
@@ -733,6 +734,7 @@ Func Game()
 
 	EndIf
 	GUISetState(@SW_SHOW, $g_ctrlBoard)
+	_CenterGameBd()
 
 	$g_dirX = 0
 	$g_dirY = 0
@@ -997,8 +999,8 @@ Func Game()
 
 EndFunc   ;==>Game
 #CS INFO
-	640795 V87 4/10/2020 12:20:13 PM V86 4/7/2020 9:22:30 PM V85 4/7/2020 2:15:18 AM V84 4/6/2020 1:06:34 AM
-#CE INFO
+	642436 V88 4/15/2020 2:57:51 AM V87 4/10/2020 12:20:13 PM V86 4/7/2020 9:22:30 PM V85 4/7/2020 2:15:18 AM
+#CE
 
 Func Tick() ;
 	Local $fdiff
@@ -2150,6 +2152,7 @@ Func StartForm()
 	EndIf
 
 	If $g_FormStart = -1 Then
+		_CenterGameBd()
 		_Center(600, 600)
 		$g_FormStart = GUICreate($sMainMenuTitle, 600, 600, $g_FormLeft, $g_FormTop)
 
@@ -2432,8 +2435,8 @@ Func StartForm()
 
 EndFunc   ;==>StartForm
 #CS INFO
-	644155 V60 3/27/2020 10:44:43 AM V59 3/25/2020 9:28:31 AM V58 2/26/2020 3:10:00 AM V57 2/24/2020 11:43:24 AM
-#CE INFO
+	645484 V61 4/15/2020 2:57:51 AM V60 3/27/2020 10:44:43 AM V59 3/25/2020 9:28:31 AM V58 2/26/2020 3:10:00 AM
+#CE
 
 Func Settings()
 	Local $y
@@ -2484,8 +2487,8 @@ Func Settings()
 	$g_FormSetting = -1
 EndFunc   ;==>Settings
 #CS INFO
-	101241 V18 4/10/2020 12:20:13 PM V17 2/28/2020 12:24:54 AM V16 2/24/2020 11:43:24 AM V15 2/12/2020 9:01:54 AM
-#CE INFO
+	90689 V19 4/15/2020 2:57:51 AM V18 4/10/2020 12:20:13 PM V17 2/28/2020 12:24:54 AM V16 2/24/2020 11:43:24 AM
+#CE
 
 ;~~
 Func ScreenSize()
@@ -2494,6 +2497,8 @@ Func ScreenSize()
 
 	$g_boardx = $g_sxBase + 2 ;$g_sxBase is not fix after 0.140
 	$g_boardy = $g_syBase + 2
+	dataout("$g_boardx", $g_boardx)
+	dataout("$g_boardy", $g_boardy)
 
 	$keep = $g_Size
 	$mathW = Int(@DesktopWidth / $g_boardx) - 1
@@ -2515,7 +2520,7 @@ Func ScreenSize()
 	$sInputBoxAnswer = InputBox("Cell size", $s, $Math, "", 250, 200, $g_FormLeft, $g_FormTop, 0, $g_FormSetting)
 	$err = @error
 	Select
-		Case $err = 1     ; Cancle was pushed
+		Case $err = 1     ; Cancel  was pushed
 			Return
 
 		Case $err = 0     ;OK - The string returned is valid
@@ -2534,8 +2539,8 @@ Func ScreenSize()
 	EndSelect
 EndFunc   ;==>ScreenSize
 #CS INFO
-	87462 V11 4/10/2020 12:20:13 PM V10 3/25/2020 9:28:31 AM V9 3/19/2020 12:09:38 AM V8 1/16/2020 2:54:39 AM
-#CE INFO
+	92854 V12 4/15/2020 2:57:51 AM V11 4/10/2020 12:20:13 PM V10 3/25/2020 9:28:31 AM V9 3/19/2020 12:09:38 AM
+#CE
 
 ; Read INI setting
 Func ReadIni()
@@ -2907,7 +2912,8 @@ Func About()
 	$g_FormAbout = GUICreate("Snake19 - About", 615, 430, $g_FormLeft, $g_FormTop, $ws_popup + $ws_caption)
 ;~+~+
 	;$Message &= "|
-	$Message = "0.154 10 Apr 2020 Change board size, make sure it will fit"
+	$Message = "0.155 14 Apr 2020 Check if game board is on screen"
+	$Message &= "|0.154 10 Apr 2020 Change board size, make sure it will fit"
 	$Message &= "|0.153 7 Apr 2020 Fix PAUSE press problem 2nd. This should fix the rare problem too"
 	$Message &= "|0.152 7 Apr 2020 Fix the HIDE on problem 1st"
 	$Message &= "|0.151 6 Apr 2020 Adjust remove to half"
@@ -3015,8 +3021,8 @@ Func About()
 
 EndFunc   ;==>About
 #CS INFO
-	394052 V51 4/10/2020 12:20:13 PM V50 4/7/2020 9:22:30 PM V49 4/7/2020 2:15:18 AM V48 4/6/2020 6:53:29 AM
-#CE INFO
+	398621 V52 4/15/2020 2:57:51 AM V51 4/10/2020 12:20:13 PM V50 4/7/2020 9:22:30 PM V49 4/7/2020 2:15:18 AM
+#CE
 
 Func SetCellSide()
 	Pause("SetCellSide")
@@ -3265,7 +3271,7 @@ Func ReplayRecData($func, $x = 0, $y = 0, $z = 0, $zz = 0)
 
 	;X, Y
 
-	dataout("ReplayRecData", $func)
+	;dataout("ReplayRecData", $func)
 	Local $a
 
 	If $g_ReplayStatus <> $s_ReplayRec Then
@@ -3297,8 +3303,8 @@ Func ReplayRecData($func, $x = 0, $y = 0, $z = 0, $zz = 0)
 
 EndFunc   ;==>ReplayRecData
 #CS INFO
-	76050 V14 1/24/2020 1:30:56 AM V13 1/23/2020 7:11:42 PM V12 1/22/2020 5:09:10 PM V11 12/15/2019 9:48:21 AM
-#CE INFO
+	76109 V15 4/15/2020 2:57:51 AM V14 1/24/2020 1:30:56 AM V13 1/23/2020 7:11:42 PM V12 1/22/2020 5:09:10 PM
+#CE
 
 ;$nMsg = GetReplayPlay(N)
 
@@ -3631,15 +3637,45 @@ EndFunc   ;==>IniCenterGameScreen
 	58420 V3 1/10/2020 5:12:30 PM V2 1/10/2020 8:46:50 AM V1 1/9/2020 9:18:30 PM
 #CE INFO
 
+Func _CenterGameBd()
+	Local $x, $y, $flag, $gameLoc
+
+	If $g_ctrlBoard <> -1 Then
+		$gameLoc = WinGetPos($g_ctrlBoard) ;x=0, y=1, W=2, H=3
+		$flag = False
+		$x = @DesktopWidth - ($gameLoc[0] + $gameLoc[2])
+		If $x < 0 Then
+			$x = $gameLoc[0] + $x - 5
+			$flag = True
+		Else
+			$x = $gameLoc[0]
+		EndIf
+		$y = @DesktopHeight - ($gameLoc[1] + $gameLoc[3])
+		If $y < 0 Then
+			$y = $gameLoc[1] + $y - 5
+			$flag = True
+		Else
+			$y = $gameLoc[1]
+		EndIf
+		If $flag Then
+			WinMove($g_ctrlBoard, "", $x, $y)
+		EndIf
+	EndIf
+EndFunc   ;==>_CenterGameBd
+#CS INFO
+	35180 V1 4/15/2020 2:57:51 AM
+#CE
+
 ;	$g_FormLeft = -1
 ;	$g_FormTop = -1
 Func _Center($W, $H, $G = False) ;xw, yh  $G= game board
-	Local $gameLoc, $aClientSize
+	Local $gameLoc, $aClientSize ;~~
 
 	If $g_ctrlBoard <> -1 Then
 		$gameLoc = WinGetPos($g_ctrlBoard) ;x=0, y=1, W=2, H=3
 		$aClientSize = WinGetClientSize($g_ctrlBoard) ;cW=o, cH=1
-
+		dataout("Center " & $gameLoc, $G)
+		dataout($aClientSize)
 		$g_GameBdCenterXW = $gameLoc[0] + Int($aClientSize[0] / 2)
 		$g_GameBdCenterYH = $gameLoc[1] + Int($aClientSize[1] / 2)
 	EndIf
@@ -3648,28 +3684,30 @@ Func _Center($W, $H, $G = False) ;xw, yh  $G= game board
 	$g_FormTop = $g_GameBdCenterYH - Int($H / 2)
 
 	If $G Then ;make sure game board in on the screen
+		Dataout("Form In " & $g_FormLeft, $g_FormTop)
 		If $g_FormLeft < 0 Then
 			$g_GameBdCenterXW = $g_GameBdCenterXW + $g_FormLeft
-			$g_FormLeft = 0
+			$g_FormLeft = 5
 		EndIf
 		If $g_FormTop < 0 Then
 			$g_GameBdCenterYH = $g_GameBdCenterYH + $g_FormTop
-			$g_FormTop = 0
+			$g_FormTop = 5
 		EndIf
+		Dataout("Form Out " & $g_FormLeft, $g_FormTop)
 	EndIf
 
 	; make sure any form is on screen
 	If $g_FormLeft < 0 Then
-		$g_FormLeft = 0
+		$g_FormLeft = 5
 	EndIf
 	If $g_FormTop < 0 Then
-		$g_FormTop = 0
+		$g_FormTop = 5
 	EndIf
 
 EndFunc   ;==>_Center
 #CS INFO
-	62929 V4 1/16/2020 2:54:39 AM V3 1/10/2020 5:12:30 PM V2 1/10/2020 8:46:50 AM V1 1/9/2020 9:18:30 PM
-#CE INFO
+	74844 V5 4/15/2020 2:57:51 AM V4 1/16/2020 2:54:39 AM V3 1/10/2020 5:12:30 PM V2 1/10/2020 8:46:50 AM
+#CE
 
 ;_FileWriteFromArray("Array.txt", $g_a5)
 ;$g_data
@@ -4339,7 +4377,18 @@ EndFunc   ;==>RemoveGameBoard
 	10879 V1 3/25/2020 9:28:31 AM
 #CE INFO
 
-;Test befor Main
+Func _ArrayDataOut(Const ByRef $aArray, $title = "") ;one dimention
+	Local $UB
+	dataout("Array =", $title)
+	$UB = UBound($aArray)
+	For $x = 0 To $UB - 1
+		dataout($x, $aArray[$x])
+	Next
+EndFunc   ;==>_ArrayDataOut
+#CS INFO
+	15536 V1 4/15/2020 2:57:51 AM
+#CE
+
 ;ChangeBoardSize()
 ;Exit
 
@@ -4347,4 +4396,4 @@ Main()
 
 Exit
 
-;~T ScriptFunc.exe V0.54a 15 May 2019 - 4/10/2020 12:20:13 PM
+;~T ScriptFunc.exe V0.54a 15 May 2019 - 4/15/2020 2:57:51 AM

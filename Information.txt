@@ -1,18 +1,22 @@
+0.155 15 Apr 2020 Check if game board is on screen
+	forces Game Boad on the screen
+		Top and Left the screen must be created.
+		Bottom and Right moves when the game to start or main menu opens.
+
 0.154 10 Apr 2020 Change board size, make sure it will fit
-	forces SCREEN SIZE is too big
+	forces SCREEN SIZE if too big
 
 0.153 7 Apr 2020 Fix PAUSE press problem 2nd. This should fix the rare problem too
 0.152 7 Apr 2020 Fix the HIDE on problem 1st
 	The rare problem was cause when I added HIDE and PAUSE to the game.  Now they skip over the arrow movement check.
 
 0.151 6 Apr 2020 Adjust remove to half
-	Seems to end to quick, remove cell slower
+	Seems to end to quick, remove cells slower
 
 0.150 6 Apr 2020 Fixed 0.145 High scores base on game size
 	Found the bug in 0.145 and removed it. But I all my problems started in the fix for the rare problem
 		Different High score for each of the game board size.
 		Different Highest replay saves.
-
 
 0.149 5 Apr 2020 Reverted to 0.144 This version has no problems
 	Removed 0.148 5 Apr 2020 Found a number of problems.  Tired to fix.
