@@ -6,17 +6,18 @@ AutoItSetOption("MustDeclareVars", 1)
 ;Global Static $MESSAGE =  False   ;Pause will still work in script  No DataOut
 
 ; Must be Declared before _Prf_startup   ~+~+
-Global $ver = "0.156 15 Apr 2020 Fix Score & status"
+Global $ver = "0.157 16 Apr 2020 Main Menu layout to include changable keys"
 
 Global $ini_ver = "0.139"
 Global $g_replayVer = "0.138"
 
 ;Global $TESTING = False
 
-#include "R:\!Autoit\Blank\_prf_startup.au3"
+;#include "R:\!Autoit\Blank\_prf_startup.au3"
+#include "_prf_startup.au3"
 
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
-#AutoIt3Wrapper_Res_Fileversion=0.1.5.6
+#AutoIt3Wrapper_Res_Fileversion=0.1.5.7
 #AutoIt3Wrapper_Icon=R:\!Autoit\Ico\prf.ico
 #AutoIt3Wrapper_Res_Description=Another snake game
 #AutoIt3Wrapper_Res_LegalCopyright=© Phillip Forrestal 2019-2020
@@ -84,6 +85,8 @@ to do
 
 	Version
 ;~+~+
+	0.157 16 Apr 2020 Main Menu layout to include changable keys
+	Updated my includes.
 	0.156 15 Apr 2020 Fix Score & status
 	0.155 14 Apr 2020 Check if game board is on screen
 	0.154 10 Apr 2020 Change board size, make sure it will fit
@@ -681,7 +684,7 @@ Func Game()
 		Dim $Map[7][$g_boardx][$g_boardy] ;$Map[$what][x][y]
 
 		$b = $g_Font * 2
-		SayClearBoard(True)  ;~~
+		SayClearBoard(True)
 		_Center($g_boardx * $g_Size, $g_boardy * $g_Size + $b + 3, True)
 
 		$g_Focus = "Snake19 - " & $ver & " - Game size: " & $g_sxBase & " x " & $g_syBase
@@ -1000,8 +1003,8 @@ Func Game()
 
 EndFunc   ;==>Game
 #CS INFO
-	642436 V88 4/15/2020 2:57:51 AM V87 4/10/2020 12:20:13 PM V86 4/7/2020 9:22:30 PM V85 4/7/2020 2:15:18 AM
-#CE INFO
+	642125 V89 4/16/2020 9:12:07 PM V88 4/15/2020 2:57:51 AM V87 4/10/2020 12:20:13 PM V86 4/7/2020 9:22:30 PM
+#CE
 
 Func Tick() ;
 	Local $fdiff
@@ -1375,7 +1378,7 @@ Func Extra()
 EndFunc   ;==>Extra
 #CS INFO
 	472588 V59 4/15/2020 1:41:14 PM V58 2/24/2020 8:19:55 PM V57 2/24/2020 11:43:24 AM V56 1/23/2020 7:11:42 PM
-#CE
+#CE INFO
 
 Func Normal()
 	Local Static $LS_SnakeLenLast = 0
@@ -1712,15 +1715,15 @@ Func RemoveSnakeExtra($inputflag = False) ; at end
 	;Put in zero
 
 	If $Map[$num][$x_new][$y_new] - $Map[$num][$x_end][$y_end] = 0 Then
-		Status(3, "Died of hunger:", 1)
+		Status(3, "Died of hunger!", 1)
 		Return True
 	EndIf
 	Return False
 
 EndFunc   ;==>RemoveSnakeExtra
 #CS INFO
-	34681 V21 8/26/2019 10:02:39 AM V20 8/21/2019 10:55:18 AM V19 8/18/2019 11:15:59 PM V18 7/13/2019 7:20:00 PM
-#CE INFO
+	34656 V22 4/16/2020 9:12:07 PM V21 8/26/2019 10:02:39 AM V20 8/21/2019 10:55:18 AM V19 8/18/2019 11:15:59 PM
+#CE
 
 Func RemoveSnakeNormal() ; at end
 	Local $x, $y
@@ -1829,8 +1832,8 @@ Func AddFood($start = False)
 
 EndFunc   ;==>AddFood
 #CS INFO
-	117358 V23 2/28/2020 12:24:54 AM V22 2/24/2020 11:43:24 AM V21 1/23/2020 7:11:42 PM V20 11/19/2019 1:09:35 PM
-#CE INFO
+	123710 V24 4/16/2020 9:12:07 PM V23 2/28/2020 12:24:54 AM V22 2/24/2020 11:43:24 AM V21 1/23/2020 7:11:42 PM
+#CE
 
 Func ClearBoard()
 	Local $var, $NotEmpty
@@ -2134,8 +2137,11 @@ EndFunc   ;==>CreateColorJpg
 	13655 V9 1/22/2020 5:09:10 PM V8 10/25/2019 12:29:56 AM V7 10/13/2019 1:37:57 PM V6 10/11/2019 3:14:30 PM
 #CE INFO
 
+;~~
 Func StartForm()
 	;Local $FormMainMenu ; , $Group1
+	Local $pl, $pr, $pu, $pd, $pp, $pq, $pm
+
 	Local $Radio3, $Checkbox1, $b_start, $b_setting, $b_about
 	Local $nMsg, $L_Tick
 	Local $L_MinNotflag = True
@@ -2193,11 +2199,9 @@ Func StartForm()
 			$b += 20
 		Next
 
-		Local $Edit1 = GUICtrlCreateEdit("", 20, $b, 550, 230, $ES_READONLY)
+		Local $Edit1 = GUICtrlCreateEdit("", 20, $b, 550, 200, $ES_READONLY)
 		GUICtrlSetFont($Edit1, 10, 400, 0, "Arial")
-		GUICtrlSetData($Edit1, "Press Q to quit. Press P to Pause.  Press M to Minimize game" & @CRLF, 1)
-		;GUICtrlSetData($Edit1, @CRLF, 1)
-		GUICtrlSetData($Edit1, "If you lose Focus or Minimize the game, it will PAUSE" & @CRLF, 1)
+		GUICtrlSetData($Edit1, "If you lose Focus or Minimize the game, the game will PAUSE" & @CRLF, 1)
 		GUICtrlSetData($Edit1, @CRLF, 1)
 
 		GUICtrlSetData($Edit1, "Normal Snake" & @CRLF, 1)
@@ -2216,6 +2220,24 @@ Func StartForm()
 		$b_about = GUICtrlCreateButton("About", 500, 550, 75, 35)
 		$gb_replay = GUICtrlCreateButton("Replay", 270 + 75 + 25, 550, 75, 35)
 		$b_start = GUICtrlCreateButton("GO", 270, 550, 75, 35)
+
+		$a = 20 ; from left edge
+		$b = 10 ; from top edge
+		$c = 15
+
+;~~
+		;220 across
+		GUICtrlCreateLabel("Up = " & $g_keyup, $a, $b, 200, $c, $SS_CENTER)
+		GUICtrlCreateLabel("Left = " & $g_keyleft, $a, $b + $c, 100, $c, $SS_LEFT)
+		GUICtrlCreateLabel("Right = " & $g_keyright, $a + 120, $b + $c, 100, $c, $SS_RIGHT)
+		GUICtrlCreateLabel("Down = " & $g_keydown, $a, $b + $c * 2, 200, $c, $SS_CENTER)
+
+		;$a=400 ; from left edge
+		$b = $b + $c * 3 ; from top edge
+
+		GUICtrlCreateLabel("Quit = " & $g_keyquit, $a, $b, 200, 15)
+		GUICtrlCreateLabel("Pause = " & $g_keypause, $a, $b + 15, 200, 15)
+		GUICtrlCreateLabel("Minimize = " & $g_keymin, $a, $b + 30, 200, 15)
 
 	EndIf
 	GUISetState(@SW_SHOW)
@@ -2442,8 +2464,8 @@ Func StartForm()
 
 EndFunc   ;==>StartForm
 #CS INFO
-	645484 V61 4/15/2020 2:57:51 AM V60 3/27/2020 10:44:43 AM V59 3/25/2020 9:28:31 AM V58 2/26/2020 3:10:00 AM
-#CE INFO
+	679943 V62 4/16/2020 9:12:07 PM V61 4/15/2020 2:57:51 AM V60 3/27/2020 10:44:43 AM V59 3/25/2020 9:28:31 AM
+#CE
 
 Func Settings()
 	Local $y
@@ -2497,7 +2519,6 @@ EndFunc   ;==>Settings
 	90689 V19 4/15/2020 2:57:51 AM V18 4/10/2020 12:20:13 PM V17 2/28/2020 12:24:54 AM V16 2/24/2020 11:43:24 AM
 #CE INFO
 
-;~~
 Func ScreenSize()
 	Local $sInputBoxAnswer, $keep, $s, $mathW, $mathH, $Math
 	Local $err
@@ -2919,7 +2940,8 @@ Func About()
 	$g_FormAbout = GUICreate("Snake19 - About", 615, 430, $g_FormLeft, $g_FormTop, $ws_popup + $ws_caption)
 ;~+~+
 	;$Message &= "|
-	$Message = "0.156 15 Apr 2020 Fix Score & status"
+	$Message = "0.157 16 Apr 2020 Main Menu layout to include changable keys"
+	$Message &= "|0.156 15 Apr 2020 Fix Score & status"
 	$Message &= "|0.155 14 Apr 2020 Check if game board is on screen"
 	$Message &= "|0.154 10 Apr 2020 Change board size, make sure it will fit"
 	$Message &= "|0.153 7 Apr 2020 Fix PAUSE press problem 2nd. This should fix the rare problem too"
@@ -3029,7 +3051,7 @@ Func About()
 
 EndFunc   ;==>About
 #CS INFO
-	402013 V53 4/15/2020 1:41:14 PM V52 4/15/2020 2:57:51 AM V51 4/10/2020 12:20:13 PM V50 4/7/2020 9:22:30 PM
+	407682 V54 4/16/2020 9:12:07 PM V53 4/15/2020 1:41:14 PM V52 4/15/2020 2:57:51 AM V51 4/10/2020 12:20:13 PM
 #CE
 
 Func SetCellSide()
@@ -3677,7 +3699,7 @@ EndFunc   ;==>_CenterGameBd
 ;	$g_FormLeft = -1
 ;	$g_FormTop = -1
 Func _Center($W, $H, $G = False) ;xw, yh  $G= game board
-	Local $gameLoc, $aClientSize ;~~
+	Local $gameLoc, $aClientSize
 
 	If $g_ctrlBoard <> -1 Then
 		$gameLoc = WinGetPos($g_ctrlBoard) ;x=0, y=1, W=2, H=3
@@ -3714,8 +3736,8 @@ Func _Center($W, $H, $G = False) ;xw, yh  $G= game board
 
 EndFunc   ;==>_Center
 #CS INFO
-	74844 V5 4/15/2020 2:57:51 AM V4 1/16/2020 2:54:39 AM V3 1/10/2020 5:12:30 PM V2 1/10/2020 8:46:50 AM
-#CE INFO
+	74533 V6 4/16/2020 9:12:07 PM V5 4/15/2020 2:57:51 AM V4 1/16/2020 2:54:39 AM V3 1/10/2020 5:12:30 PM
+#CE
 
 ;_FileWriteFromArray("Array.txt", $g_a5)
 ;$g_data
@@ -3893,6 +3915,7 @@ Func SettingKeys()
 	$b = 60
 	$c = 120
 
+;~~
 	$pu = GUICtrlCreateButton("Up = " & $ku, 400 / 2 - 60, $b, $c, 20)
 	$pl = GUICtrlCreateButton("Left = " & $kl, 400 / 4 - 80, $b + 30, $c, 20)
 	$pr = GUICtrlCreateButton("Right = " & $kr, 400 * .75 - 40, $b + 30, $c, 20)
@@ -3994,8 +4017,8 @@ Func SettingKeys()
 	GUIDelete($g_FormKey)
 EndFunc   ;==>SettingKeys
 #CS INFO
-	228490 V4 2/15/2020 6:35:19 PM V3 2/15/2020 6:21:21 PM V2 2/14/2020 9:46:03 AM V1 2/12/2020 9:01:54 AM
-#CE INFO
+	228801 V5 4/16/2020 9:12:07 PM V4 2/15/2020 6:35:19 PM V3 2/15/2020 6:21:21 PM V2 2/14/2020 9:46:03 AM
+#CE
 
 #EndRegion SettingKeys
 
@@ -4249,7 +4272,6 @@ EndFunc   ;==>SettingsWhenAdjLen
 	175423 V3 2/26/2020 3:10:00 AM V2 2/24/2020 8:19:55 PM V1 2/24/2020 11:43:24 AM
 #CE INFO
 
-;~~
 Func ChangeBoardSize()
 	Local $ok, $cancel, $default, $nMsg, $idX, $idY, $x, $y, $a, $Input_Value
 
@@ -4385,18 +4407,6 @@ EndFunc   ;==>RemoveGameBoard
 	10879 V1 3/25/2020 9:28:31 AM
 #CE INFO
 
-Func _ArrayDataOut(Const ByRef $aArray, $title = "") ;one dimention
-	Local $UB
-	dataout("Array =", $title)
-	$UB = UBound($aArray)
-	For $x = 0 To $UB - 1
-		dataout($x, $aArray[$x])
-	Next
-EndFunc   ;==>_ArrayDataOut
-#CS INFO
-	15536 V1 4/15/2020 2:57:51 AM
-#CE INFO
-
 ;ChangeBoardSize()
 ;Exit
 
@@ -4404,4 +4414,4 @@ Main()
 
 Exit
 
-;~T ScriptFunc.exe V0.54a 15 May 2019 - 4/15/2020 1:41:14 PM
+;~T ScriptFunc.exe V0.54a 15 May 2019 - 4/16/2020 9:12:07 PM

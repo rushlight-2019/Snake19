@@ -1,3 +1,7 @@
+0.157 16 Apr 2020 Main Menu layout to include changable keys
+	Changabe keys so on Main Menu.  To change them go to Setting and Keys
+	Change Information now does not overlap the bottom buttons.
+
 0.156 15 Apr 2020 Fix Score & status
 	Changed wording and remove some number to make if fix on smaller game board size. Very small will not fix.
 
@@ -159,23 +163,10 @@ Bonus Food over 100 length, will create a 2nd food.    On or off.
 
 ----------------
 To do
-Fix Score remove not needed make smaller
-Status size problem
-Main Menu buttons.
-Press Q is changable.
+Main Menu buttons. Press Q is changable.
 Clean up
 Rare problem: No food in game. Seen it once this year. But I saved the replay games.
 
 ----------------
 Problem:
-
-Should be fixed in 0.153
-The rare problem is in how pause worked.
-Should be fixed in 0.146 the fix cause problems.
-Long: Still have the funny start game problem that I can't create in debug mode.
-The end of the snake does not clear, snake just get longer, until you run over it.
-Saw it in version 0.145
-One way to cause it: Start game, don't move, lose focus, get focus and move.
-I'll active debug trace and I not able to get it to happen.
-
 Rare: No food in game. Seen it once this year. But I saved the replay games.
