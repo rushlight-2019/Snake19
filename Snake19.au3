@@ -6,7 +6,7 @@ AutoItSetOption("MustDeclareVars", 1)
 ;Global Static $MESSAGE =  False   ;Pause will still work in script  No DataOut
 
 ; Must be Declared before _Prf_startup   ~+~+
-Global $ver = "0.157 16 Apr 2020 Main Menu layout to include changable keys"
+Global $ver = "0.159 17 Apr 2020 Change Food bonus from fix value 100 to game board size + 30"
 
 Global $ini_ver = "0.139"
 Global $g_replayVer = "0.138"
@@ -17,7 +17,7 @@ Global $g_replayVer = "0.138"
 #include "_prf_startup.au3"
 
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
-#AutoIt3Wrapper_Res_Fileversion=0.1.5.7
+#AutoIt3Wrapper_Res_Fileversion=0.1.5.9
 #AutoIt3Wrapper_Icon=R:\!Autoit\Ico\prf.ico
 #AutoIt3Wrapper_Res_Description=Another snake game
 #AutoIt3Wrapper_Res_LegalCopyright=© Phillip Forrestal 2019-2020
@@ -85,6 +85,8 @@ to do
 
 	Version
 ;~+~+
+	0.159 17 Apr 2020 Change Food bonus from fix value 100 to game board size + 30
+	0.158 17 Apr 2020 Change My in game score line. Change order to add food
 	0.157 16 Apr 2020 Main Menu layout to include changable keys
 	Updated my includes.
 	0.156 15 Apr 2020 Fix Score & status
@@ -1004,7 +1006,7 @@ Func Game()
 EndFunc   ;==>Game
 #CS INFO
 	642125 V89 4/16/2020 9:12:07 PM V88 4/15/2020 2:57:51 AM V87 4/10/2020 12:20:13 PM V86 4/7/2020 9:22:30 PM
-#CE
+#CE INFO
 
 Func Tick() ;
 	Local $fdiff
@@ -1265,9 +1267,9 @@ Func Extra()
 			$HungerCnt = 0
 
 			;RemoveFood()  NOT needed because  snake will over write with out looking
-			AddFood()
 			PrevNext($x_new + $g_dirX, $y_new + $g_dirY) ;New value
 			RemoveSnakeExtra() ;only empty cell change len
+			AddFood()
 
 		Case $FOOD2 ;Food from Food from 0
 			If $g_PWsnkTruCnt > 3 Then
@@ -1367,17 +1369,17 @@ Func Extra()
 			Case $s_ReplayPlay
 				$b = String($g_iReplayPlyInx)
 		EndSwitch
-		;		Status(1, StringFormat("L %4u, Mx: %4u, Score: %6u,   ms/cyc %u", $a, $g_SnakeMax, $g_GameScore, $g_tc, $b), 2)
+
 		If $g_GameScore > 500 Then
-			Status(1, StringFormat("L %u Max %u Score %u", $a, $g_SnakeMax, $g_GameScore), 2)
+			Status(1, StringFormat("Score %u Max %u Len %u", $g_GameScore, $g_SnakeMax, $a), 2)
 		Else
-			Status(1, StringFormat("L %u Max %u Score %u  ms/cyc %u", $a, $g_SnakeMax, $g_GameScore, $g_tc), 2)
+			Status(1, StringFormat("Score %u Max %u L %u ms/cyc %u", $g_GameScore, $g_SnakeMax, $a, $g_tc), 2)
 		EndIf
 	EndIf
 
 EndFunc   ;==>Extra
 #CS INFO
-	472588 V59 4/15/2020 1:41:14 PM V58 2/24/2020 8:19:55 PM V57 2/24/2020 11:43:24 AM V56 1/23/2020 7:11:42 PM
+	464956 V60 4/17/2020 9:19:34 AM V59 4/15/2020 1:41:14 PM V58 2/24/2020 8:19:55 PM V57 2/24/2020 11:43:24 AM
 #CE INFO
 
 Func Normal()
@@ -1421,8 +1423,8 @@ Func Normal()
 			$g_ScoreFood += 1
 
 			;RemoveFood()  NOT needed because  snake will over write with out looking
-			AddFood()
 			PrevNext($x_new + $g_dirX, $y_new + $g_dirY) ;New value
+			AddFood()
 
 		Case $EMPTY ;Normal
 
@@ -1723,7 +1725,7 @@ Func RemoveSnakeExtra($inputflag = False) ; at end
 EndFunc   ;==>RemoveSnakeExtra
 #CS INFO
 	34656 V22 4/16/2020 9:12:07 PM V21 8/26/2019 10:02:39 AM V20 8/21/2019 10:55:18 AM V19 8/18/2019 11:15:59 PM
-#CE
+#CE INFO
 
 Func RemoveSnakeNormal() ; at end
 	Local $x, $y
@@ -1748,7 +1750,8 @@ Func AddFood($start = False)
 	If Not $start Then ;Force start with one food  below math sometime cause 0 food on start
 		$x = 1
 		If $g_gBonusFood Then
-			If ($Map[$num][$x_new][$y_new] - $Map[$num][$x_end][$y_end]) > 100 Then
+			;	If ($Map[$num][$x_new][$y_new] - $Map[$num][$x_end][$y_end]) > 100 Then
+			If ($Map[$num][$x_new][$y_new] - $Map[$num][$x_end][$y_end]) > 30 + $g_sxBase + $g_syBase Then
 				$x = 2
 			EndIf
 		EndIf
@@ -1832,7 +1835,7 @@ Func AddFood($start = False)
 
 EndFunc   ;==>AddFood
 #CS INFO
-	123710 V24 4/16/2020 9:12:07 PM V23 2/28/2020 12:24:54 AM V22 2/24/2020 11:43:24 AM V21 1/23/2020 7:11:42 PM
+	124841 V26 4/17/2020 12:45:12 PM V25 4/17/2020 9:19:34 AM V24 4/16/2020 9:12:07 PM V23 2/28/2020 12:24:54 AM
 #CE
 
 Func ClearBoard()
@@ -2465,7 +2468,7 @@ Func StartForm()
 EndFunc   ;==>StartForm
 #CS INFO
 	679943 V62 4/16/2020 9:12:07 PM V61 4/15/2020 2:57:51 AM V60 3/27/2020 10:44:43 AM V59 3/25/2020 9:28:31 AM
-#CE
+#CE INFO
 
 Func Settings()
 	Local $y
@@ -2940,7 +2943,9 @@ Func About()
 	$g_FormAbout = GUICreate("Snake19 - About", 615, 430, $g_FormLeft, $g_FormTop, $ws_popup + $ws_caption)
 ;~+~+
 	;$Message &= "|
-	$Message = "0.157 16 Apr 2020 Main Menu layout to include changable keys"
+	$Message = "0.159 17 Apr 2020 Change Food bonus from fix value 100 to game board size + 30"
+	$Message &= "|0.158 17 Apr 2020 Change My in game score line. Change order to add food"
+	$Message &= "|0.157 16 Apr 2020 Main Menu layout to include changable keys"
 	$Message &= "|0.156 15 Apr 2020 Fix Score & status"
 	$Message &= "|0.155 14 Apr 2020 Check if game board is on screen"
 	$Message &= "|0.154 10 Apr 2020 Change board size, make sure it will fit"
@@ -3051,7 +3056,7 @@ Func About()
 
 EndFunc   ;==>About
 #CS INFO
-	407682 V54 4/16/2020 9:12:07 PM V53 4/15/2020 1:41:14 PM V52 4/15/2020 2:57:51 AM V51 4/10/2020 12:20:13 PM
+	420642 V55 4/17/2020 12:45:12 PM V54 4/16/2020 9:12:07 PM V53 4/15/2020 1:41:14 PM V52 4/15/2020 2:57:51 AM
 #CE
 
 Func SetCellSide()
@@ -3737,7 +3742,7 @@ Func _Center($W, $H, $G = False) ;xw, yh  $G= game board
 EndFunc   ;==>_Center
 #CS INFO
 	74533 V6 4/16/2020 9:12:07 PM V5 4/15/2020 2:57:51 AM V4 1/16/2020 2:54:39 AM V3 1/10/2020 5:12:30 PM
-#CE
+#CE INFO
 
 ;_FileWriteFromArray("Array.txt", $g_a5)
 ;$g_data
@@ -4018,7 +4023,7 @@ Func SettingKeys()
 EndFunc   ;==>SettingKeys
 #CS INFO
 	228801 V5 4/16/2020 9:12:07 PM V4 2/15/2020 6:35:19 PM V3 2/15/2020 6:21:21 PM V2 2/14/2020 9:46:03 AM
-#CE
+#CE INFO
 
 #EndRegion SettingKeys
 
@@ -4221,10 +4226,12 @@ Func SettingsWhenAdjLen()
 
 	;Check box is for it bonus food is  used at 100
 
-	$ckFoodBonus = GUICtrlCreateCheckbox("Bonus Food over 100 length", 30, 150, 250, 20)
+	$ckFoodBonus = GUICtrlCreateCheckbox("Bonus Food over X length", 30, 150, 250, 20)
 	GUICtrlSetFont(-1, 12, 400, 0, "Arial")
+	GUICtrlCreateLabel("X = Game Board size + 30", 30, 170, 250, 20)
+	GUICtrlSetFont(-1, 10, 400, 0, "Arial")
 	If $g_gBonusFood Then
-		GUICtrlSetState(-1, $GUI_CHECKED)
+		GUICtrlSetState($ckFoodBonus, $GUI_CHECKED)
 	EndIf
 
 	$ok = GUICtrlCreateButton("OK", 34, 200, 90, 50)
@@ -4269,8 +4276,8 @@ Func SettingsWhenAdjLen()
 	GUIDelete($g_FormAdjLen)
 EndFunc   ;==>SettingsWhenAdjLen
 #CS INFO
-	175423 V3 2/26/2020 3:10:00 AM V2 2/24/2020 8:19:55 PM V1 2/24/2020 11:43:24 AM
-#CE INFO
+	183102 V4 4/17/2020 12:45:12 PM V3 2/26/2020 3:10:00 AM V2 2/24/2020 8:19:55 PM V1 2/24/2020 11:43:24 AM
+#CE
 
 Func ChangeBoardSize()
 	Local $ok, $cancel, $default, $nMsg, $idX, $idY, $x, $y, $a, $Input_Value
@@ -4414,4 +4421,4 @@ Main()
 
 Exit
 
-;~T ScriptFunc.exe V0.54a 15 May 2019 - 4/16/2020 9:12:07 PM
+;~T ScriptFunc.exe V0.54a 15 May 2019 - 4/17/2020 12:45:12 PM

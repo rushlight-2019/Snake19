@@ -1,9 +1,16 @@
+0.159 17 Apr 2020 Change Food bonus from fix value 100 to game board size + 30
+	Next I am removing all the trouble shooting line. I am done.  Unless I find something.
+
+0.158 17 Apr 2020 Change My in game score line. Change order to add food
+	Put Score first.
+	Put Add Food last.  (Only thing I can think of to fix the super rare problem of no food)
+
 0.157 16 Apr 2020 Main Menu layout to include changable keys
 	Changabe keys so on Main Menu.  To change them go to Setting and Keys
 	Change Information now does not overlap the bottom buttons.
 
 0.156 15 Apr 2020 Fix Score & status
-	Changed wording and remove some number to make if fix on smaller game board size. Very small will not fix.
+	Changed wording and remove some numbers to make if fit on smaller game board size. Very small will not fit.
 
 0.155 15 Apr 2020 Check if game board is on screen
 	forces Game Boad on the screen
@@ -157,16 +164,15 @@ Clear the high scores. Default is not to delete the highest score.  Uncheck the 
 Adjust when to Add/Remove Snake Cells
 When to adjust snake length. Snake moves a number of positions before the change occurs. 0-10  Default 2.
 
-Bonus Food over 100 length, will create a 2nd food.    On or off.
+Bonus Food over board size plus 30 length, will create a 2nd food.    On or off.
 
 
 
 ----------------
 To do
-Main Menu buttons. Press Q is changable.
 Clean up
 Rare problem: No food in game. Seen it once this year. But I saved the replay games.
 
 ----------------
 Problem:
-Rare: No food in game. Seen it once this year. But I saved the replay games.
+Rare: No food in game. Seen it once this year.
