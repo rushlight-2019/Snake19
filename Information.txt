@@ -1,3 +1,6 @@
+0.160 20 Apr 2020 Minor changes and fix remove data
+	Delete the game, delete all the data create in the game.
+
 0.159 17 Apr 2020 Change Food bonus from fix value 100 to game board size + 30
 	Next I am removing all the trouble shooting line. I am done.  Unless I find something.
 
@@ -171,7 +174,6 @@ Bonus Food over board size plus 30 length, will create a 2nd food.    On or off.
 ----------------
 To do
 Clean up
-Rare problem: No food in game. Seen it once this year. But I saved the replay games.
 
 ----------------
 Problem:

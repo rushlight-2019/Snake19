@@ -6,7 +6,7 @@ AutoItSetOption("MustDeclareVars", 1)
 ;Global Static $MESSAGE =  False   ;Pause will still work in script  No DataOut
 
 ; Must be Declared before _Prf_startup   ~+~+
-Global $ver = "0.159 17 Apr 2020 Change Food bonus from fix value 100 to game board size + 30"
+Global $ver = "0.160 20 Apr 2020 Minor changes and fix remove data"
 
 Global $ini_ver = "0.139"
 Global $g_replayVer = "0.138"
@@ -17,7 +17,7 @@ Global $g_replayVer = "0.138"
 #include "_prf_startup.au3"
 
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
-#AutoIt3Wrapper_Res_Fileversion=0.1.5.9
+#AutoIt3Wrapper_Res_Fileversion=0.1.6.0
 #AutoIt3Wrapper_Icon=R:\!Autoit\Ico\prf.ico
 #AutoIt3Wrapper_Res_Description=Another snake game
 #AutoIt3Wrapper_Res_LegalCopyright=© Phillip Forrestal 2019-2020
@@ -85,6 +85,7 @@ to do
 
 	Version
 ;~+~+
+	0.160 20 Apr 2020 Minor changes and fix remove data
 	0.159 17 Apr 2020 Change Food bonus from fix value 100 to game board size + 30
 	0.158 17 Apr 2020 Change My in game score line. Change order to add food
 	0.157 16 Apr 2020 Main Menu layout to include changable keys
@@ -1370,7 +1371,7 @@ Func Extra()
 				$b = String($g_iReplayPlyInx)
 		EndSwitch
 
-		If $g_GameScore > 500 Then
+		If $g_GameScore > 1000 Then
 			Status(1, StringFormat("Score %u Max %u Len %u", $g_GameScore, $g_SnakeMax, $a), 2)
 		Else
 			Status(1, StringFormat("Score %u Max %u L %u ms/cyc %u", $g_GameScore, $g_SnakeMax, $a, $g_tc), 2)
@@ -1379,8 +1380,8 @@ Func Extra()
 
 EndFunc   ;==>Extra
 #CS INFO
-	464956 V60 4/17/2020 9:19:34 AM V59 4/15/2020 1:41:14 PM V58 2/24/2020 8:19:55 PM V57 2/24/2020 11:43:24 AM
-#CE INFO
+	465000 V61 4/20/2020 3:02:22 AM V60 4/17/2020 9:19:34 AM V59 4/15/2020 1:41:14 PM V58 2/24/2020 8:19:55 PM
+#CE
 
 Func Normal()
 	Local Static $LS_SnakeLenLast = 0
@@ -1836,7 +1837,7 @@ Func AddFood($start = False)
 EndFunc   ;==>AddFood
 #CS INFO
 	124841 V26 4/17/2020 12:45:12 PM V25 4/17/2020 9:19:34 AM V24 4/16/2020 9:12:07 PM V23 2/28/2020 12:24:54 AM
-#CE
+#CE INFO
 
 Func ClearBoard()
 	Local $var, $NotEmpty
@@ -2917,7 +2918,7 @@ Func DeleteData()
 			Case $Button1
 				FileDelete($s_ini)
 				FileDelete($s_scoreini)
-
+				FileDelete($g_data & "*.Snk19")
 				FileDelete($cEDGE)
 				FileDelete($cEMPTY)
 				FileDelete($cSNAKE)
@@ -2933,8 +2934,8 @@ Func DeleteData()
 	Exit
 EndFunc   ;==>DeleteData
 #CS INFO
-	145047 V4 1/9/2020 9:18:30 PM V3 11/19/2019 1:09:35 PM V2 10/20/2019 1:07:26 AM V1 10/13/2019 1:37:57 PM
-#CE INFO
+	147351 V5 4/20/2020 3:02:22 AM V4 1/9/2020 9:18:30 PM V3 11/19/2019 1:09:35 PM V2 10/20/2019 1:07:26 AM
+#CE
 
 Func About()
 	Local $MyUrl, $Message
@@ -2943,7 +2944,8 @@ Func About()
 	$g_FormAbout = GUICreate("Snake19 - About", 615, 430, $g_FormLeft, $g_FormTop, $ws_popup + $ws_caption)
 ;~+~+
 	;$Message &= "|
-	$Message = "0.159 17 Apr 2020 Change Food bonus from fix value 100 to game board size + 30"
+	$Message = "0.160 20 Apr 2020 Minor changes and fix remove data"
+	$Message &= "||0.159 17 Apr 2020 Change Food bonus from fix value 100 to game board size + 30"
 	$Message &= "|0.158 17 Apr 2020 Change My in game score line. Change order to add food"
 	$Message &= "|0.157 16 Apr 2020 Main Menu layout to include changable keys"
 	$Message &= "|0.156 15 Apr 2020 Fix Score & status"
@@ -2953,7 +2955,7 @@ Func About()
 	$Message &= "|0.152 7 Apr 2020 Fix the HIDE on problem 1st"
 	$Message &= "|0.151 6 Apr 2020 Adjust remove to half"
 	$Message &= "|0.150 6 Apr 2020 Fixed 0.145 High scores base on game size"
-	$Message &= "|0.149 5 Apr 2020 Reverted to 0.144 This version has no problems"
+	$Message &= "||0.149 5 Apr 2020 Reverted to 0.144 This version has no problems"
 	$Message &= "|0.148 5 Apr 2020 Found a number of problems.  Tired to fix."
 	$Message &= "|0.147 31 Mar 2020 Adjust remove to half"
 	$Message &= "|0.146 27 Mar 2020 Fixed the rare start problem"
@@ -3056,7 +3058,7 @@ Func About()
 
 EndFunc   ;==>About
 #CS INFO
-	420642 V55 4/17/2020 12:45:12 PM V54 4/16/2020 9:12:07 PM V53 4/15/2020 1:41:14 PM V52 4/15/2020 2:57:51 AM
+	425700 V56 4/20/2020 3:02:22 AM V55 4/17/2020 12:45:12 PM V54 4/16/2020 9:12:07 PM V53 4/15/2020 1:41:14 PM
 #CE
 
 Func SetCellSide()
@@ -4277,7 +4279,7 @@ Func SettingsWhenAdjLen()
 EndFunc   ;==>SettingsWhenAdjLen
 #CS INFO
 	183102 V4 4/17/2020 12:45:12 PM V3 2/26/2020 3:10:00 AM V2 2/24/2020 8:19:55 PM V1 2/24/2020 11:43:24 AM
-#CE
+#CE INFO
 
 Func ChangeBoardSize()
 	Local $ok, $cancel, $default, $nMsg, $idX, $idY, $x, $y, $a, $Input_Value
@@ -4421,4 +4423,4 @@ Main()
 
 Exit
 
-;~T ScriptFunc.exe V0.54a 15 May 2019 - 4/17/2020 12:45:12 PM
+;~T ScriptFunc.exe V0.54a 15 May 2019 - 4/20/2020 3:02:22 AM
