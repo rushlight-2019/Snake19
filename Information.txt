@@ -1,3 +1,6 @@
+0.161 25 Apr 2020 Problem With replay: When switch game types, you could play the wrong replay type
+	Fix Replay text
+
 0.160 20 Apr 2020 Minor changes and fix remove data
 	Delete the game, delete all the data create in the game.
 
