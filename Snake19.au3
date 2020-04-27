@@ -6,7 +6,7 @@ AutoItSetOption("MustDeclareVars", 1)
 ;Global Static $MESSAGE =  False   ;Pause will still work in script  No DataOut
 
 ; Must be Declared before _Prf_startup   ~+~+
-Global $ver = "0.161 25 Apr 2020 Problem With replay: When switch game types, you could play the wrong replay type"
+Global $ver = "0.162 26 Apr 2020 Fix No Food problem. Adding food was not the problem"
 ;"Removal of trouble shooting code"
 ;Problem With replay went switch game types
 
@@ -14,11 +14,10 @@ Global $ini_ver = "0.139"
 Global $g_replayVer = "0.138"
 
 ;Global $TESTING = False
-
 #include "_prf_startup.au3"
 
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
-#AutoIt3Wrapper_Res_Fileversion=0.1.6.1
+#AutoIt3Wrapper_Res_Fileversion=0.1.6.2
 #AutoIt3Wrapper_Icon=R:\!Autoit\Ico\prf.ico
 #AutoIt3Wrapper_Res_Description=Another snake game
 #AutoIt3Wrapper_Res_LegalCopyright=© Phillip Forrestal 2019-2020
@@ -86,6 +85,7 @@ to do
 
 	Version
 ;~+~+
+	0.162 26 Apr 2020 Fix No Food problem. Adding food was not the problem
 	0.161 25 Apr 2020 Problem With replay: When switch game types, you could play the wrong replay type: Text fixed
 	0.160 20 Apr 2020 Minor changes and fix remove data
 	0.159 17 Apr 2020 Change Food bonus from fix value 100 to game board size + 30
@@ -292,6 +292,8 @@ to do
 
 Opt("GUIEventOptions", 1)
 #EndRegion Base
+
+Global $PRF = False
 
 #Region Global
 Global $g_data ;= @ScriptDir & "\SNAKE19-Data"
@@ -670,7 +672,6 @@ Func Game()
 		$y = Int(IniRead($s_ini, "Board", "Y", 30))
 	EndIf
 	If $g_ctrlBoard <> -1 And ($x <> $L_gamesizeX Or $y <> $L_gamesizeY) Then  ;Use only for this test
-		dataout($x, $L_gamesizeX)
 		RemoveGameBoard()
 	EndIf
 	If $g_ctrlBoard = -1 Then
@@ -1001,18 +1002,11 @@ Func Game()
 
 EndFunc   ;==>Game
 #CS INFO
-	625731 V90 4/25/2020 3:00:10 AM V89 4/16/2020 9:12:07 PM V88 4/15/2020 2:57:51 AM V87 4/10/2020 12:20:13 PM
+	623548 V91 4/27/2020 12:59:11 AM V90 4/25/2020 3:00:10 AM V89 4/16/2020 9:12:07 PM V88 4/15/2020 2:57:51 AM
 #CE
 
 Func Tick() ;
 	Local $fdiff
-
-	;If $TESTING Then
-	;	If $Map[$what][0][0] <> $M1 Then
-	;		Pause("Null not edge", $Map[$what][0][0])
-	;		$Map[$what][0][0] = $M1
-	;	EndIf
-	;EndIf
 
 	If $g_Status0Off = 0 Then
 		Status(0, "", 0)
@@ -1063,8 +1057,8 @@ Func Tick() ;
 	$g_hTick = TimerInit()
 EndFunc   ;==>Tick
 #CS INFO
-	67812 V20 3/27/2020 10:44:43 AM V19 1/15/2020 10:44:49 AM V18 12/30/2019 7:47:56 PM V17 11/4/2019 9:35:34 AM
-#CE INFO
+	58135 V21 4/27/2020 12:59:11 AM V20 3/27/2020 10:44:43 AM V19 1/15/2020 10:44:49 AM V18 12/30/2019 7:47:56 PM
+#CE
 
 Func Extra()
 	Local $a, $c, $z, $b
@@ -1086,7 +1080,7 @@ Func Extra()
 			If $g_Ouch > 0 Then
 				$flag = DoubleBack($g_dirX, $g_dirY)
 				If $flag Then
-					Status(2, "Double back DEAD", 3)
+					Status(2, "Escape DEAD", 3)
 				Else
 					Status(0, "Ate too much dead snake or poop", 1)
 					$g_endgame = True
@@ -1112,10 +1106,8 @@ Func Extra()
 			Status(3, "Ate  snake POOP  Yuck! Lost " & $a, 1)
 			If $g_ReplayStatus = $s_ReplayPlay Then
 				$a = GetReplayPlay(20) ;55
-				dataout("55", $a[2])
-				If $a[0] Then  ; if false no poop out
+				If $a[0] Then                  ; if false no poop out
 					$z = $a[5]
-					dataout("Poop 1p", $z)
 					$g_poop[$z][0] = 1
 					$g_poop[$z][1] = $a[3]
 					$g_poop[$z][2] = $a[4]
@@ -1123,8 +1115,6 @@ Func Extra()
 					;		ReplayRecData(20,  $x, $y, $z, $g_poop[$Z][3])
 				EndIf
 			Else
-				dataout("Poop 1r", $z)
-
 				PoopAdd($x_new + $g_dirX, $y_new + $g_dirY, $s_PoopSize)
 			EndIf
 
@@ -1187,8 +1177,7 @@ Func Extra()
 
 				If $g_ReplayStatus = $s_ReplayPlay Then
 					$a = GetReplayPlay(20) ;44
-					dataout("44", $a[2])
-					If $a[0] Then  ; if false no poop out
+					If $a[0] Then                      ; if false no poop out
 						$z = $a[5]
 						$g_poop[$z][0] = 1
 						$g_poop[$z][1] = $a[3]
@@ -1375,8 +1364,8 @@ Func Extra()
 
 EndFunc   ;==>Extra
 #CS INFO
-	465000 V61 4/20/2020 3:02:22 AM V60 4/17/2020 9:19:34 AM V59 4/15/2020 1:41:14 PM V58 2/24/2020 8:19:55 PM
-#CE INFO
+	458389 V62 4/27/2020 12:59:11 AM V61 4/20/2020 3:02:22 AM V60 4/17/2020 9:19:34 AM V59 4/15/2020 1:41:14 PM
+#CE
 
 Func Normal()
 	Local Static $LS_SnakeLenLast = 0
@@ -1539,7 +1528,7 @@ Func ShowRow($x, $y)
 EndFunc   ;==>ShowRow
 #CS INFO
 	13600 V5 4/25/2020 3:00:10 AM V4 12/29/2019 7:10:02 PM V3 11/19/2019 1:09:35 PM V2 6/24/2019 11:22:57 PM
-#CE
+#CE INFO
 
 Func Status($status, $string, $color)
 	Local $c
@@ -1637,11 +1626,11 @@ Func DoubleBack($dirx, $diry)
 				EndIf
 			EndIf
 			If $flag Then
-				ReplayRecData(21, $x_new + $a, $y_new + $diry)
-				PrevNext($x_new + $a, $y_new + $diry)
+				ReplayRecData(21, $x_new + $a, $y_new)
+				PrevNext($x_new + $a, $y_new)
 				RemoveSnakeExtra() ;Same size
 			EndIf
-		Else ;$diry =0
+		Else ;$diry = 0
 			$a = Random(0, 1, 1)
 			If $a = 0 Then
 				$a = -1
@@ -1656,8 +1645,8 @@ Func DoubleBack($dirx, $diry)
 				EndIf
 			EndIf
 			If $flag Then
-				ReplayRecData(21, $x_new + $dirx, $y_new + $a)
-				PrevNext($x_new + $dirx, $y_new + $a)
+				ReplayRecData(21, $x_new, $y_new + $a)
+				PrevNext($x_new, $y_new + $a)
 				RemoveSnakeExtra() ;Same size
 			EndIf
 		EndIf
@@ -1666,8 +1655,8 @@ Func DoubleBack($dirx, $diry)
 
 EndFunc   ;==>DoubleBack
 #CS INFO
-	79338 V7 1/23/2020 7:11:42 PM V6 12/29/2019 7:10:02 PM V5 12/10/2019 8:29:16 PM V4 11/21/2019 3:52:08 PM
-#CE INFO
+	77264 V8 4/27/2020 12:59:11 AM V7 1/23/2020 7:11:42 PM V6 12/29/2019 7:10:02 PM V5 12/10/2019 8:29:16 PM
+#CE
 
 Func PrevNext($x, $y) ;New value
 	Local $x_prv, $y_prv
@@ -1741,24 +1730,24 @@ EndFunc   ;==>RemoveSnakeNormal
 #CE INFO
 
 Func AddFood($start = False)
-	Local $x, $y, $a
+	Local $x, $y, $a, $need
 
 	If Not $start Then ;Force start with one food  below math sometime cause 0 food on start
-		$x = 1
+		$need = 1
 		If $g_gBonusFood Then
 			;	If ($Map[$num][$x_new][$y_new] - $Map[$num][$x_end][$y_end]) > 100 Then
 			If ($Map[$num][$x_new][$y_new] - $Map[$num][$x_end][$y_end]) > 30 + $g_sxBase + $g_syBase Then
-				$x = 2
+				$need = 2
 			EndIf
 		EndIf
 
-		If $g_foodCnt > $x Then
+		If $g_foodCnt > $need Then
 			$g_foodCnt -= 1
 			If $g_foodCnt < 1 Then
 				$g_foodCnt = 1  ; for some reason $g_foodCnt becomes 0
 			EndIf
 			Return
-		ElseIf $g_foodCnt < $x Then
+		ElseIf $g_foodCnt < $need Then
 			$g_foodCnt += 1
 			AddFood()
 		EndIf
@@ -1807,7 +1796,7 @@ Func AddFood($start = False)
 					$y = Random(1, $g_syBase, 1)
 				Until $Map[$what][$x][$y] = $EMPTY
 			EndIf
-			;DataOut("Record 3 Food")
+
 			ReplayRecData(3, $x, $y) ;normal
 
 		EndIf
@@ -1818,6 +1807,7 @@ Func AddFood($start = False)
 			$x = $a[3]
 			$y = $a[4]
 		Else
+
 			Do
 				$x = Random(1, $g_sxBase, 1)
 				$y = Random(1, $g_syBase, 1)
@@ -1828,11 +1818,10 @@ Func AddFood($start = False)
 
 	$Map[$what][$x][$y] = $FOOD
 	GUICtrlSetImage($Map[$ctrl][$x][$y], $cFOOD)
-
 EndFunc   ;==>AddFood
 #CS INFO
-	124841 V26 4/17/2020 12:45:12 PM V25 4/17/2020 9:19:34 AM V24 4/16/2020 9:12:07 PM V23 2/28/2020 12:24:54 AM
-#CE INFO
+	124553 V27 4/27/2020 12:59:11 AM V26 4/17/2020 12:45:12 PM V25 4/17/2020 9:19:34 AM V24 4/16/2020 9:12:07 PM
+#CE
 
 Func ClearBoard()
 	Local $var, $NotEmpty
@@ -1892,7 +1881,7 @@ Func NormalExtra()
 EndFunc   ;==>NormalExtra
 #CS INFO
 	30164 V10 4/25/2020 3:00:10 AM V9 1/24/2020 1:30:56 AM V8 1/23/2020 7:11:42 PM V7 1/22/2020 5:09:10 PM
-#CE
+#CE INFO
 
 Func DisplayHiScore()
 	Local $s, $hs
@@ -2160,12 +2149,6 @@ Func StartForm()
 	Local $sMainMenuTitle = "Snake19 - Main Menu"
 
 	If $g_FormStart = -1 Then
-		Dataout("Create FormStart")
-	Else
-		Dataout("Reuse FormStart")
-	EndIf
-
-	If $g_FormStart = -1 Then
 		_CenterGameBd()
 		_Center(600, 600)
 		$g_FormStart = GUICreate($sMainMenuTitle, 600, 600, $g_FormLeft, $g_FormTop)
@@ -2323,7 +2306,6 @@ Func StartForm()
 				Else
 					$GameName = "My-"
 				EndIf
-				;pause($g_data & $GameName & "Current" & $g_sxBase & $g_syBase & ".Snk19")
 
 				If FileExists($g_data & $GameName & "Current" & $g_sxBase & $g_syBase & ".Snk19") = 1 Then
 
@@ -2359,8 +2341,7 @@ Func StartForm()
 					$done = 3 ; start replay
 
 					If IsArray($g_aReplay) = 0 Then
-						dataout("$g_aReplay not an array", @ScriptLineNumber)
-						Dim $g_aReplay[1] ;
+						Dim $g_aReplay[1]                         ;
 						$g_aReplay[0] = 1 ; size
 					EndIf
 
@@ -2402,7 +2383,7 @@ Func StartForm()
 								Else
 									$GameName = "M-"
 								EndIf
-								dataout("LOAD")
+
 								;$filename = FileOpenDialog("Load Replay", $MyDoc, "Snake Replay (*." & $GameName & "snk19)", 1, "", $g_FormReplay)
 								$filename = FileOpenDialog("Load Replay", $MyDoc, "Snake Replay (*." & $GameName & "snk19)", 1, "", $g_FormReplay)
 								If @error = 0 Then
@@ -2465,11 +2446,10 @@ Func StartForm()
 		EndSwitch
 	WEnd
 	MsgBox(0, "ERROR", "You shound never see me")
-	pause()
 
 EndFunc   ;==>StartForm
 #CS INFO
-	685689 V63 4/25/2020 3:00:10 AM V62 4/16/2020 9:12:07 PM V61 4/15/2020 2:57:51 AM V60 3/27/2020 10:44:43 AM
+	666394 V64 4/27/2020 12:59:11 AM V63 4/25/2020 3:00:10 AM V62 4/16/2020 9:12:07 PM V61 4/15/2020 2:57:51 AM
 #CE
 
 Func Settings()
@@ -2530,8 +2510,6 @@ Func ScreenSize()
 
 	$g_boardx = $g_sxBase + 2 ;$g_sxBase is not fix after 0.140
 	$g_boardy = $g_syBase + 2
-	dataout("$g_boardx", $g_boardx)
-	dataout("$g_boardy", $g_boardy)
 
 	$keep = $g_Size
 	$mathW = Int(@DesktopWidth / $g_boardx) - 1
@@ -2572,8 +2550,8 @@ Func ScreenSize()
 	EndSelect
 EndFunc   ;==>ScreenSize
 #CS INFO
-	92854 V12 4/15/2020 2:57:51 AM V11 4/10/2020 12:20:13 PM V10 3/25/2020 9:28:31 AM V9 3/19/2020 12:09:38 AM
-#CE INFO
+	87462 V13 4/27/2020 12:59:11 AM V12 4/15/2020 2:57:51 AM V11 4/10/2020 12:20:13 PM V10 3/25/2020 9:28:31 AM
+#CE
 
 ; Read INI setting
 Func ReadIni()
@@ -2622,12 +2600,10 @@ Func PoopRemove()
 				If $g_poop[$z][3] = 0 Then     ;delay = 0
 					$g_poop[$z][0] = 0
 					If $z = 0 Then     ;if zero then is a super food.
-						dataout("Poop super------------add 0")
 						$Map[$what][$g_poop[$z][1]][$g_poop[$z][2]] = $FOOD2
 						GUICtrlSetImage($Map[$ctrl][$g_poop[$z][1]][$g_poop[$z][2]], $cFOOD)
 					Else
-						dataout("Poop normal --------add", $z)
-						$Map[$what][$g_poop[$z][1]][$g_poop[$z][2]] = $EMPTY     ; normal remove
+						$Map[$what][$g_poop[$z][1]][$g_poop[$z][2]] = $EMPTY                             ; normal remove
 						GUICtrlSetImage($Map[$ctrl][$g_poop[$z][1]][$g_poop[$z][2]], $cEMPTY)
 					EndIf
 				Else
@@ -2638,8 +2614,8 @@ Func PoopRemove()
 	Next
 EndFunc   ;==>PoopRemove
 #CS INFO
-	54916 V7 12/29/2019 7:10:02 PM V6 12/15/2019 9:48:21 AM V5 11/19/2019 1:09:35 PM V4 10/20/2019 12:46:58 AM
-#CE INFO
+	49330 V8 4/27/2020 12:59:11 AM V7 12/29/2019 7:10:02 PM V6 12/15/2019 9:48:21 AM V5 11/19/2019 1:09:35 PM
+#CE
 
 ;Add poop array: Poop will replace food once this loction is empty
 Func PoopAdd($x, $y, $delay = $s_PoopSize / 4 + Random(0, Ceiling($s_PoopSize / 3), 1))
@@ -2688,7 +2664,6 @@ Func PoopShow($x, $y)
 		If $g_poop[$z][0] = 1 Then
 			If $g_poop[$z][1] = $x And $g_poop[$z][2] = $y Then
 				$g_poop[$z][0] = 2
-				dataout("Show Poop ", $z)
 
 				$Map[$what][$x][$y] = $POOP
 				GUICtrlSetImage($Map[$ctrl][$x][$y], $cPOOP)
@@ -2700,8 +2675,8 @@ Func PoopShow($x, $y)
 	Return True
 EndFunc   ;==>PoopShow
 #CS INFO
-	23609 V6 12/15/2019 9:48:21 AM V5 11/19/2019 1:09:35 PM V4 8/25/2019 6:50:13 PM V3 8/24/2019 6:38:07 PM
-#CE INFO
+	21673 V7 4/27/2020 12:59:11 AM V6 12/15/2019 9:48:21 AM V5 11/19/2019 1:09:35 PM V4 8/25/2019 6:50:13 PM
+#CE
 
 ;Check to see if color files exist, if not create them.
 Func CheckJpg()
@@ -2945,7 +2920,8 @@ Func About()
 	$g_FormAbout = GUICreate("Snake19 - About", 615, 430, $g_FormLeft, $g_FormTop, $ws_popup + $ws_caption)
 ;~+~+
 	;$Message &= "|
-	$Message = "0.161 25 Apr 2020 Problem With replay: When switch game types, you could play the wrong replay type"
+	$Message = "0.162 26 Apr 2020 Fix No Food problem. Adding food was not the problem"
+	$Message &= "|0.161 25 Apr 2020 Problem With replay: When switch game types, you could play the wrong replay type"
 	$Message &= "|0.160 20 Apr 2020 Minor changes and fix remove data"
 	$Message &= "||0.159 17 Apr 2020 Change Food bonus from fix value 100 to game board size + 30"
 	$Message &= "|0.158 17 Apr 2020 Change My in game score line. Change order to add food"
@@ -3060,15 +3036,8 @@ Func About()
 
 EndFunc   ;==>About
 #CS INFO
-	434798 V57 4/25/2020 3:00:10 AM V56 4/20/2020 3:02:22 AM V55 4/17/2020 12:45:12 PM V54 4/16/2020 9:12:07 PM
+	441096 V58 4/27/2020 12:59:11 AM V57 4/25/2020 3:00:10 AM V56 4/20/2020 3:02:22 AM V55 4/17/2020 12:45:12 PM
 #CE
-
-Func SetCellSide()
-	Pause("SetCellSide")
-EndFunc   ;==>SetCellSide
-#CS INFO
-	5273 V1 10/8/2019 4:57:52 PM
-#CE INFO
 
 ;------ Pass Wall
 
@@ -3270,7 +3239,6 @@ Func ReplayRecData($func, $x = 0, $y = 0, $z = 0, $zz = 0)
 
 	;X, Y
 
-	;dataout("ReplayRecData", $func)
 	Local $a
 
 	If $g_ReplayStatus <> $s_ReplayRec Then
@@ -3301,7 +3269,7 @@ Func ReplayRecData($func, $x = 0, $y = 0, $z = 0, $zz = 0)
 
 EndFunc   ;==>ReplayRecData
 #CS INFO
-	73685 V16 4/25/2020 3:00:10 AM V15 4/15/2020 2:57:51 AM V14 1/24/2020 1:30:56 AM V13 1/23/2020 7:11:42 PM
+	70934 V17 4/27/2020 12:59:11 AM V16 4/25/2020 3:00:10 AM V15 4/15/2020 2:57:51 AM V14 1/24/2020 1:30:56 AM
 #CE
 
 ;$nMsg = GetReplayPlay(N)
@@ -3350,39 +3318,35 @@ Func GetReplayPlay($Expecting)
 EndFunc   ;==>GetReplayPlay
 #CS INFO
 	41289 V14 4/25/2020 3:00:10 AM V13 1/31/2020 5:20:55 PM V12 1/23/2020 7:11:42 PM V11 12/29/2019 7:10:02 PM
-#CE
+#CE INFO
 
 ;Check to see if the sum is inside the edge, return $nv if ok same, not ok then 0
 Func CkOutsideEdgeX($nv, $ov)
 	If $nv + $ov < 0 Then
-		dataout("EdgeX out 1", $nv + $ov)
 		Return 0
 	EndIf
 	If $nv + $ov > $g_sxBase + 1 Then
-		dataout("EdgeX out top", $nv + $ov)
 		Return 0
 	EndIf
 	Return $nv
 EndFunc   ;==>CkOutsideEdgeX
 #CS INFO
-	16330 V2 2/28/2020 12:24:54 AM V1 12/15/2019 9:48:21 AM
-#CE INFO
+	11294 V3 4/27/2020 12:59:11 AM V2 2/28/2020 12:24:54 AM V1 12/15/2019 9:48:21 AM
+#CE
 
 ;Check to see if the sum is inside the edge, return $nv if ok same, not ok then 0
 Func CkOutsideEdgeY($nv, $ov)
 	If $nv + $ov < 0 Then
-		dataout("EdgeY out 1", $nv + $ov)
 		Return 0
 	EndIf
 	If $nv + $ov > $g_syBase + 1 Then
-		dataout("EdgeY out top", $nv + $ov)
 		Return 0
 	EndIf
 	Return $nv
 EndFunc   ;==>CkOutsideEdgeY
 #CS INFO
-	16335 V2 2/28/2020 12:24:54 AM V1 12/15/2019 9:48:21 AM
-#CE INFO
+	11297 V3 4/27/2020 12:59:11 AM V2 2/28/2020 12:24:54 AM V1 12/15/2019 9:48:21 AM
+#CE
 
 Func ChooseColor()
 	Local $a, $y, $flag
@@ -3535,7 +3499,6 @@ Func ChooseColor()
 					$a = True
 					If Not $L_bok Then
 						GUICtrlSetState($B_OK, $GUI_SHOW)
-						dataout("OK Show")
 						$L_bok = True
 					EndIf
 					ExitLoop
@@ -3543,7 +3506,6 @@ Func ChooseColor()
 			Next
 			If Not $a Then
 				If $L_bok Then
-					dataout("OK Hide")
 					GUICtrlSetState($B_OK, $GUI_HIDE)
 					$L_bok = False
 				EndIf
@@ -3602,7 +3564,7 @@ Func ChooseColor()
 	$g_FormColor = -1
 EndFunc   ;==>ChooseColor
 #CS INFO
-	364674 V7 4/25/2020 3:00:10 AM V6 3/25/2020 9:28:31 AM V5 1/10/2020 9:27:34 AM V4 1/9/2020 9:18:30 PM
+	361765 V8 4/27/2020 12:59:11 AM V7 4/25/2020 3:00:10 AM V6 3/25/2020 9:28:31 AM V5 1/10/2020 9:27:34 AM
 #CE
 
 ;Read / Write INI Center of game screen
@@ -3670,8 +3632,6 @@ Func _Center($W, $H, $G = False) ;xw, yh  $G= game board
 	If $g_ctrlBoard <> -1 Then
 		$gameLoc = WinGetPos($g_ctrlBoard) ;x=0, y=1, W=2, H=3
 		$aClientSize = WinGetClientSize($g_ctrlBoard) ;cW=o, cH=1
-		dataout("Center " & $gameLoc, $G)
-		dataout($aClientSize)
 		$g_GameBdCenterXW = $gameLoc[0] + Int($aClientSize[0] / 2)
 		$g_GameBdCenterYH = $gameLoc[1] + Int($aClientSize[1] / 2)
 	EndIf
@@ -3680,7 +3640,6 @@ Func _Center($W, $H, $G = False) ;xw, yh  $G= game board
 	$g_FormTop = $g_GameBdCenterYH - Int($H / 2)
 
 	If $G Then ;make sure game board in on the screen
-		Dataout("Form In " & $g_FormLeft, $g_FormTop)
 		If $g_FormLeft < 0 Then
 			$g_GameBdCenterXW = $g_GameBdCenterXW + $g_FormLeft
 			$g_FormLeft = 5
@@ -3689,7 +3648,6 @@ Func _Center($W, $H, $G = False) ;xw, yh  $G= game board
 			$g_GameBdCenterYH = $g_GameBdCenterYH + $g_FormTop
 			$g_FormTop = 5
 		EndIf
-		Dataout("Form Out " & $g_FormLeft, $g_FormTop)
 	EndIf
 
 	; make sure any form is on screen
@@ -3702,8 +3660,8 @@ Func _Center($W, $H, $G = False) ;xw, yh  $G= game board
 
 EndFunc   ;==>_Center
 #CS INFO
-	74533 V6 4/16/2020 9:12:07 PM V5 4/15/2020 2:57:51 AM V4 1/16/2020 2:54:39 AM V3 1/10/2020 5:12:30 PM
-#CE INFO
+	62949 V7 4/27/2020 12:59:11 AM V6 4/16/2020 9:12:07 PM V5 4/15/2020 2:57:51 AM V4 1/16/2020 2:54:39 AM
+#CE
 
 Func ReplaySave()
 	; replay save current as last file, check to see it score is highest
@@ -3740,7 +3698,7 @@ Func ReplaySave()
 EndFunc   ;==>ReplaySave
 #CS INFO
 	74669 V6 4/25/2020 3:00:10 AM V5 3/27/2020 10:44:43 AM V4 2/6/2020 2:46:20 PM V3 1/24/2020 1:30:56 AM
-#CE
+#CE INFO
 
 Func SettingScore()
 	Local $idInput
@@ -3823,7 +3781,6 @@ Func SettingScore()
 								$g_aHiScore[$i][5] = ""     ;Max
 							Else
 								$c = StringSplit($a[$i][1], "|")
-								pause($i, $c[1])
 								$g_aHiScore[$i][0] = Int($c[1])
 								$g_aHiScore[$i][1] = $c[2]
 								$g_aHiScore[$i][2] = $c[3]
@@ -3842,8 +3799,8 @@ Func SettingScore()
 	GUIDelete($g_FormScore)
 EndFunc   ;==>SettingScore
 #CS INFO
-	198237 V6 3/27/2020 10:44:43 AM V5 2/28/2020 12:24:54 AM V4 2/24/2020 11:43:24 AM V3 2/17/2020 8:07:54 PM
-#CE INFO
+	197061 V7 4/27/2020 12:59:11 AM V6 3/27/2020 10:44:43 AM V5 2/28/2020 12:24:54 AM V4 2/24/2020 11:43:24 AM
+#CE
 
 #Region SettingKeys
 Func SettingKeys()
@@ -3979,7 +3936,7 @@ Func SettingKeys()
 EndFunc   ;==>SettingKeys
 #CS INFO
 	228490 V6 4/25/2020 3:00:10 AM V5 4/16/2020 9:12:07 PM V4 2/15/2020 6:35:19 PM V3 2/15/2020 6:21:21 PM
-#CE
+#CE INFO
 
 #EndRegion SettingKeys
 
@@ -3989,13 +3946,12 @@ EndFunc   ;==>SettingKeys
 Func _IsPressed1($hexKey)
 	Local $aR
 	$aR = DllCall($UserDll, "int", "GetAsyncKeyState", "int", $hexKey)
-	;dataout(Hex( BitAND($aR[0], 0x8000)), Hex($aR[1]))
 	Return BitAND($aR[0], 0x8000) <> 0
 
 EndFunc   ;==>_IsPressed1
 #CS INFO
-	15759 V1 2/15/2020 6:21:21 PM
-#CE INFO
+	12187 V2 4/27/2020 12:59:11 AM V1 2/15/2020 6:21:21 PM
+#CE
 
 Func ReadKey()
 	Local $a
@@ -4377,4 +4333,4 @@ Main()
 
 Exit
 
-;~T ScriptFunc.exe V0.54a 15 May 2019 - 4/25/2020 3:03:55 AM
+;~T ScriptFunc.exe V0.54a 15 May 2019 - 4/27/2020 12:59:11 AM
