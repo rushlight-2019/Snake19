@@ -1,7 +1,16 @@
+0.165 2 May 2020 Replay - Problems - Open replay and it wipe last and loads current. Can't save last
+	Save last game fixed. Removes button after save.
+
+0.164 1 May 2020 Replay - Problems - Replay game title, force Current to run. Better title
+	Better titles for which replay games to play.  But forcing Curent to run broke Saved replay  - next version will fix that.
+
+0.163 28 Apr 2020 Replay - Problems - Center Save complete message
+	Add indicator to say Replay game saved.
+
 0.162 26 Apr 2020 Fix No Food problem. Adding food was not the problem
-	If I double back on snake, it would over write the food.  The result would be no food to get.
+	If I double back on snake, it would over write the food. The result would be no food to get.
 	Once I knew how to do it the rare problem could be created in any game.
-	I was test one cell and writing to another cell. Now I can't cause it at all.
+	I was testing one cell and writing to another cell. Now I can't cause it at all.
 
 0.161 25 Apr 2020 Problem With replay: When switch game types, you could play the wrong replay type
 	Fix Replay text
