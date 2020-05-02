@@ -6,12 +6,9 @@ AutoItSetOption("MustDeclareVars", 1)
 ;Global Static $MESSAGE =  False   ;Pause will still work in script  No DataOut
 
 ; Must be Declared before _Prf_startup   ~+~+
-Global $ver = "0.165 2 May 2020 Replay - Problems - Open replay and it wipe last and loads current. Can't save last"
-;Open replay and it wipe last and loads current.  Can't save last
-; Clear score then clear replay files.
-; Save Current Highest - Hide switch if files do not exit. Let Replay show if files do not exist.
+Global $ver = "0.166 2 May 2020 Replay - Problems - Hide buttons if files do not exit"
 ; Add clear all scores.
-
+; If portable for data, user game will be stored local, not user documents
 ;"Removal of trouble shooting code"
 
 Global $ini_ver = "0.139"
@@ -21,7 +18,7 @@ Global $g_replayVer = "0.138"
 #include "_prf_startup.au3"
 
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
-#AutoIt3Wrapper_Res_Fileversion=0.1.6.5
+#AutoIt3Wrapper_Res_Fileversion=0.1.6.6
 #AutoIt3Wrapper_Icon=R:\!Autoit\Ico\prf.ico
 #AutoIt3Wrapper_Res_Description=Another snake game
 #AutoIt3Wrapper_Res_LegalCopyright=© Phillip Forrestal 2019-2020
@@ -89,6 +86,7 @@ to do
 
 	Version
 ;~+~+
+	0.166 2 May 2020 Replay - Problems - Hide buttons if files do not exit
 	0.165 2 May 2020 Replay - Problems - Open replay and it wipe last and loads current. Can't save last
 	0.164 1 May 2020 Replay - Problems - Replay game title, force Current to run. Better title
 	0.163 28 Apr 2020 Replay - Problems - Center Save complete message
@@ -549,7 +547,7 @@ Global $g_keydown
 Global $g_keyleft
 Global $g_keyright
 
-;0.165~~
+;0.165
 Global $g_lastReplay  ; Copy last game replay array for Save if empty = -1
 
 PassWallDefault()
@@ -650,7 +648,7 @@ Func Main()
 EndFunc   ;==>Main
 #CS INFO
 	222428 V50 5/2/2020 2:42:11 AM V49 4/7/2020 2:15:18 AM V48 3/27/2020 10:44:43 AM V47 2/28/2020 12:24:54 AM
-#CE
+#CE INFO
 
 Func Game()
 	Local $l_startrun ;153
@@ -2234,6 +2232,7 @@ Func StartForm()
 		GUICtrlCreateLabel("Minimize = " & $g_keymin, $a, $b + 30, 200, 15)
 
 	EndIf
+
 	GUISetState(@SW_SHOW)
 
 	;restored here because Replay will change it.
@@ -2317,9 +2316,8 @@ Func StartForm()
 				Else
 					$GameName = "My-"
 				EndIf
-
-				If FileExists($g_data & $GameName & "Current" & $g_sxBase & $g_syBase & ".Snk19") = 1 Then
-
+				If FileExists($g_data & $GameName & "Current" & $g_sxBase & $g_syBase & ".Snk19") = 1 Or _
+						(FileExists($MyDoc) And FileExists($MyDoc & "\*." & $GameName & "snk19")) Then
 					GUIDelete($g_FormStart)
 					$g_FormStart = -1
 
@@ -2348,8 +2346,19 @@ Func StartForm()
 					Local $b_rp100 = GUICtrlCreateButton("100ms", 300, 150, 100, 40)
 					Local $b_rpfull = GUICtrlCreateButton("Full", 420, 150, 100, 40)
 
+					If FileExists($MyDoc) = 0 Then
+						GUICtrlSetState($b_Load, $GUI_HIDE)
+					Else
+						If FileExists($MyDoc & "\*." & $GameName & "snk19") = 0 Then
+							GUICtrlSetState($b_Load, $GUI_HIDE)
+						EndIf
+					EndIf
 					If IsArray($g_lastReplay) = 0 Then
 						GUICtrlSetState($b_Save, $GUI_HIDE)
+					EndIf
+					If FileExists($g_data & $GameName & "Current" & $g_sxBase & $g_syBase & ".Snk19") = 0 Then
+						GUICtrlSetState($b_rpLast, $GUI_HIDE)
+						GUICtrlSetState($b_rpHigh, $GUI_HIDE)
 					EndIf
 
 					GUISetState(@SW_SHOW)
@@ -2361,13 +2370,18 @@ Func StartForm()
 						$g_aReplay[0] = 1 ; size
 					EndIf
 
-					If $g_aReplay[0] = 1 Then
-						If _FileReadToArray($g_data & $GameName & "Current" & $g_sxBase & $g_syBase & ".Snk19", $g_aReplay, 0) Then
-							$datename = "Current " & $g_sxBase & $g_syBase
-						EndIf
-					EndIf
+					If FileExists($g_data & $GameName & "Current" & $g_sxBase & $g_syBase & ".Snk19") = 1 Then
 
-					GUICtrlSetData($l_title, $datename & " - " & $g_aReplay[5])  ; outside of loop so it won't flicker
+						If $g_aReplay[0] = 1 Then
+							If _FileReadToArray($g_data & $GameName & "Current" & $g_sxBase & $g_syBase & ".Snk19", $g_aReplay, 0) Then
+								$datename = "Current " & $g_sxBase & $g_syBase
+							EndIf
+						EndIf
+
+						GUICtrlSetData($l_title, $datename & " - " & $g_aReplay[5]) ; outside of loop so it won't flicker
+					Else
+						GUICtrlSetData($l_title, "No files to replay - Use Load Documents")
+					EndIf
 
 					While 1
 						Local $nMsg = GUIGetMsg()
@@ -2390,7 +2404,6 @@ Func StartForm()
 									GUICtrlSetData($l_title, $datename & " - " & $g_aReplay[5])
 								EndIf
 
-;~~
 							Case $b_Load
 								If Not FileExists($MyDoc) Then
 									DirCreate($MyDoc)
@@ -2424,6 +2437,10 @@ Func StartForm()
 									GUICtrlSetFont(-1, 12, 400, 0, "Arial")
 									GUISetState(@SW_SHOW)
 									GUICtrlSetState($b_Save, $GUI_HIDE)
+									GUICtrlSetState($b_rpLast, $GUI_SHOW)
+									GUICtrlSetState($b_rpHigh, $GUI_SHOW)
+									GUICtrlSetState($b_Load, $GUI_SHOW)
+
 									Sleep(2000)
 									GUIDelete($Form)
 									$a = ""
@@ -2451,7 +2468,14 @@ Func StartForm()
 
 					$g_TickTime = $L_Tick
 					Return $done
-
+				Else
+					_Center(600, 100)                         ;xw, yh
+					$Form = GUICreate("", 600, 100, $g_FormLeft, $g_FormTop, $WS_DLGFRAME, BitOR($WS_EX_TOPMOST, $WS_EX_STATICEDGE))
+					GUICtrlCreateLabel("No Replay files exist.", 20, 20, 550, 25, $SS_CENTER)
+					GUICtrlSetFont(-1, 12, 400, 0, "Arial")
+					GUISetState(@SW_SHOW)
+					Sleep(2000)
+					GUIDelete($Form)
 				EndIf
 			Case $b_start
 				GUIDelete($g_FormStart)
@@ -2465,14 +2489,14 @@ Func StartForm()
 
 EndFunc   ;==>StartForm
 #CS INFO
-	685072 V67 5/2/2020 2:42:11 AM V66 5/1/2020 1:45:33 PM V65 4/28/2020 11:06:45 PM V64 4/27/2020 12:59:11 AM
+	760099 V68 5/2/2020 12:23:32 PM V67 5/2/2020 2:42:11 AM V66 5/1/2020 1:45:33 PM V65 4/28/2020 11:06:45 PM
 #CE
 
 Func Settings()
 	Local $y
 
-	_Center(600, 150) ;xw, yh
-	$g_FormSetting = GUICreate("Change Setting", 600, 150, $g_FormLeft, $g_FormTop)    ;, -1, -1, -1, -1, $g_FormStart)
+	_Center(600, 150)     ;xw, yh
+	$g_FormSetting = GUICreate("Change Setting", 600, 150, $g_FormLeft, $g_FormTop)     ;, -1, -1, -1, -1, $g_FormStart)
 	GUICtrlCreateLabel("Settings", 260, 0, 80, 26, $SS_CENTER)
 	GUICtrlSetFont(-1, 14, 800, 0, "Arial")
 
@@ -2524,13 +2548,13 @@ Func ScreenSize()
 	Local $sInputBoxAnswer, $keep, $s, $mathW, $mathH, $Math
 	Local $err
 
-	$g_boardx = $g_sxBase + 2 ;$g_sxBase is not fix after 0.140
+	$g_boardx = $g_sxBase + 2     ;$g_sxBase is not fix after 0.140
 	$g_boardy = $g_syBase + 2
 
 	$keep = $g_Size
 	$mathW = Int(@DesktopWidth / $g_boardx) - 1
 
-	$mathH = Int((@DesktopHeight - ($g_Font * 4)) / $g_boardy) - 1  ; was 3 b4 154 now 4
+	$mathH = Int((@DesktopHeight - ($g_Font * 4)) / $g_boardy) - 1     ; was 3 b4 154 now 4
 
 	If $mathW > $mathH Then
 		$Math = $mathH
@@ -2543,7 +2567,7 @@ Func ScreenSize()
 	$s &= @DesktopWidth & @CRLF & "Maximum cell size: "
 	$s &= $Math & @CRLF & @CRLF & "Use Maximum cell size or enter a smaller size."
 
-	_Center(250, 200) ;xw, yh
+	_Center(250, 200)     ;xw, yh
 	$sInputBoxAnswer = InputBox("Cell size", $s, $Math, "", 250, 200, $g_FormLeft, $g_FormTop, 0, $g_FormSetting)
 	$err = @error
 	Select
@@ -2596,7 +2620,7 @@ Func LostSnake()
 	If $a > 10 Then
 		$a = 10
 	EndIf
-	Return Int($a / 2) + 1 ; 0.147 0.151
+	Return Int($a / 2) + 1     ; 0.147 0.151
 EndFunc   ;==>LostSnake
 #CS INFO
 	11614 V3 4/6/2020 6:53:29 AM V2 11/19/2019 1:09:35 PM V1 11/5/2019 12:50:43 AM
@@ -2718,7 +2742,7 @@ Func Speed()
 	Local $bar[10]
 	;Local $nMsg
 
-	_Center(300, 200) ;xw, yh
+	_Center(300, 200)     ;xw, yh
 	$g_FormSpeed = GUICreate("Test Script", 300, 200, $g_FormLeft, $g_FormTop, -1, -1, $g_FormSetting)
 	GUICtrlCreateLabel("ms/cycle", 125, 25, 80, 25)
 	GUICtrlSetFont(-1, 10, 900, 0, "Arial")
@@ -2932,11 +2956,12 @@ EndFunc   ;==>DeleteData
 Func About()
 	Local $MyUrl, $Message
 
-	_Center(615, 430)   ;xw, yh
+	_Center(615, 430)     ;xw, yh
 	$g_FormAbout = GUICreate("Snake19 - About", 615, 430, $g_FormLeft, $g_FormTop, $ws_popup + $ws_caption)
 ;~+~+
 	;$Message &= "|
-	$Message = "0.165 2 May 2020 Replay - Problems - Open replay and it wipe last and loads current. Can't save last"
+	$Message = "0.166 2 May 2020 Replay - Problems - Hide buttons if files do not exit"
+	$Message &= "|0.165 2 May 2020 Replay - Problems - Open replay and it wipe last and loads current. Can't save last"
 	$Message &= "|0.164 1 May 2020 Replay - Problems - Replay game title, force Current to run. Better title"
 	$Message &= "|0.163 28 Apr 2020 Replay - Problems - Center Save complete message"
 	$Message &= "|0.162 26 Apr 2020 Fix No Food problem. Adding food was not the problem"
@@ -3055,7 +3080,7 @@ Func About()
 
 EndFunc   ;==>About
 #CS INFO
-	463940 V60 5/2/2020 2:42:11 AM V59 5/1/2020 1:45:33 PM V58 4/27/2020 12:59:11 AM V57 4/25/2020 3:00:10 AM
+	470204 V61 5/2/2020 12:23:32 PM V60 5/2/2020 2:42:11 AM V59 5/1/2020 1:45:33 PM V58 4/27/2020 12:59:11 AM
 #CE
 
 ;------ Pass Wall
@@ -3266,7 +3291,7 @@ Func ReplayRecData($func, $x = 0, $y = 0, $z = 0, $zz = 0)
 
 	$a = $g_aReplay[0] + 1
 
-	ReDim $g_aReplay[$a + 1] ;plus 1 because it zero base
+	ReDim $g_aReplay[$a + 1]     ;plus 1 because it zero base
 	$g_aReplay[0] += 1
 
 	Switch $func
@@ -3429,7 +3454,7 @@ Func ChooseColor()
 
 		EndSelect
 	Next
-	_Center(570, 220)   ;xw, yh
+	_Center(570, 220)     ;xw, yh
 	$g_FormColor = GUICreate("Change Colors", 570, 220, $g_FormLeft, $g_FormTop)
 
 	;Around colors  600-140 =460
@@ -3542,7 +3567,7 @@ Func ChooseColor()
 					$flag = False
 					For $x = 1 To 7
 						If $r_what[$x][4] <> $r_what[$x][5] Then
-							If $x = 1 Or $x = 2 Then ;reset Gameboard
+							If $x = 1 Or $x = 2 Then     ;reset Gameboard
 								$flag = True
 							EndIf
 							CreateColorJpg($r_what[$x][1], $r_what[$x][5])     ;Name, Color
@@ -3592,8 +3617,8 @@ Func IniCenterGameScreen($wr = True)
 
 	If $wr Then
 		If $g_ctrlBoard <> -1 Then
-			$gameLoc = WinGetPos($g_ctrlBoard) ;x=0, y=1, W=2, H=3
-			$aClientSize = WinGetClientSize($g_ctrlBoard) ;cW=o, cH=1
+			$gameLoc = WinGetPos($g_ctrlBoard)     ;x=0, y=1, W=2, H=3
+			$aClientSize = WinGetClientSize($g_ctrlBoard)     ;cW=o, cH=1
 
 			IniWrite($s_ini, "Center", "W", $gameLoc[0] + Int($aClientSize[0] / 2))
 			IniWrite($s_ini, "Center", "H", $gameLoc[1] + Int($aClientSize[1] / 2))
@@ -3618,7 +3643,7 @@ Func _CenterGameBd()
 	Local $x, $y, $flag, $gameLoc
 
 	If $g_ctrlBoard <> -1 Then
-		$gameLoc = WinGetPos($g_ctrlBoard) ;x=0, y=1, W=2, H=3
+		$gameLoc = WinGetPos($g_ctrlBoard)     ;x=0, y=1, W=2, H=3
 		$flag = False
 		$x = @DesktopWidth - ($gameLoc[0] + $gameLoc[2])
 		If $x < 0 Then
@@ -3645,12 +3670,12 @@ EndFunc   ;==>_CenterGameBd
 
 ;	$g_FormLeft = -1
 ;	$g_FormTop = -1
-Func _Center($W, $H, $G = False) ;xw, yh  $G= game board
+Func _Center($W, $H, $G = False)     ;xw, yh  $G= game board
 	Local $gameLoc, $aClientSize
 
 	If $g_ctrlBoard <> -1 Then
-		$gameLoc = WinGetPos($g_ctrlBoard) ;x=0, y=1, W=2, H=3
-		$aClientSize = WinGetClientSize($g_ctrlBoard) ;cW=o, cH=1
+		$gameLoc = WinGetPos($g_ctrlBoard)     ;x=0, y=1, W=2, H=3
+		$aClientSize = WinGetClientSize($g_ctrlBoard)     ;cW=o, cH=1
 		$g_GameBdCenterXW = $gameLoc[0] + Int($aClientSize[0] / 2)
 		$g_GameBdCenterYH = $gameLoc[1] + Int($aClientSize[1] / 2)
 	EndIf
@@ -3658,7 +3683,7 @@ Func _Center($W, $H, $G = False) ;xw, yh  $G= game board
 	$g_FormLeft = $g_GameBdCenterXW - Int($W / 2)
 	$g_FormTop = $g_GameBdCenterYH - Int($H / 2)
 
-	If $G Then ;make sure game board in on the screen
+	If $G Then     ;make sure game board in on the screen
 		If $g_FormLeft < 0 Then
 			$g_GameBdCenterXW = $g_GameBdCenterXW + $g_FormLeft
 			$g_FormLeft = 5
@@ -3691,11 +3716,11 @@ Func ReplaySave()
 
 	Local $GameName, $H
 	Local $RPhighscore
-;~~
+
 	;IsArray($g_lastreplay)
 	$g_lastReplay = $g_aReplay
 
-	If $g_GameWhich = 0 Then  ; 0 Normal, 1 Mine
+	If $g_GameWhich = 0 Then     ; 0 Normal, 1 Mine
 		$GameName = "Nor-"
 	Else
 		$GameName = "My-"
@@ -3710,7 +3735,7 @@ Func ReplaySave()
 		$RPhighscore = 0
 	EndIf
 
-	If $g_aReplay[0] > 10 Then  ; which means it  was not aborted
+	If $g_aReplay[0] > 13 Then     ; Min size of  game array was not played.
 		If $g_aReplay[2] > $RPhighscore Then
 			_FileWriteFromArray($g_data & $GameName & "Highest" & $g_sxBase & $g_syBase & ".Snk19", $g_aReplay)
 			$RPhighscore = $g_aReplay[2]
@@ -3724,7 +3749,7 @@ Func ReplaySave()
 	EndIf
 EndFunc   ;==>ReplaySave
 #CS INFO
-	97659 V8 5/2/2020 2:42:11 AM V7 5/1/2020 1:45:33 PM V6 4/25/2020 3:00:10 AM V5 3/27/2020 10:44:43 AM
+	97916 V9 5/2/2020 12:23:32 PM V8 5/2/2020 2:42:11 AM V7 5/1/2020 1:45:33 PM V6 4/25/2020 3:00:10 AM
 #CE
 
 Func SettingScore()
@@ -3733,7 +3758,7 @@ Func SettingScore()
 	Local $clrscore, $ok, $cancel, $doclr, $a, $c, $cnt
 
 	$doclr = False
-	_Center(280, 265)   ;xw, yh
+	_Center(280, 265)     ;xw, yh
 	$g_FormScore = GUICreate("Score Clear - Adjust", 280, 265, $g_FormLeft, $g_FormTop)
 	GUICtrlCreateLabel("Score settings", 0, 10, 280, 17, $SS_CENTER)
 	GUICtrlSetFont(-1, 12, 800, 0, "Arial")
@@ -3779,9 +3804,9 @@ Func SettingScore()
 				;Clear score
 				If $doclr Then
 					If BitAND(GUICtrlRead($butHi), $GUI_CHECKED) = $GUI_CHECKED Then
-						$cnt = 1 ; Checked
+						$cnt = 1     ; Checked
 					Else
-						$cnt = 0  ; NOT Checked
+						$cnt = 0     ; NOT Checked
 					EndIf
 					If $g_GameWhich = 0 Then     ; 0 Normal, 1 Mine
 						$a = IniReadSection($s_scoreini, "HighScoreNormal" & $g_sxBase & $g_syBase)
@@ -3792,9 +3817,9 @@ Func SettingScore()
 					EndIf
 
 					If @error = 0 Then
-						If $cnt = 0 Then  ; Delete high score then delete Highest replay
-							If FileExists($g_data & $c & "Highest" & $g_sxBase & $g_syBase & ".Snk19") = 1 Then
-								FileDelete($g_data & $c & "Highest" & $g_sxBase & $g_syBase & ".Snk19")
+						If $cnt = 0 Then     ; Delete high score then delete all replays
+							If FileExists($g_data & $c & "*" & $g_sxBase & $g_syBase & ".Snk19") = 1 Then
+								FileDelete($g_data & $c & "*" & $g_sxBase & $g_syBase & ".Snk19")
 							EndIf
 						EndIf
 
@@ -3826,8 +3851,8 @@ Func SettingScore()
 	GUIDelete($g_FormScore)
 EndFunc   ;==>SettingScore
 #CS INFO
-	197061 V7 4/27/2020 12:59:11 AM V6 3/27/2020 10:44:43 AM V5 2/28/2020 12:24:54 AM V4 2/24/2020 11:43:24 AM
-#CE INFO
+	195425 V8 5/2/2020 12:23:32 PM V7 4/27/2020 12:59:11 AM V6 3/27/2020 10:44:43 AM V5 2/28/2020 12:24:54 AM
+#CE
 
 #Region SettingKeys
 Func SettingKeys()
@@ -3838,7 +3863,7 @@ Func SettingKeys()
 
 	$UserDll = DllOpen("user32.dll")
 
-	_Center(400, 340)   ;xw, yh
+	_Center(400, 340)     ;xw, yh
 	$g_FormKey = GUICreate("Select KEYs", 400, 340, $g_FormLeft, $g_FormTop)
 	GUICtrlCreateLabel("Select Keys", 0, 10, 400, 17, $SS_CENTER)
 	GUICtrlSetFont(-1, 12, 800, 0, "Arial")
@@ -3983,7 +4008,7 @@ EndFunc   ;==>_IsPressed1
 Func ReadKey()
 	Local $a
 
-	_Center(100, 140) ;xw, yh
+	_Center(100, 140)     ;xw, yh
 	Local $ab = GUICreate("Press Key to change", 100, 100, $g_FormLeft, $g_FormTop, $ws_popup + $ws_caption, -1, $g_FormKey)
 	GUISetState()
 	$g_KeyIn = _GetKey()
@@ -4129,13 +4154,13 @@ Func SettingsWhenAdjLen()
 	Local $a, $b, $c, $ok, $cancel
 
 	Switch $g_GameWhich
-		Case 1 ;my
+		Case 1     ;my
 			$g_gBonusFood = $g_gBonusFoodMy
 		Case 0             ;			Normal
 			$g_gBonusFood = $g_gBonusFoodNormal
 	EndSwitch
 
-	_Center(280, 265)   ;xw, yh
+	_Center(280, 265)     ;xw, yh
 	$g_FormAdjLen = GUICreate("Adjust when to Add/Remove Snake Cells", 280, 265, $g_FormLeft, $g_FormTop)
 	GUICtrlCreateLabel("When to adjust snake length", 0, 10, 280, 17, $SS_CENTER)
 	GUICtrlSetFont(-1, 12, 800, 0, "Arial")
@@ -4144,7 +4169,7 @@ Func SettingsWhenAdjLen()
 	GUICtrlCreateLabel("before the change occurs.", 0, 50, 280, 17, $SS_CENTER)
 	GUICtrlSetFont(-1, 10, 400, 0, "Arial")
 
-	If $g_GameWhich = 0 Then ; 0 Normal, 1 Mine
+	If $g_GameWhich = 0 Then     ; 0 Normal, 1 Mine
 		$a = "Normal"
 		$b = $g_gChangeBaseNormal
 		$c = 2
@@ -4184,7 +4209,7 @@ Func SettingsWhenAdjLen()
 
 			Case $ok
 				$a = GUICtrlRead($idInput)
-				If $g_GameWhich = 0 Then ; 0 Normal, 1 Mine
+				If $g_GameWhich = 0 Then     ; 0 Normal, 1 Mine
 					If $a <> $g_gChangeBaseNormal Then
 						$g_gChangeBaseNormal = $a
 						$g_gChangeBase = $a
@@ -4221,7 +4246,7 @@ EndFunc   ;==>SettingsWhenAdjLen
 Func ChangeBoardSize()
 	Local $ok, $cancel, $default, $nMsg, $idX, $idY, $x, $y, $a, $Input_Value
 
-	_Center(280, 265) ;xw, yh
+	_Center(280, 265)     ;xw, yh
 	;temp
 	;$g_FormLeft = -1
 	;$g_FormTop = -1
@@ -4321,12 +4346,12 @@ Func ChangeBoardSize()
 	;154 add below
 	Local $mathW, $mathH
 
-	$g_boardx = $g_sxBase + 2 ;$g_sxBase is not fix after 0.140
+	$g_boardx = $g_sxBase + 2     ;$g_sxBase is not fix after 0.140
 	$g_boardy = $g_syBase + 2
 
 	$mathW = Int(@DesktopWidth / $g_boardx) - 1
 
-	$mathH = Int((@DesktopHeight - ($g_Font * 4)) / $g_boardy) - 1  ; was 3 b4 154 now 4
+	$mathH = Int((@DesktopHeight - ($g_Font * 4)) / $g_boardy) - 1     ; was 3 b4 154 now 4
 
 	If $mathW > $mathH Then
 		$mathW = $mathH
@@ -4360,4 +4385,4 @@ Main()
 
 Exit
 
-;~T ScriptFunc.exe V0.54a 15 May 2019 - 5/2/2020 2:42:11 AM
+;~T ScriptFunc.exe V0.54a 15 May 2019 - 5/2/2020 12:23:32 PM

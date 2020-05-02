@@ -1,3 +1,7 @@
+0.166 2 May 2020 Replay - Problems - Hide buttons if files do not exit
+	Hide buttons if files do not exit.  I think I got all the combinations.
+	Found another issue, just can't get 2 things left.
+
 0.165 2 May 2020 Replay - Problems - Open replay and it wipe last and loads current. Can't save last
 	Save last game fixed. Removes button after save.
 
@@ -19,7 +23,7 @@
 	Delete the game, delete all the data create in the game.
 
 0.159 17 Apr 2020 Change Food bonus from fix value 100 to game board size + 30
-	Next I am removing all the trouble shooting line. I am done.  Unless I find something.
+	Next I am removing all the trouble shooting line. I am done, nope.  Unless I find something.
 
 0.158 17 Apr 2020 Change My in game score line. Change order to add food
 	Put Score first.
