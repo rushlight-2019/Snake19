@@ -1,3 +1,6 @@
+0.167 4 May 2020 Add clear all scores
+	Clear all scores not just the current game.
+
 0.166 2 May 2020 Replay - Problems - Hide buttons if files do not exit
 	Hide buttons if files do not exit.  I think I got all the combinations.
 	Found another issue, just can't get 2 things left.

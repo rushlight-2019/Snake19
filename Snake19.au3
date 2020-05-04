@@ -6,8 +6,8 @@ AutoItSetOption("MustDeclareVars", 1)
 ;Global Static $MESSAGE =  False   ;Pause will still work in script  No DataOut
 
 ; Must be Declared before _Prf_startup   ~+~+
-Global $ver = "0.166 2 May 2020 Replay - Problems - Hide buttons if files do not exit"
-; Add clear all scores.
+Global $ver = "0.167 4 May 2020 Add clear all scores"
+
 ; If portable for data, user game will be stored local, not user documents
 ;"Removal of trouble shooting code"
 
@@ -18,7 +18,7 @@ Global $g_replayVer = "0.138"
 #include "_prf_startup.au3"
 
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
-#AutoIt3Wrapper_Res_Fileversion=0.1.6.6
+#AutoIt3Wrapper_Res_Fileversion=0.1.6.7
 #AutoIt3Wrapper_Icon=R:\!Autoit\Ico\prf.ico
 #AutoIt3Wrapper_Res_Description=Another snake game
 #AutoIt3Wrapper_Res_LegalCopyright=© Phillip Forrestal 2019-2020
@@ -86,6 +86,7 @@ to do
 
 	Version
 ;~+~+
+	0.167 4 May 2020 Add clear all scores
 	0.166 2 May 2020 Replay - Problems - Hide buttons if files do not exit
 	0.165 2 May 2020 Replay - Problems - Open replay and it wipe last and loads current. Can't save last
 	0.164 1 May 2020 Replay - Problems - Replay game title, force Current to run. Better title
@@ -2490,7 +2491,7 @@ Func StartForm()
 EndFunc   ;==>StartForm
 #CS INFO
 	760099 V68 5/2/2020 12:23:32 PM V67 5/2/2020 2:42:11 AM V66 5/1/2020 1:45:33 PM V65 4/28/2020 11:06:45 PM
-#CE
+#CE INFO
 
 Func Settings()
 	Local $y
@@ -2960,7 +2961,8 @@ Func About()
 	$g_FormAbout = GUICreate("Snake19 - About", 615, 430, $g_FormLeft, $g_FormTop, $ws_popup + $ws_caption)
 ;~+~+
 	;$Message &= "|
-	$Message = "0.166 2 May 2020 Replay - Problems - Hide buttons if files do not exit"
+	$Message = "0.167 4 May 2020 Add clear all scores"
+	$Message &= "|0.166 2 May 2020 Replay - Problems - Hide buttons if files do not exit"
 	$Message &= "|0.165 2 May 2020 Replay - Problems - Open replay and it wipe last and loads current. Can't save last"
 	$Message &= "|0.164 1 May 2020 Replay - Problems - Replay game title, force Current to run. Better title"
 	$Message &= "|0.163 28 Apr 2020 Replay - Problems - Center Save complete message"
@@ -3080,7 +3082,7 @@ Func About()
 
 EndFunc   ;==>About
 #CS INFO
-	470204 V61 5/2/2020 12:23:32 PM V60 5/2/2020 2:42:11 AM V59 5/1/2020 1:45:33 PM V58 4/27/2020 12:59:11 AM
+	473787 V62 5/4/2020 5:11:01 PM V61 5/2/2020 12:23:32 PM V60 5/2/2020 2:42:11 AM V59 5/1/2020 1:45:33 PM
 #CE
 
 ;------ Pass Wall
@@ -3750,16 +3752,17 @@ Func ReplaySave()
 EndFunc   ;==>ReplaySave
 #CS INFO
 	97916 V9 5/2/2020 12:23:32 PM V8 5/2/2020 2:42:11 AM V7 5/1/2020 1:45:33 PM V6 4/25/2020 3:00:10 AM
-#CE
+#CE INFO
 
 Func SettingScore()
 	Local $idInput
 	Local $butHi
-	Local $clrscore, $ok, $cancel, $doclr, $a, $c, $cnt
+	Local $clrscore, $ok, $cancel, $doclr
+	Local $game, $x, $y, $a, $c
 
 	$doclr = False
 	_Center(280, 265)     ;xw, yh
-	$g_FormScore = GUICreate("Score Clear - Adjust", 280, 265, $g_FormLeft, $g_FormTop)
+	$g_FormScore = GUICreate("Score Clear", 280, 265, $g_FormLeft, $g_FormTop)
 	GUICtrlCreateLabel("Score settings", 0, 10, 280, 17, $SS_CENTER)
 	GUICtrlSetFont(-1, 12, 800, 0, "Arial")
 	GUICtrlCreateLabel("Number of scores to save at exit.", 0, 30, 280, 17, $SS_CENTER)
@@ -3771,9 +3774,8 @@ Func SettingScore()
 	GUICtrlSetFont(-1, 12, 400, 0, "Arial")
 	Local $updown = GUICtrlCreateUpdown($idInput, BitOR($GUI_SS_DEFAULT_UPDOWN, $UDS_ARROWKEYS))
 	GUICtrlSetLimit($updown, 10, 1)
-	;GUICtrlRead($idInput)
 
-	$butHi = GUICtrlCreateCheckbox("But Hightest", 155, 120, 100, 50)
+	$butHi = GUICtrlCreateCheckbox("Keep Hightest", 140, 120, 120, 50)
 	GUICtrlSetFont(-1, 12, 400, 0, "Arial")
 	GUICtrlSetState(-1, $GUI_CHECKED)
 
@@ -3804,44 +3806,62 @@ Func SettingScore()
 				;Clear score
 				If $doclr Then
 					If BitAND(GUICtrlRead($butHi), $GUI_CHECKED) = $GUI_CHECKED Then
-						$cnt = 1     ; Checked
-					Else
-						$cnt = 0     ; NOT Checked
-					EndIf
-					If $g_GameWhich = 0 Then     ; 0 Normal, 1 Mine
-						$a = IniReadSection($s_scoreini, "HighScoreNormal" & $g_sxBase & $g_syBase)
-						$c = "Nor-"
-					Else
-						$a = IniReadSection($s_scoreini, "HighScoreMy" & $g_sxBase & $g_syBase)
-						$c = "My-"
-					EndIf
+						;Keep High scores
+						; 0 Normal, 1 Mine
+						For $game = 0 To 1
+							For $x = 20 To 40 Step 5
+								For $y = 20 To 40 Step 5
+									$c = ""
+									If $game = 0 Then ; 0 Normal, 1 Mine
+										If IniRead($s_scoreini, "HighScoreNormal" & $x & $y, " 1", " 1") <> " 1" Then
+											$a = IniReadSection($s_scoreini, "HighScoreNormal" & $x & $y)
+											$c = "Nor-"
+										EndIf
+									Else
+										If IniRead($s_scoreini, "HighScoreMy" & $x & $y, " 1", " 1") <> " 1" Then
+											$a = IniReadSection($s_scoreini, "HighScoreMy" & $x & $y)
+											$c = "My-"
+										EndIf
+									EndIf
 
-					If @error = 0 Then
-						If $cnt = 0 Then     ; Delete high score then delete all replays
-							If FileExists($g_data & $c & "*" & $g_sxBase & $g_syBase & ".Snk19") = 1 Then
-								FileDelete($g_data & $c & "*" & $g_sxBase & $g_syBase & ".Snk19")
-							EndIf
-						EndIf
+									If $c <> "" Then
+										For $i = 1 To 10
+											If $i > 1 Then
+												$g_aHiScore[$i][0] = 0                     ;
+												$g_aHiScore[$i][1] = "" ;date
+												$g_aHiScore[$i][2] = "" ;len
+												$g_aHiScore[$i][3] = "" ;food
+												$g_aHiScore[$i][4] = "" ;turns
+												$g_aHiScore[$i][5] = "" ;Max
+											Else
+												$c = StringSplit($a[$i][1], "|")
+												$g_aHiScore[$i][0] = Int($c[1])
+												$g_aHiScore[$i][1] = $c[2]
+												$g_aHiScore[$i][2] = $c[3]
+												$g_aHiScore[$i][3] = $c[4]
+												$g_aHiScore[$i][4] = $c[5]
+												$g_aHiScore[$i][5] = $c[6]
+											EndIf
+										Next
+										For $i = 1 To 10
+											$a[$i][0] = String($i)
+											$a[$i][1] = $g_aHiScore[$i][0] & "|" & $g_aHiScore[$i][1] & "|" & $g_aHiScore[$i][2] & "|" & $g_aHiScore[$i][3] & "|" & $g_aHiScore[$i][4] & "|" & $g_aHiScore[$i][5]
+										Next
+										$a[0][0] = 10
+										If $game = 0 Then ; 0 Normal, 1 Mine
+											IniWriteSection($s_scoreini, "HighScoreNormal" & $x & $y, $a)
+										Else
+											IniWriteSection($s_scoreini, "HighScoreMy" & $x & $y, $a)
+										EndIf
+									EndIf
+								Next ;x
+							Next ;y
+						Next  ;game
 
-						For $i = 1 To 10
-							If $i > $cnt Then
-								$g_aHiScore[$i][0] = 0                                     ;
-								$g_aHiScore[$i][1] = ""     ;date
-								$g_aHiScore[$i][2] = ""     ;len
-								$g_aHiScore[$i][3] = ""     ;food
-								$g_aHiScore[$i][4] = ""     ;turns
-								$g_aHiScore[$i][5] = ""     ;Max
-							Else
-								$c = StringSplit($a[$i][1], "|")
-								$g_aHiScore[$i][0] = Int($c[1])
-								$g_aHiScore[$i][1] = $c[2]
-								$g_aHiScore[$i][2] = $c[3]
-								$g_aHiScore[$i][3] = $c[4]
-								$g_aHiScore[$i][4] = $c[5]
-								$g_aHiScore[$i][5] = $c[6]
-							EndIf
-						Next
-						SaveHiScore()
+					Else             ; Do not keep High scores
+						FileDelete($s_scoreini)
+						FileDelete($g_data & "*.Snk19")             ; replays files
+
 					EndIf
 				EndIf
 				ExitLoop
@@ -3851,7 +3871,7 @@ Func SettingScore()
 	GUIDelete($g_FormScore)
 EndFunc   ;==>SettingScore
 #CS INFO
-	195425 V8 5/2/2020 12:23:32 PM V7 4/27/2020 12:59:11 AM V6 3/27/2020 10:44:43 AM V5 2/28/2020 12:24:54 AM
+	225710 V9 5/4/2020 5:11:01 PM V8 5/2/2020 12:23:32 PM V7 4/27/2020 12:59:11 AM V6 3/27/2020 10:44:43 AM
 #CE
 
 #Region SettingKeys
@@ -3863,7 +3883,7 @@ Func SettingKeys()
 
 	$UserDll = DllOpen("user32.dll")
 
-	_Center(400, 340)     ;xw, yh
+	_Center(400, 340)             ;xw, yh
 	$g_FormKey = GUICreate("Select KEYs", 400, 340, $g_FormLeft, $g_FormTop)
 	GUICtrlCreateLabel("Select Keys", 0, 10, 400, 17, $SS_CENTER)
 	GUICtrlSetFont(-1, 12, 800, 0, "Arial")
@@ -4008,7 +4028,7 @@ EndFunc   ;==>_IsPressed1
 Func ReadKey()
 	Local $a
 
-	_Center(100, 140)     ;xw, yh
+	_Center(100, 140)             ;xw, yh
 	Local $ab = GUICreate("Press Key to change", 100, 100, $g_FormLeft, $g_FormTop, $ws_popup + $ws_caption, -1, $g_FormKey)
 	GUISetState()
 	$g_KeyIn = _GetKey()
@@ -4154,13 +4174,13 @@ Func SettingsWhenAdjLen()
 	Local $a, $b, $c, $ok, $cancel
 
 	Switch $g_GameWhich
-		Case 1     ;my
+		Case 1             ;my
 			$g_gBonusFood = $g_gBonusFoodMy
 		Case 0             ;			Normal
 			$g_gBonusFood = $g_gBonusFoodNormal
 	EndSwitch
 
-	_Center(280, 265)     ;xw, yh
+	_Center(280, 265)             ;xw, yh
 	$g_FormAdjLen = GUICreate("Adjust when to Add/Remove Snake Cells", 280, 265, $g_FormLeft, $g_FormTop)
 	GUICtrlCreateLabel("When to adjust snake length", 0, 10, 280, 17, $SS_CENTER)
 	GUICtrlSetFont(-1, 12, 800, 0, "Arial")
@@ -4169,7 +4189,7 @@ Func SettingsWhenAdjLen()
 	GUICtrlCreateLabel("before the change occurs.", 0, 50, 280, 17, $SS_CENTER)
 	GUICtrlSetFont(-1, 10, 400, 0, "Arial")
 
-	If $g_GameWhich = 0 Then     ; 0 Normal, 1 Mine
+	If $g_GameWhich = 0 Then             ; 0 Normal, 1 Mine
 		$a = "Normal"
 		$b = $g_gChangeBaseNormal
 		$c = 2
@@ -4209,7 +4229,7 @@ Func SettingsWhenAdjLen()
 
 			Case $ok
 				$a = GUICtrlRead($idInput)
-				If $g_GameWhich = 0 Then     ; 0 Normal, 1 Mine
+				If $g_GameWhich = 0 Then             ; 0 Normal, 1 Mine
 					If $a <> $g_gChangeBaseNormal Then
 						$g_gChangeBaseNormal = $a
 						$g_gChangeBase = $a
@@ -4226,7 +4246,7 @@ Func SettingsWhenAdjLen()
 				$a = BitAND(GUICtrlRead($ckFoodBonus), $GUI_CHECKED) = $GUI_CHECKED
 				If $a <> $g_gBonusFood Then
 
-					If $g_GameWhich = 0 Then     ; 0 Normal, 1 Mine
+					If $g_GameWhich = 0 Then             ; 0 Normal, 1 Mine
 						IniWrite($s_ini, "Misc", "BonusFoodNormal", $a)
 						$g_gBonusFoodNormal = $a
 					Else
@@ -4246,7 +4266,7 @@ EndFunc   ;==>SettingsWhenAdjLen
 Func ChangeBoardSize()
 	Local $ok, $cancel, $default, $nMsg, $idX, $idY, $x, $y, $a, $Input_Value
 
-	_Center(280, 265)     ;xw, yh
+	_Center(280, 265)             ;xw, yh
 	;temp
 	;$g_FormLeft = -1
 	;$g_FormTop = -1
@@ -4346,12 +4366,12 @@ Func ChangeBoardSize()
 	;154 add below
 	Local $mathW, $mathH
 
-	$g_boardx = $g_sxBase + 2     ;$g_sxBase is not fix after 0.140
+	$g_boardx = $g_sxBase + 2             ;$g_sxBase is not fix after 0.140
 	$g_boardy = $g_syBase + 2
 
 	$mathW = Int(@DesktopWidth / $g_boardx) - 1
 
-	$mathH = Int((@DesktopHeight - ($g_Font * 4)) / $g_boardy) - 1     ; was 3 b4 154 now 4
+	$mathH = Int((@DesktopHeight - ($g_Font * 4)) / $g_boardy) - 1             ; was 3 b4 154 now 4
 
 	If $mathW > $mathH Then
 		$mathW = $mathH
@@ -4385,4 +4405,4 @@ Main()
 
 Exit
 
-;~T ScriptFunc.exe V0.54a 15 May 2019 - 5/2/2020 12:23:32 PM
+;~T ScriptFunc.exe V0.54a 15 May 2019 - 5/4/2020 5:11:01 PM
