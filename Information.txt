@@ -182,9 +182,8 @@ Works for the usable keys.
 You can use Enter, Insert, Home, Page Up, Delete, End, Page Down, Space
 You can not use the Function keys, Shift keys or Tab
 
-	SCORE
-This is the only setting that can be different on each game type.
-Change the number of high scores save on exit. Default is 8,  Were the highest score is saved.
+	SCORE - Delete scores in All game sizes.
+Change the number of high scores save on exit. Default is 8
 Clear the high scores. Default is not to delete the highest score.  Uncheck the box and the highest can be deleted.
 
 	MISC
@@ -192,13 +191,3 @@ Adjust when to Add/Remove Snake Cells
 When to adjust snake length. Snake moves a number of positions before the change occurs. 0-10  Default 2.
 
 Bonus Food over board size plus 30 length, will create a 2nd food.    On or off.
-
-
-
-----------------
-To do
-Clean up
-
-----------------
-Problem:
-Rare: No food in game. Seen it once this year.
