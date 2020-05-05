@@ -6,9 +6,7 @@ AutoItSetOption("MustDeclareVars", 1)
 ;Global Static $MESSAGE =  False   ;Pause will still work in script  No DataOut
 
 ; Must be Declared before _Prf_startup   ~+~+
-Global $ver = "0.167 4 May 2020 Add clear all scores"
-
-; If portable for data, user game will be stored local, not user documents
+Global $ver = "0.168 5 May 2020 If portable for data, user game will be stored local, not user documents"
 ;"Removal of trouble shooting code"
 
 Global $ini_ver = "0.139"
@@ -18,7 +16,7 @@ Global $g_replayVer = "0.138"
 #include "_prf_startup.au3"
 
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
-#AutoIt3Wrapper_Res_Fileversion=0.1.6.7
+#AutoIt3Wrapper_Res_Fileversion=0.1.6.8
 #AutoIt3Wrapper_Icon=R:\!Autoit\Ico\prf.ico
 #AutoIt3Wrapper_Res_Description=Another snake game
 #AutoIt3Wrapper_Res_LegalCopyright=© Phillip Forrestal 2019-2020
@@ -86,6 +84,7 @@ to do
 
 	Version
 ;~+~+
+	0.168 5 May 2020 If portable for data, user game will be stored local, not user documents
 	0.167 4 May 2020 Add clear all scores
 	0.166 2 May 2020 Replay - Problems - Hide buttons if files do not exit
 	0.165 2 May 2020 Replay - Problems - Open replay and it wipe last and loads current. Can't save last
@@ -302,14 +301,14 @@ Opt("GUIEventOptions", 1)
 Global $PRF = False
 
 #Region Global
+;@MyDocumentsDir
+Global $g_MyDoc = @MyDocumentsDir & "\Snake19"
+
 Global $g_data ;= @ScriptDir & "\SNAKE19-Data"
-$g_data = CheckDataLoc() & "\" ;find data folder
+$g_data = CheckDataLoc() & "\" ;find data folder  0.167 $g_MyDoc
 If $g_data = "" Then
 	Exit
 EndIf
-
-;@MyDocumentsDir
-Global $MyDoc = @MyDocumentsDir & "\Snake19"
 
 Static $s_ini = $g_data & "snake.ini"
 Static $s_scoreini = $g_data & "score.ini"
@@ -2318,7 +2317,7 @@ Func StartForm()
 					$GameName = "My-"
 				EndIf
 				If FileExists($g_data & $GameName & "Current" & $g_sxBase & $g_syBase & ".Snk19") = 1 Or _
-						(FileExists($MyDoc) And FileExists($MyDoc & "\*." & $GameName & "snk19")) Then
+						(FileExists($g_MyDoc) And FileExists($g_MyDoc & "\*." & $GameName & "snk19")) Then
 					GUIDelete($g_FormStart)
 					$g_FormStart = -1
 
@@ -2347,10 +2346,10 @@ Func StartForm()
 					Local $b_rp100 = GUICtrlCreateButton("100ms", 300, 150, 100, 40)
 					Local $b_rpfull = GUICtrlCreateButton("Full", 420, 150, 100, 40)
 
-					If FileExists($MyDoc) = 0 Then
+					If FileExists($g_MyDoc) = 0 Then
 						GUICtrlSetState($b_Load, $GUI_HIDE)
 					Else
-						If FileExists($MyDoc & "\*." & $GameName & "snk19") = 0 Then
+						If FileExists($g_MyDoc & "\*." & $GameName & "snk19") = 0 Then
 							GUICtrlSetState($b_Load, $GUI_HIDE)
 						EndIf
 					EndIf
@@ -2406,11 +2405,11 @@ Func StartForm()
 								EndIf
 
 							Case $b_Load
-								If Not FileExists($MyDoc) Then
-									DirCreate($MyDoc)
+								If Not FileExists($g_MyDoc) Then
+									DirCreate($g_MyDoc)
 								EndIf
 
-								$filename = FileOpenDialog("Load Replay", $MyDoc, "Snake Replay (*." & $GameName & "snk19)", 1, "", $g_FormReplay)
+								$filename = FileOpenDialog("Load Replay", $g_MyDoc, "Snake Replay (*." & $GameName & "snk19)", 1, "", $g_FormReplay)
 								If @error = 0 Then
 									If _FileReadToArray($filename, $g_aReplay, 0) Then
 										$datename = "User " & $g_aReplay[6] & $g_aReplay[7]
@@ -2421,15 +2420,15 @@ Func StartForm()
 
 							Case $b_Save
 								If IsArray($g_lastReplay) = 1 Then
-									If Not FileExists($MyDoc) Then
-										DirCreate($MyDoc)
+									If Not FileExists($g_MyDoc) Then
+										DirCreate($g_MyDoc)
 									EndIf
 									$filename = _Now() & $g_sxBase & $g_syBase & "." & $GameName & "Snk19"
 									$filename = StringReplace($filename, ":", "")
 									$filename = StringReplace($filename, "/", "")
 									$filename = StringReplace($filename, " ", "")
-									$a = $MyDoc & "\" & $filename
-									;	$filename = $MyDoc & "\" & "Test.n-snk19"
+									$a = $g_MyDoc & "\" & $filename
+									;	$filename = $g_MyDoc & "\" & "Test.n-snk19"
 									_FileWriteFromArray($a, $g_lastReplay)
 									$g_lastReplay = 0
 									_Center(600, 100) ;xw, yh
@@ -2490,8 +2489,8 @@ Func StartForm()
 
 EndFunc   ;==>StartForm
 #CS INFO
-	760099 V68 5/2/2020 12:23:32 PM V67 5/2/2020 2:42:11 AM V66 5/1/2020 1:45:33 PM V65 4/28/2020 11:06:45 PM
-#CE INFO
+	762277 V69 5/5/2020 2:35:34 AM V68 5/2/2020 12:23:32 PM V67 5/2/2020 2:42:11 AM V66 5/1/2020 1:45:33 PM
+#CE
 
 Func Settings()
 	Local $y
@@ -2824,12 +2823,12 @@ EndFunc   ;==>TickSpeed
 #CE INFO
 
 ;Check to see it Data is store in one of the two locations. If not ask where to store the data
+
 Func CheckDataLoc()
-	Local $progr
 	Local $data
 
-	$progr = @ScriptDir
 	$data = @AppDataDir & "\SNAKE19-Data"
+	;$g_MyDoc = @MyDocumentsDir & "\Snake19"
 
 	;@ScriptDir & "\SNAKE19-Data"
 	If FileExists($data & "\snake.ini") = 1 Then
@@ -2837,6 +2836,7 @@ Func CheckDataLoc()
 	EndIf
 
 	If FileExists(@ScriptDir & "\SNAKE19-Data\snake.ini") = 1 Then
+		$g_MyDoc = @ScriptDir & "\SNAKE19-Data\User"
 		Return @ScriptDir & "\SNAKE19-Data"
 	EndIf
 
@@ -2848,7 +2848,7 @@ Func CheckDataLoc()
 	GUICtrlSetFont(-1, 10, 400, 0, "MS Sans Serif")
 
 	Local $ProgLabel = GUICtrlCreateLabel("", 32, 80, 610, 20)
-	GUICtrlSetData(-1, "Program file directory: " & $progr)
+	GUICtrlSetData(-1, "Program file directory: " & @ScriptDir)
 	GUICtrlSetFont(-1, 10, 400, 0, "MS Sans Serif")
 	Local $Radio1 = GUICtrlCreateRadio("User's Application Ddata folder (recommended for( Win7, Win 8, Win10)", 64, 176, 610, 17)
 	GUICtrlSetState(-1, $GUI_CHECKED)
@@ -2874,10 +2874,12 @@ Func CheckDataLoc()
 				Return ""
 			Case $Radio1
 				$data = @AppDataDir & "\SNAKE19-Data"
+				$g_MyDoc = @MyDocumentsDir & "\Snake19"
 				GUICtrlSetData($DataLabel, "Data files directory: " & $data)
 				GUICtrlSetData($DeleteData, "To delete data folder:  Menu, Settings, Uninstall")
 			Case $Radio2
-				$data = $progr & "\SNAKE19-Data"
+				$data = @ScriptDir & "\SNAKE19-Data"
+				$g_MyDoc = @ScriptDir & "\SNAKE19-Data\User"
 				GUICtrlSetData($DataLabel, "Data files directory: " & $data)
 				GUICtrlSetData($DeleteData, "To delete data folder:  Delete " & $data)
 			Case $Bgo
@@ -2888,8 +2890,8 @@ Func CheckDataLoc()
 
 EndFunc   ;==>CheckDataLoc
 #CS INFO
-	175775 V4 1/9/2020 9:18:30 PM V3 11/19/2019 1:09:35 PM V2 10/13/2019 1:37:57 PM V1 10/11/2019 3:14:30 PM
-#CE INFO
+	186748 V5 5/5/2020 2:35:34 AM V4 1/9/2020 9:18:30 PM V3 11/19/2019 1:09:35 PM V2 10/13/2019 1:37:57 PM
+#CE
 
 ;This will delete the data files and exit the game
 Func DeleteData()
@@ -2899,27 +2901,29 @@ Func DeleteData()
 	If FileExists($data & "\snake.ini") = 0 Then
 		$data = @ScriptDir & "\SNAKE19-Data"
 		If FileExists(@ScriptDir & "\SNAKE19-Data\snake.ini") = 0 Then
-			MsgBox(0, "Error", "Data folder missing - Tell programer")
+			MsgBox(0, "Error", "Data folder missing")
 			Exit
 		EndIf
 	EndIf
 
 	Local $L_FormRemoveSetup = GUICreate("Snake19 - Remove Data - " & $ver, 615, 294, -1, -1, $ws_popup + $ws_caption, -1, $g_FormSetting)
+
 	GUICtrlCreateLabel("Thanks for using the Snake19 game - " & $ver, 0, 24, 610, 28, $SS_CENTER)
 	GUICtrlSetFont(-1, 14, 800, 0, "MS Sans Serif")
-	GUICtrlCreateLabel("To delete the program Snake19.exe. Go to the program folder and delete it manually.", 32, 144, 504, 20)
-	GUICtrlSetFont(-1, 10, 400, 0, "MS Sans Serif")
 	GUICtrlCreateLabel("This will delete the data files created by the Snake19 game.", 32, 80, 355, 20)
 	GUICtrlSetFont(-1, 10, 400, 0, "MS Sans Serif")
-	GUICtrlCreateLabel("________________________________________________________________________________________________", 24, 216, 580, 17)
-
 	Local $Label5 = GUICtrlCreateLabel("Data folder: ", 32, 112, 610, 20)
 	GUICtrlSetData(-1, "Data files directory: " & $data)
+	GUICtrlSetFont(-1, 10, 400, 0, "MS Sans Serif")
+
+	GUICtrlCreateLabel("To delete the program Snake19.exe. Go to the program folder and delete it manually.", 32, 154, 504, 20)
 	GUICtrlSetFont(-1, 10, 400, 0, "MS Sans Serif")
 
 	Local $Label6 = GUICtrlCreateLabel("Program folder: ", 32, 184, 610, 20)
 	GUICtrlSetData(-1, "Program file directory: " & $progr)
 	GUICtrlSetFont(-1, 10, 400, 0, "MS Sans Serif")
+
+	GUICtrlCreateLabel("________________________________________________________________________________________________", 24, 216, 580, 17)
 
 	Local $Button1 = GUICtrlCreateButton("Delete Data", 416, 248, 75, 25)
 	Local $Button2 = GUICtrlCreateButton("Cancel", 520, 248, 75, 25)
@@ -2951,8 +2955,8 @@ Func DeleteData()
 	Exit
 EndFunc   ;==>DeleteData
 #CS INFO
-	147351 V5 4/20/2020 3:02:22 AM V4 1/9/2020 9:18:30 PM V3 11/19/2019 1:09:35 PM V2 10/20/2019 1:07:26 AM
-#CE INFO
+	145931 V6 5/5/2020 2:35:34 AM V5 4/20/2020 3:02:22 AM V4 1/9/2020 9:18:30 PM V3 11/19/2019 1:09:35 PM
+#CE
 
 Func About()
 	Local $MyUrl, $Message
@@ -2961,7 +2965,8 @@ Func About()
 	$g_FormAbout = GUICreate("Snake19 - About", 615, 430, $g_FormLeft, $g_FormTop, $ws_popup + $ws_caption)
 ;~+~+
 	;$Message &= "|
-	$Message = "0.167 4 May 2020 Add clear all scores"
+	$Message = "0.168 5 May 2020 If portable for data, user game will be stored local, not user documents"
+	$Message &= "|0.167 4 May 2020 Add clear all scores"
 	$Message &= "|0.166 2 May 2020 Replay - Problems - Hide buttons if files do not exit"
 	$Message &= "|0.165 2 May 2020 Replay - Problems - Open replay and it wipe last and loads current. Can't save last"
 	$Message &= "|0.164 1 May 2020 Replay - Problems - Replay game title, force Current to run. Better title"
@@ -3082,7 +3087,7 @@ Func About()
 
 EndFunc   ;==>About
 #CS INFO
-	473787 V62 5/4/2020 5:11:01 PM V61 5/2/2020 12:23:32 PM V60 5/2/2020 2:42:11 AM V59 5/1/2020 1:45:33 PM
+	481915 V63 5/5/2020 2:35:34 AM V62 5/4/2020 5:11:01 PM V61 5/2/2020 12:23:32 PM V60 5/2/2020 2:42:11 AM
 #CE
 
 ;------ Pass Wall
@@ -3872,7 +3877,7 @@ Func SettingScore()
 EndFunc   ;==>SettingScore
 #CS INFO
 	225710 V9 5/4/2020 5:11:01 PM V8 5/2/2020 12:23:32 PM V7 4/27/2020 12:59:11 AM V6 3/27/2020 10:44:43 AM
-#CE
+#CE INFO
 
 #Region SettingKeys
 Func SettingKeys()
@@ -4405,4 +4410,4 @@ Main()
 
 Exit
 
-;~T ScriptFunc.exe V0.54a 15 May 2019 - 5/4/2020 5:11:01 PM
+;~T ScriptFunc.exe V0.54a 15 May 2019 - 5/5/2020 2:35:34 AM

@@ -1,3 +1,7 @@
+0.169 Clean up
+
+0.168 5 May 2020 If portable for data, user game will be stored local, not user documents
+
 0.167 4 May 2020 Add clear all scores
 	Clear all scores not just the current game.
 
