@@ -1,4 +1,8 @@
-0.169 Clean up
+0.170 Clean up & test
+
+0.169 8 May 2020 2 second delay at end of pause, adjust status box and colors
+	Add delay at end of pause. Which helps
+	Put the lost of focus and pause in upper right (score) in pink, 2 second delay in green
 
 0.168 5 May 2020 If portable for data, user game will be stored local, not user documents
 

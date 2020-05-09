@@ -6,17 +6,17 @@ AutoItSetOption("MustDeclareVars", 1)
 ;Global Static $MESSAGE =  False   ;Pause will still work in script  No DataOut
 
 ; Must be Declared before _Prf_startup   ~+~+
-Global $ver = "0.168 5 May 2020 If portable for data, user game will be stored local, not user documents"
-;"Removal of trouble shooting code"
+Global $ver = "0.169 8 May 2020 2 second delay at end of pause, adjust status box and colors"
+;Removal of trouble shooting code"
 
 Global $ini_ver = "0.139"
 Global $g_replayVer = "0.138"
 
 ;Global $TESTING = False
-#include "_prf_startup.au3"
+;#include "_prf_startup.au3"  ;for trouble shooting
 
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
-#AutoIt3Wrapper_Res_Fileversion=0.1.6.8
+#AutoIt3Wrapper_Res_Fileversion=0.1.6.9
 #AutoIt3Wrapper_Icon=R:\!Autoit\Ico\prf.ico
 #AutoIt3Wrapper_Res_Description=Another snake game
 #AutoIt3Wrapper_Res_LegalCopyright=© Phillip Forrestal 2019-2020
@@ -84,6 +84,7 @@ to do
 
 	Version
 ;~+~+
+	0.169 8 May 2020 2 second delay at end of pause, adjust status box and colors
 	0.168 5 May 2020 If portable for data, user game will be stored local, not user documents
 	0.167 4 May 2020 Add clear all scores
 	0.166 2 May 2020 Replay - Problems - Hide buttons if files do not exit
@@ -341,6 +342,7 @@ Static $MaxLost = 7 ;   5 to 10
 ; GUIDelete($)   GUICreate("
 Global $g_FormLeft
 Global $g_FormTop
+$ver = StringLeft($ver, StringInStr($ver, " ", 0, 4))
 
 ;_Center($W, $H)   ;xw, yh   , $g_FormLeft, $g_FormTop)
 Global $g_GameBdCenterYH
@@ -907,8 +909,12 @@ Func Game()
 			If $nMsg = $L_idPause Then
 				Do
 				Until GUIGetMsg() <> $L_idPause
+				Status(1, "End of Pause - Wait 2 seconds", 4)
+				Sleep(2000)
+				MouseMove(0, 0, 0)
 				$g_Pause = False
 				Status(1, "", 2)
+
 			EndIf
 			ContinueLoop  ; skip to end
 		EndIf
@@ -918,7 +924,7 @@ Func Game()
 			Until GUIGetMsg() <> $L_idPause
 			If $l_startrun Then     ;153 if added
 				$g_Pause = True
-				Status(1, "---PAUSE---", 2)
+				Status(1, "---PAUSE---", 1)
 			EndIf
 			ContinueLoop     ;153 skip to end of loop
 		EndIf
@@ -1011,7 +1017,7 @@ Func Game()
 
 EndFunc   ;==>Game
 #CS INFO
-	623548 V91 4/27/2020 12:59:11 AM V90 4/25/2020 3:00:10 AM V89 4/16/2020 9:12:07 PM V88 4/15/2020 2:57:51 AM
+	628803 V92 5/8/2020 7:46:55 PM V91 4/27/2020 12:59:11 AM V90 4/25/2020 3:00:10 AM V89 4/16/2020 9:12:07 PM
 #CE INFO
 
 Func Tick() ;
@@ -1051,22 +1057,23 @@ Func Tick() ;
 	WEnd
 
 	If $g_Focus <> WinGetTitle("[ACTIVE]") Then
-		Status(3, "Lost Focus - Pause", 1)
+		Status(1, "Lost Focus - Pause", 1)
 		While $g_Focus <> WinGetTitle("[ACTIVE]")
 			Sleep(1000)
 		WEnd
 
 		$g_Pause = False
-		Status(3, "Found Focus - Wait 2 seconds", 4)
+		;		Status(1, "End of Pause - Wait 2 seconds", 2)
+		Status(1, "Found Focus - Wait 2 seconds", 4)
 		Sleep(2000)
 		MouseMove(0, 0, 0)
-		Status(3, "", 0)
+		Status(1, "", 2)
 	EndIf
 
 	$g_hTick = TimerInit()
 EndFunc   ;==>Tick
 #CS INFO
-	58135 V21 4/27/2020 12:59:11 AM V20 3/27/2020 10:44:43 AM V19 1/15/2020 10:44:49 AM V18 12/30/2019 7:47:56 PM
+	61423 V22 5/8/2020 7:46:55 PM V21 4/27/2020 12:59:11 AM V20 3/27/2020 10:44:43 AM V19 1/15/2020 10:44:49 AM
 #CE INFO
 
 Func Extra()
@@ -1247,10 +1254,6 @@ Func Extra()
 
 			EndSwitch
 
-			;If $TESTING Then
-			;	$g_gChange = 100
-			;EndIf
-
 			$ls_HungerFug = 3 - Int($LS_SnakeLenLast / 20)
 			If $ls_HungerFug < 1 Then
 				$ls_HungerFug = 0
@@ -1373,7 +1376,7 @@ Func Extra()
 
 EndFunc   ;==>Extra
 #CS INFO
-	458389 V62 4/27/2020 12:59:11 AM V61 4/20/2020 3:02:22 AM V60 4/17/2020 9:19:34 AM V59 4/15/2020 1:41:14 PM
+	455481 V63 5/8/2020 7:46:55 PM V62 4/27/2020 12:59:11 AM V61 4/20/2020 3:02:22 AM V60 4/17/2020 9:19:34 AM
 #CE INFO
 
 Func Normal()
@@ -1522,21 +1525,6 @@ Func ConvDead($x, $y, $useNext = False) ; start map location
 EndFunc   ;==>ConvDead
 #CS INFO
 	34565 V6 8/25/2019 6:50:13 PM V5 7/9/2019 1:03:14 AM V4 7/6/2019 6:24:29 PM V3 7/5/2019 4:03:49 PM
-#CE INFO
-
-Func ShowRow($x, $y)
-
-	If $TESTING Then ; Not used in compiled, in case I forget to comment out.
-		Local $aa[7]
-		For $z = 0 To 6
-			$aa[$z] = $Map[$z][$x][$y]
-		Next
-
-	EndIf
-
-EndFunc   ;==>ShowRow
-#CS INFO
-	13600 V5 4/25/2020 3:00:10 AM V4 12/29/2019 7:10:02 PM V3 11/19/2019 1:09:35 PM V2 6/24/2019 11:22:57 PM
 #CE INFO
 
 Func Status($status, $string, $color)
@@ -2490,7 +2478,7 @@ Func StartForm()
 EndFunc   ;==>StartForm
 #CS INFO
 	762277 V69 5/5/2020 2:35:34 AM V68 5/2/2020 12:23:32 PM V67 5/2/2020 2:42:11 AM V66 5/1/2020 1:45:33 PM
-#CE
+#CE INFO
 
 Func Settings()
 	Local $y
@@ -2822,8 +2810,6 @@ EndFunc   ;==>TickSpeed
 	12887 V1 8/22/2019 6:28:51 PM
 #CE INFO
 
-;Check to see it Data is store in one of the two locations. If not ask where to store the data
-
 Func CheckDataLoc()
 	Local $data
 
@@ -2891,7 +2877,7 @@ Func CheckDataLoc()
 EndFunc   ;==>CheckDataLoc
 #CS INFO
 	186748 V5 5/5/2020 2:35:34 AM V4 1/9/2020 9:18:30 PM V3 11/19/2019 1:09:35 PM V2 10/13/2019 1:37:57 PM
-#CE
+#CE INFO
 
 ;This will delete the data files and exit the game
 Func DeleteData()
@@ -2956,7 +2942,7 @@ Func DeleteData()
 EndFunc   ;==>DeleteData
 #CS INFO
 	145931 V6 5/5/2020 2:35:34 AM V5 4/20/2020 3:02:22 AM V4 1/9/2020 9:18:30 PM V3 11/19/2019 1:09:35 PM
-#CE
+#CE INFO
 
 Func About()
 	Local $MyUrl, $Message
@@ -2965,7 +2951,8 @@ Func About()
 	$g_FormAbout = GUICreate("Snake19 - About", 615, 430, $g_FormLeft, $g_FormTop, $ws_popup + $ws_caption)
 ;~+~+
 	;$Message &= "|
-	$Message = "0.168 5 May 2020 If portable for data, user game will be stored local, not user documents"
+	$Message = "0.169 8 May 2020 2 second delay at end of pause, adjust status box and colors"
+	$Message &= "|0.168 5 May 2020 If portable for data, user game will be stored local, not user documents"
 	$Message &= "|0.167 4 May 2020 Add clear all scores"
 	$Message &= "|0.166 2 May 2020 Replay - Problems - Hide buttons if files do not exit"
 	$Message &= "|0.165 2 May 2020 Replay - Problems - Open replay and it wipe last and loads current. Can't save last"
@@ -2988,44 +2975,6 @@ Func About()
 	$Message &= "|0.148 5 Apr 2020 Found a number of problems.  Tired to fix."
 	$Message &= "|0.147 31 Mar 2020 Adjust remove to half"
 	$Message &= "|0.146 27 Mar 2020 Fixed the rare start problem"
-
-	$Message &= "||0.145 27 Mar 2020 High scores base on game size"
-	$Message &= "|0.144 25 Mar 2020 Game size fix - crash"
-	$Message &= "|0.143 21 Mar 2020 Save / Load replay base on size"
-	$Message &= "|0.142 18 Mar 2020 Change Size cell x cell: code. Set to 20-40 steps of 5"
-	$Message &= "|0.141 28 Feb 2020 Change Size cell x cell: code. Set to 10 to 60 too small, too long"
-	$Message &= "|0.140 26 Feb 2020 Change Size cell x cell: Form"
-	$Message &= "||0.139 24 Feb 2020 Misc thing in replay"
-	$Message &= "|0.138 23 Feb 2020 Adjust when the snake becomes longer or shorter"
-	$Message &= "|0.137 17 Feb 2020 Fix If High score delete, delete Highest replay too"
-	$Message &= "|0.136 15 Feb 2020 Select different keys to use. Try3 -- All works"
-	$Message &= "|0.135 14 Feb 2020 Select different keys to use. Not complete, but main keys work, numpad does not"
-	$Message &= "|0.134 12 Feb 2020 Select different keys to use. Went back to version .032."
-	$Message &= "|  Because using way Autoit works and made it more complex and gain nothing."
-	$Message &= "|0.133 12 Feb 2020 Select different keys to use. Try 2, read keys different. -- more complex and gain nothing"
-	$Message &= "|0.132 11 Feb 2020 Select different keys to use. Program: didn't work. Worked of A-Z0-9 not arrows"
-	$Message &= "|0.131 10 Feb 2020 Select different keys to use. Set up form"
-	$Message &= "|0.130 9 Feb 2020 Score: clear all, clear all but highest"
-	$Message &= "||0.129 6 Feb 2020 Save/Load Replay - Load/Save User replay"
-	$Message &= "|0.128 31 Jan 2020 Fixed the replay end, start with old score"
-	$Message &= "|0.127 24 Jan 2020 Save/Load Replay - Load Highscore and current replay"
-	$Message &= "|0.126 23 Jan 2020 Save/Load Replay - Save highest score replay"
-	$Message &= "|0.125 22 Jan 2020 Save/Load Replay - Change how replay dim is stored"
-	$Message &= "|0.124 22 Jan 2020 Save/Load Replay"
-	$Message &= "|0.123 16 Jan 2020 Resize game board, Main Menu make sure its on screen on top"
-	$Message &= "|0.122 15 Jan 2020 Hide game screen - Main Menu"
-	$Message &= "|0.121 10 Jan 2020 make rest of forms open on Game center"
-	$Message &= "||0.120 10 Jan 2020 make forms and game open saved or true center Main and Game done"
-	$Message &= "|0.119 5 Jan 2020 Remember where start open last"
-	$Message &= "|0.118 5 Jan 2020 Hid games menus.  Need to rework them"
-	$Message &= "|0.117 31 Dec 2019 Hid, Pause now will work in Replay"
-	$Message &= "|0.116 30 Dec 2019 Pause during game by press P, Quit press Q. Fix Change Colors"
-	$Message &= "|0.115 29 Dec 2019 Color changes. Change layout. Done"
-	$Message &= "|0.114 26 Dec 2019  Compile different"
-	$Message &= "|0.113 22 Dec 2019 Bonus location"
-	$Message &= "|0.112 15 Dec 2019 Color changes.  Change layout more, not complete"
-	$Message &= "|0.111 15 Dec 2019 Error on long replay.  Fixed Poop not releasing right, 55 was not skipping.  Still over edge error"
-	$Message &= "||0.110 13 Dec 2019 Color changes.  Change layout"
 
 	GUICtrlCreateLabel("Welcome to Snake19", 0, 24, 617, 28, $SS_CENTER)
 	GUICtrlSetFont(-1, 14, 800, 0, "MS Sans Serif")
@@ -3087,8 +3036,8 @@ Func About()
 
 EndFunc   ;==>About
 #CS INFO
-	481915 V63 5/5/2020 2:35:34 AM V62 5/4/2020 5:11:01 PM V61 5/2/2020 12:23:32 PM V60 5/2/2020 2:42:11 AM
-#CE
+	269570 V64 5/8/2020 7:46:55 PM V63 5/5/2020 2:35:34 AM V62 5/4/2020 5:11:01 PM V61 5/2/2020 12:23:32 PM
+#CE INFO
 
 ;------ Pass Wall
 
@@ -3715,12 +3664,6 @@ EndFunc   ;==>_Center
 #CE INFO
 
 Func ReplaySave()
-	; replay save current as last file, check to see it score is highest
-	; my-current.snk19
-	; nor-current.snk19
-	; my- or nor- highest.snk19
-	; user store in User Doc as my- or nor- replay date-time.snk19
-
 	Local $GameName, $H
 	Local $RPhighscore
 
@@ -3756,7 +3699,7 @@ Func ReplaySave()
 	EndIf
 EndFunc   ;==>ReplaySave
 #CS INFO
-	97916 V9 5/2/2020 12:23:32 PM V8 5/2/2020 2:42:11 AM V7 5/1/2020 1:45:33 PM V6 4/25/2020 3:00:10 AM
+	81567 V10 5/8/2020 7:46:55 PM V9 5/2/2020 12:23:32 PM V8 5/2/2020 2:42:11 AM V7 5/1/2020 1:45:33 PM
 #CE INFO
 
 Func SettingScore()
@@ -4272,14 +4215,7 @@ Func ChangeBoardSize()
 	Local $ok, $cancel, $default, $nMsg, $idX, $idY, $x, $y, $a, $Input_Value
 
 	_Center(280, 265)             ;xw, yh
-	;temp
-	;$g_FormLeft = -1
-	;$g_FormTop = -1
-	;temp
-
-	;	Global $g_sxBase = 40 ;50
 	;Global $g_syBase = 30 ;40
-
 	$g_FormCellxCell = GUICreate("change Game Board size", 280, 265, $g_FormLeft, $g_FormTop)
 	GUICtrlCreateLabel("Change Game Board size", 0, 10, 280, 17, $SS_CENTER)
 	GUICtrlSetFont(-1, 12, 800, 0, "Arial")
@@ -4287,11 +4223,6 @@ Func ChangeBoardSize()
 	GUICtrlSetFont(-1, 10, 400, 0, "Arial")
 	GUICtrlCreateLabel("Current size is X:" & $g_sxBase & " by Y:" & $g_syBase, 0, 50, 280, 17, $SS_CENTER)
 	GUICtrlSetFont(-1, 10, 400, 0, "Arial")
-
-	;temp
-	;$g_sxBase = Int(IniRead($s_ini, "Board", "X", 40))
-	;$g_syBase = Int(IniRead($s_ini, "Board", "Y", 30))
-	;temp
 
 	$x = $g_sxBase
 	$y = $g_syBase
@@ -4390,7 +4321,7 @@ Func ChangeBoardSize()
 
 EndFunc   ;==>ChangeBoardSize
 #CS INFO
-	197320 V6 4/10/2020 12:20:13 PM V5 4/7/2020 2:15:18 AM V4 3/25/2020 9:28:31 AM V3 3/19/2020 12:09:38 AM
+	183890 V7 5/8/2020 7:46:55 PM V6 4/10/2020 12:20:13 PM V5 4/7/2020 2:15:18 AM V4 3/25/2020 9:28:31 AM
 #CE INFO
 
 Func RemoveGameBoard()
@@ -4410,4 +4341,4 @@ Main()
 
 Exit
 
-;~T ScriptFunc.exe V0.54a 15 May 2019 - 5/5/2020 2:35:34 AM
+;~T ScriptFunc.exe V0.54a 15 May 2019 - 5/8/2020 7:46:55 PM
