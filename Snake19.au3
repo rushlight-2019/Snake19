@@ -6,17 +6,16 @@ AutoItSetOption("MustDeclareVars", 1)
 ;Global Static $MESSAGE =  False   ;Pause will still work in script  No DataOut
 
 ; Must be Declared before _Prf_startup   ~+~+
-Global $ver = "0.169 8 May 2020 2 second delay at end of pause, adjust status box and colors"
-;Removal of trouble shooting code"
+Global $ver = "1.00 16 May 2020 Done"
 
-Global $ini_ver = "0.139"
-Global $g_replayVer = "0.138"
+Global $ini_ver = "1.00"
+Global $g_replayVer = "1.00"
 
 ;Global $TESTING = False
 ;#include "_prf_startup.au3"  ;for trouble shooting
 
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
-#AutoIt3Wrapper_Res_Fileversion=0.1.6.9
+#AutoIt3Wrapper_Res_Fileversion=1.0.0.0
 #AutoIt3Wrapper_Icon=R:\!Autoit\Ico\prf.ico
 #AutoIt3Wrapper_Res_Description=Another snake game
 #AutoIt3Wrapper_Res_LegalCopyright=© Phillip Forrestal 2019-2020
@@ -84,8 +83,10 @@ to do
 
 	Version
 ;~+~+
+	1.00 16 May 2020 Done
+	0.170 16 May 2020 Removal of trouble shooting code and test
 	0.169 8 May 2020 2 second delay at end of pause, adjust status box and colors
-	0.168 5 May 2020 If portable for data, user game will be stored local, not user documents
+	0.168 5 May 2020 If portable: The data will be stored in a folder under snake19.exe location, not user documents
 	0.167 4 May 2020 Add clear all scores
 	0.166 2 May 2020 Replay - Problems - Hide buttons if files do not exit
 	0.165 2 May 2020 Replay - Problems - Open replay and it wipe last and loads current. Can't save last
@@ -2951,8 +2952,10 @@ Func About()
 	$g_FormAbout = GUICreate("Snake19 - About", 615, 430, $g_FormLeft, $g_FormTop, $ws_popup + $ws_caption)
 ;~+~+
 	;$Message &= "|
-	$Message = "0.169 8 May 2020 2 second delay at end of pause, adjust status box and colors"
-	$Message &= "|0.168 5 May 2020 If portable for data, user game will be stored local, not user documents"
+	$Message = "1.00 16 May 2020 Done"
+	$Message &= "||0.170 16 May 2020 Removal of trouble shooting code and test"
+	$Message &= "|0.169 8 May 2020 2 second delay at end of pause, adjust status box and colors"
+	$Message &= "|0.168 5 May 2020 If portable: The data will be stored in a folder under snake19.exe location, not user documents"
 	$Message &= "|0.167 4 May 2020 Add clear all scores"
 	$Message &= "|0.166 2 May 2020 Replay - Problems - Hide buttons if files do not exit"
 	$Message &= "|0.165 2 May 2020 Replay - Problems - Open replay and it wipe last and loads current. Can't save last"
@@ -3036,8 +3039,8 @@ Func About()
 
 EndFunc   ;==>About
 #CS INFO
-	269570 V64 5/8/2020 7:46:55 PM V63 5/5/2020 2:35:34 AM V62 5/4/2020 5:11:01 PM V61 5/2/2020 12:23:32 PM
-#CE INFO
+	286467 V66 5/16/2020 1:56:25 AM V65 5/16/2020 1:11:12 AM V64 5/8/2020 7:46:55 PM V63 5/5/2020 2:35:34 AM
+#CE
 
 ;------ Pass Wall
 
@@ -4341,4 +4344,4 @@ Main()
 
 Exit
 
-;~T ScriptFunc.exe V0.54a 15 May 2019 - 5/8/2020 7:46:55 PM
+;~T ScriptFunc.exe V0.54a 15 May 2019 - 5/16/2020 1:56:25 AM

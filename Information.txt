@@ -1,16 +1,132 @@
-0.170 Clean up & test
+Two versions of the snake game:
+  Both are work on turns and food. Not distant.
+
+My Snake - hard to die.
+  Food increase Snake by 1.  A special food will get you more.
+  My Snake Bonus:
+    Snake can 'double back' on self.  Looses 2 cells.
+
+    Will not die if snake eat itself, but will cause the end of the snake to die.
+
+    Pass through Wall to other side. But loose X cells.
+	  May not a direct location, because it can't see in the wall and may come out near.
+      Will pass through the walls so long as there nothing on the other side.  It will a free location or it will die.
+
+    Snake does not like to Turn so, so few turns, is OK.
+      Too many turns Snake gets shorter
+
+Normal Snake
+  Food increase Snake by 1.  Score +1 per food pickup.  There is a bonus.
+    Will die if Snake eat itself, eat a wall.
+
+----------------
+Special keys:  All changable.
+ P = Pause game
+ Q = Quit game
+ M = Minimize game.  Restore from program tray.
+Movement keys are also changable.
+
+----------------
+Score line in
+ My Snake:
+  Score
+  Maximum length
+  Length of snake
+
+  ms/cyc: time it take to do a game loop on this computer. My desktop about 12ms, Win 10 notebook about 85ms.
+
+ Normal Snake:
+	Length of snake.
+
+----------------
+Replay:
+You can replay the highest score game played and the last game played.
+At different speeds. Default speed, 200ms, 100ms, Full (no delay in loop)
+
+Replay files now can be stored in User Documents in Snake19 folder
+If portable: The data will be stored in a folder Snake19\User under snake19.exe location, not user documents
+
+Files named YearMonthDayTimeAM
+
+You can rename the file, but keep the same extension.
+.M-Snk19 My Snake games
+.N-Snk19 Normal Snake games
+
+To rename a file: Press Load Doc, select file and rename it.  F2, new name.
+
+To delete a file, Press Load Doc, select file and press delete.
+Or go to the Document folder Snake19 and delete the file.
+
+----------------
+1) Minimize Game board by pressing M while game is active.  Restore from tray. While game is minimize it will pause.
+2) Minimize Main Menu by pressing minimize button.  Restore from tray.   If game board is showing it will disappear.
+3) When at Main Menu and Game board is showing, click on Game board to show it for 3 seconds.
+4) When at Main Menu and Game board is showing, to see it for longer then 3 seconds, click & hold Game board title bar. 3 second after release Main Menu will return.
+5) Pause the Game, press P.  Start Game again press P. Or lose Focus and click on Game board to restore focus. Game will restart after 2 seconds.
+6) If the Game board loses focus, the game will pause.  Game will restart after 2 seconds after it return to focus.
+7) Quit the Game, press Q
+
+----------------
+Settings:
+
+Change board Size
+Screen Size
+Colors
+Speed
+Keys
+Score
+Misc
+
+Remove game created data files from computer.
+
+--------------
+Settings
+	CHANGE BOARD SIZE
+Change the game board size.  Default is 40x30
+Size 20 to 40 by steps of 5
+
+	SCREEN SIZE
+Change the number of pixel of the game cell. 10 is the smallest. 22 is default, Maximum is calculated from the screen size.
+
+	COLOR
+2 pre-define color layouts.  You can pick any color you want.
+
+	SPEED
+Change the speed of the movement of snake.  Default is 150 ms per loop, up or down by 10 ms.
+
+	KEYS
+Change which keys to use in the game.
+Works for the usable keys.
+You can use Enter, Insert, Home, Page Up, Delete, End, Page Down, Space
+You can not use the Function keys, Shift keys or Tab
+
+	SCORE - Delete scores in All game sizes.
+Change the number of high scores save on exit. Default is 8
+Clear the high scores. Default is not to delete the highest score.  Uncheck the box and the highest can be deleted.
+
+	MISC
+Adjust when to Add/Remove Snake Cells
+When to adjust snake length. Snake moves a number of positions before the change occurs. 0-10  Default 2.
+
+Bonus Food over board size plus 30 length, will create a 2nd food.    On or off.
+
+Versions.  For complete list see source code.
+1.00 16 May 2020 Done
+
+0.170 16 May 2020 Removal of trouble shooting code and test
+	Tested it for a number of days
 
 0.169 8 May 2020 2 second delay at end of pause, adjust status box and colors
 	Add delay at end of pause. Which helps
 	Put the lost of focus and pause in upper right (score) in pink, 2 second delay in green
 
-0.168 5 May 2020 If portable for data, user game will be stored local, not user documents
+0.168 5 May 2020 If portable: The data will be stored in a folder under snake19.exe location, not user documents
 
 0.167 4 May 2020 Add clear all scores
 	Clear all scores not just the current game.
 
-0.166 2 May 2020 Replay - Problems - Hide buttons if files do not exit
-	Hide buttons if files do not exit.  I think I got all the combinations.
+0.166 2 May 2020 Replay - Problems - Hide buttons if files do not exist
+	Hide buttons if files do not exist.  I think I got all the combinations.
 	Found another issue, just can't get 2 things left.
 
 0.165 2 May 2020 Replay - Problems - Open replay and it wipe last and loads current. Can't save last
@@ -94,108 +210,3 @@ Fixed the set cell size.  Calulates the right maximum size, not the super big nu
 Replay is not set to change board size. Will crash is a big board is played on a small board
 
 
-----------------
-Two versions of the snake game:
-  Both are work on turns and food. Not distant.
-
-My Snake - hard to die.
-  Food increase Snake by 1.  A special food will get you more.
-  My Snake Bonus:
-    Snake can 'double back' on self.
-
-    Will not die if snake eat itself, could cause part of its end to die.
-
-    Pass through Wall to other side. But loose X cells.
-      Will pass through the walls so long as there nothing on the other side.
-
-    Snake does not like to Turn so, so few turns and Food increase snake & score
-      Too many turns Snake gets shorter
-
-Normal Snake
-  Food increase Snake by 1.  Score +1 per food pickup.  There is a bonus.
-    Will die if Snake eat itself, eat a wall.
-
-----------------
-Special keys:
- P = Pause game
- Q = Quit game
- M = Minimize game.  Restore from program tray.
-
-----------------
-Score line in
- My Snake:
-  Length of snake
-  Maximum length
-  Score
-  ms/cyc: time it take to do a game loop on this computer. My desktop about 12ms, Win 10 notebook about 85ms.
-  test number: number of replay cells used.
-
- Normal Snake: Length of snake.
-
-----------------
-Replay:
-You can replay the highest score game played and the last game played.
-At different speeds. Default speed, 200ms, 100ms, Full (no delay in loop)
-
-Replay files now can be stored in User Documents in Snake19 folder
-Files named YearMonthDayTimeAM
-.M-Snk19 My Snake games
-.N-Snk19 Normal Snake games
-
-To rename a file: Press Load Doc, select file and rename it.  F2, new name.
-
-To delete a file, Press Load Doc, select file and press delete.
-Or go to the Document folder Snake19 and delete the file.
-
-----------------
-1) Minimize Game board by pressing M while game is active.  Restore from tray. While game is minimize it will pause.
-2) Minimize Main Menu by pressing minimize button.  Restore from tray.   If game board is showing it will disappear.
-3) When at Main Menu and Game board is showing, click on Game board to show it for 3 seconds.
-4) When at Main Menu and Game board is showing, to see it for longer then 3 seconds, click & hold Game board title bar. 3 second after release Main Menu will return.
-5) Pause the Game, press P.  Start Game again press P. Or lose Focus and click on Game board to restore focus. Game will restart after 2 seconds.
-6) If the Game board loses focus, the game will pause.  Game will restart after 2 seconds after it return to focus.
-7) Quit the Game, press Q
-
-----------------
-Settings:
-
-Change board Size
-Screen Size
-Colors
-Speed
-Keys
-Score
-Misc
-
-Remove data files from computer.
-
---------------
-Settings
-	CHANGE BOARD SIZE
-Change the game board size.  Default is 40x30
-Size 20 to 40 by steps of 5
-
-	SCREEN SIZE
-Change the number of pixel of the game cell. 10 is the smallest. 22 is default, Maximum is calculated from the screen size.
-
-	COLOR
-2 per-define color layout.  You can pick any color you want.
-
-	SPEED
-Change the speed of the movement of snake.  Default is 150 ms per loop, up or down by 10 ms.
-
-	KEYS
-Change which keys to use in the game.
-Works for the usable keys.
-You can use Enter, Insert, Home, Page Up, Delete, End, Page Down, Space
-You can not use the Function keys, Shift keys or Tab
-
-	SCORE - Delete scores in All game sizes.
-Change the number of high scores save on exit. Default is 8
-Clear the high scores. Default is not to delete the highest score.  Uncheck the box and the highest can be deleted.
-
-	MISC
-Adjust when to Add/Remove Snake Cells
-When to adjust snake length. Snake moves a number of positions before the change occurs. 0-10  Default 2.
-
-Bonus Food over board size plus 30 length, will create a 2nd food.    On or off.
