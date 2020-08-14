@@ -111,6 +111,8 @@ When to adjust snake length. Snake moves a number of positions before the change
 Bonus Food over board size plus 30 length, will create a 2nd food.    On or off.
 
 Versions.  For complete list see source code.
+1.01 14 Jul 2020 Fix text in About
+
 1.00 20 May 2020 Done
 
 0.170 16 May 2020 Removal of trouble shooting code and test

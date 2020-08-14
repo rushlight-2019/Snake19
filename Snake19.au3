@@ -6,7 +6,7 @@ AutoItSetOption("MustDeclareVars", 1)
 ;Global Static $MESSAGE =  False   ;Pause will still work in script  No DataOut
 
 ; Must be Declared before _Prf_startup   ~+~+
-Global $ver = "1.00 20 May 2020 Done"
+Global $ver = "1.01 14 Aug 2020 Fix text in About"
 
 Global $ini_ver = "1.00"
 Global $g_replayVer = "1.00"
@@ -15,7 +15,7 @@ Global $g_replayVer = "1.00"
 ;#include "_prf_startup.au3"  ;for trouble shooting
 
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
-#AutoIt3Wrapper_Res_Fileversion=1.0.0.0
+#AutoIt3Wrapper_Res_Fileversion=1.0.0.1
 #AutoIt3Wrapper_Icon=R:\!Autoit\Ico\prf.ico
 #AutoIt3Wrapper_Res_Description=Another snake game
 #AutoIt3Wrapper_Res_LegalCopyright=© Phillip Forrestal 2019-2020
@@ -83,6 +83,7 @@ to do
 
 	Version
 ;~+~+
+	1.01 14 Aug 2020 Fix text in About
 	1.00 20 May 2020 Done
 	0.170 16 May 2020 Removal of trouble shooting code and test
 	0.169 8 May 2020 2 second delay at end of pause, adjust status box and colors
@@ -644,7 +645,7 @@ Func Main()
 EndFunc   ;==>Main
 #CS INFO
 	205797 V51 5/20/2020 1:45:55 AM V50 5/2/2020 2:42:11 AM V49 4/7/2020 2:15:18 AM V48 3/27/2020 10:44:43 AM
-#CE
+#CE INFO
 
 Func Game()
 	Local $l_startrun ;153
@@ -2945,7 +2946,8 @@ Func About()
 	$g_FormAbout = GUICreate("Snake19 - About", 615, 430, $g_FormLeft, $g_FormTop, $ws_popup + $ws_caption)
 ;~+~+
 	;$Message &= "|
-	$Message = "1.00 20 May 2020 Done"
+	$Message = "1.01 14 Aug 2020 Fix text in About"
+	$Message &= "|1.00 20 May 2020 Done"
 	$Message &= "||0.170 16 May 2020 Removal of trouble shooting code and test"
 	$Message &= "|0.169 8 May 2020 2 second delay at end of pause, adjust status box and colors"
 	$Message &= "|0.168 5 May 2020 If portable: The data will be stored in a folder under snake19.exe location, not user documents"
@@ -2977,7 +2979,7 @@ Func About()
 	GUICtrlCreateLabel("Copyright (C) 2019-2020 -- by Phillip Forrestal", 0, 104, 620, 20, $SS_CENTER)
 	GUICtrlSetFont(-1, 10, 400, 0, "MS Sans Serif")
 	GUICtrlCreateLabel("", 0, 60, 618, 20, $SS_CENTER)
-	GUICtrlSetData(-1, "Snake 19 -beta but working version " & $ver)
+	GUICtrlSetData(-1, "Snake 19 - " & $ver)
 	GUICtrlSetFont(-1, 10, 400, 0, "MS Sans Serif")
 
 	$MyUrl = GUICtrlCreateLabel("", 0, 80, 618, 20, $SS_CENTER + $SS_NOTIFY)
@@ -3032,7 +3034,7 @@ Func About()
 
 EndFunc   ;==>About
 #CS INFO
-	286462 V67 5/20/2020 1:45:55 AM V66 5/16/2020 1:56:25 AM V65 5/16/2020 1:11:12 AM V64 5/8/2020 7:46:55 PM
+	287456 V69 8/14/2020 1:14:43 PM V68 8/13/2020 10:38:24 AM V67 5/20/2020 1:45:55 AM V66 5/16/2020 1:56:25 AM
 #CE
 
 ;------ Pass Wall
@@ -3816,7 +3818,7 @@ Func SettingScore()
 EndFunc   ;==>SettingScore
 #CS INFO
 	230010 V10 5/20/2020 1:45:55 AM V9 5/4/2020 5:11:01 PM V8 5/2/2020 12:23:32 PM V7 4/27/2020 12:59:11 AM
-#CE
+#CE INFO
 
 #Region SettingKeys
 Func SettingKeys()
@@ -4337,4 +4339,4 @@ Main()
 
 Exit
 
-;~T ScriptFunc.exe V0.54a 15 May 2019 - 5/20/2020 1:45:55 AM
+;~T ScriptFunc.exe V0.54a 15 May 2019 - 8/14/2020 1:14:43 PM
